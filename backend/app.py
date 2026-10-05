@@ -5,8 +5,9 @@ from flask_cors import CORS
 import mysql.connector
 import random
 import string
-import requests
-import os
+import smtplib
+import threading
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -23,9 +24,12 @@ DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
 
 # ==========================================
-# CONFIGURACIÓN DE CORREO (RESEND API - SEGURO)
+# CONFIGURACIÓN DE CORREO (SMTP GMAIL)
 # ==========================================
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_SISTEMA = "campus.security.test@gmail.com"
+EMAIL_PASSWORD = "FA200175m@."
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -36,6 +40,25 @@ def get_db_connection():
         port=DB_PORT,
         ssl_disabled=False
     )
+
+# Función para enviar correo en segundo plano (Evita Timeouts en Render)
+def enviar_correo_async(destinatario, nombre, token):
+    try:
+        asunto = "Recuperación de Contraseña - Campus Security"
+        cuerpo = f"Hola {nombre},\n\nHas solicitado restablecer tu contraseña. Tu código de recuperación es: {token}\nEste código expira en 15 minutos.\n\nSi no solicitaste esto, ignora este mensaje."
+        
+        msg = MIMEText(cuerpo)
+        msg['Subject'] = asunto
+        msg['From'] = EMAIL_SISTEMA
+        msg['To'] = destinatario
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_SISTEMA, destinatario, msg.as_string())
+        server.quit()
+    except Exception as e:
+        print(f"Error al enviar correo en background: {str(e)}")
 
 # ==========================================
 # RUTAS DE SEGURIDAD E IDENTIDAD (IAM)
@@ -78,7 +101,7 @@ def login():
         if 'conn' in locals(): conn.close()
 
 # ==========================================
-# RUTAS DE RECUPERACIÓN DE CONTRASEÑA (RESEND)
+# RUTAS DE RECUPERACIÓN DE CONTRASEÑA
 # ==========================================
 @app.route('/api/auth/recuperar-solicitar', methods=['POST'])
 def solicitar_recuperacion():
@@ -103,22 +126,9 @@ def solicitar_recuperacion():
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        # Enviar correo mediante Resend API
-        headers = {
-            "Authorization": f"Bearer {RESEND_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "from": "Campus Security <onboarding@resend.dev>",
-            "to": [correo],
-            "subject": "Recuperación de Contraseña - Campus Security",
-            "html": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Has solicitado restablecer tu contraseña.</p><p>Tu código de recuperación es: <h2 style='color:#3b82f6;'>{token}</h2></p><p>Este código expira en 15 minutos.</p>"
-        }
-        
-        res = requests.post("https://api.resend.com/emails", json=payload, headers=headers)
-        
-        if res.status_code != 200:
-            return jsonify({"error": f"Error al enviar el correo: {res.text}"}), 500
+        # Lanzar el envío de correo en un hilo separado (No bloquea a Render)
+        hilo = threading.Thread(target=enviar_correo_async, args=(correo, usuario['nombre'], token))
+        hilo.start()
         
         return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
     except Exception as e:
@@ -414,6 +424,6 @@ def coord_inscribir():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-if __name__ == 'main':
+if __name__ == '__main__':
     print("🛡️ Backend de Campus Security v1.0 Iniciado y conectado a AWS TiDB Cloud")
     app.run(debug=True, port=5000)
