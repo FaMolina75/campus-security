@@ -9,7 +9,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
         aside { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
         .sidebar-brand h2 { font-size: 1.4rem; color: white; margin-bottom: 5px; }
         .sidebar-brand span { color: var(--accent); }
@@ -17,7 +16,6 @@
         .sidebar-menu li { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.3s; font-size: 0.95rem; }
         .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); }
         
-        /* Main Content */
         main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         header { background: white; padding: 20px 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
         .user-info { font-weight: 500; font-size: 0.9rem; color: #64748b; }
@@ -116,9 +114,10 @@
                                 <th>Horario</th>
                                 <th>Aula</th>
                             </tr>
-                        <thead id="tablaGruposBody">
-                            <tr><td colspan="6" style="text-align: center;">Cargando grupos...</td></tr>
                         </thead>
+                        <tbody id="tablaGruposBody">
+                            <tr><td colspan="6" style="text-align: center;">Cargando grupos...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -155,7 +154,6 @@
         const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
         const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
 
-        // Control de sesión y rol
         if (!usuario || usuario.rol !== 'coordinadora') {
             alert('Acceso no autorizado.');
             window.location.href = '../../index.html';
@@ -173,15 +171,13 @@
 
         function cerrarSesion() {
             sessionStorage.clear();
-            window.location.href = '../../index.html';
+            window.location.href = '/index.html';
         }
 
-        // Carga inicial de datos vinculados a la carrera de la coordinadora
         const idCarrera = usuario.id_carrera;
 
         async function cargarDatosCoordinadora() {
             try {
-                // 1. Materias de la carrera
                 const resMat = await fetch(`${API_BASE}/coordinador/materias_carrera/${idCarrera}`);
                 const materias = await resMat.json();
                 const selMat = document.getElementById('selectMateria');
@@ -190,7 +186,6 @@
                     selMat.innerHTML += `<option value="${m.id_materia}">[Sem ${m.semestre}] ${m.nombre} (${m.clave})</option>`;
                 });
 
-                // 2. Profesores activos
                 const resProf = await fetch(`${API_BASE}/coordinador/profesores`);
                 const profesores = await resProf.json();
                 const selProf = document.getElementById('selectProfesor');
@@ -199,7 +194,6 @@
                     selProf.innerHTML += `<option value="${p.id_usuario}">${p.nombre}</option>`;
                 });
 
-                // 3. Alumnos de la carrera
                 const resAlu = await fetch(`${API_BASE}/coordinador/alumnos/${idCarrera}`);
                 const alumnos = await resAlu.json();
                 const selAlu = document.getElementById('selectAlumno');
@@ -208,9 +202,7 @@
                     selAlu.innerHTML += `<option value="${a.id_usuario}">${a.nombre} (Mat: ${a.matricula})</option>`;
                 });
 
-                // 4. Tabla de grupos creados
                 cargarGruposTabla();
-
             } catch (error) {
                 console.error("Error al cargar datos de coordinación:", error);
             }
@@ -243,7 +235,6 @@
             }
         }
 
-        // Crear Grupo
         document.getElementById('formGrupo').addEventListener('submit', async (e) => {
             e.preventDefault();
             const alertBox = document.getElementById('alertGrupo');
@@ -282,7 +273,6 @@
             }
         });
 
-        // Cargar materias disponibles para inscribir al alumno seleccionado
         async function cargarGruposDisponibles(idAlumno) {
             const selGrupo = document.getElementById('selectGrupoDisponible');
             selGrupo.innerHTML = '<option value="">Cargando materias disponibles...</option>';
@@ -300,22 +290,14 @@
             }
         }
 
-        // Inscribir alumno
         document.getElementById('formInscripcion').addEventListener('submit', async (e) => {
             e.preventDefault();
             const alertBox = document.getElementById('alertInscripcion');
             alertBox.style.display = 'none';
 
-            // Nota: El endpoint pide id_alumno, id_materia, id_grupo. Extraemos el id_materia del grupo seleccionado o lo mandamos directo.
-            // Revisando app.py, '/api/coordinador/inscribir' requiere id_alumno, id_materia, id_grupo en el JSON.
-            // Ajustamos para obtener el id_materia correspondiente al grupo seleccionado.
             const idAlumno = document.getElementById('selectAlumno').value;
             const idGrupo = document.getElementById('selectGrupoDisponible').value;
             
-            // Hacemos una consulta rápida o mapeamos, o ajustamos el backend si fuera necesario. Como app.py espera id_materia, 
-            // asegurémonos de enviarlo consultando o extrayéndolo. Vamos a buscarlo directo de la selección:
-            // Dado que el select tiene id_grupo, obtengamos el id_materia haciendo un fetch rápido o enviándolo:
-            // Mejor aún, actualizamos el payload con el id_materia correcto buscándolo de la API de grupos disponibles:
             try {
                 const resDisponibles = await fetch(`${API_BASE}/coordinador/grupos_disponibles/${idAlumno}`);
                 const lista = await resDisponibles.json();
@@ -358,11 +340,7 @@
                 alertBox.style.display = 'block';
             }
         });
-        function cerrarSesion() {
-    sessionStorage.clear();
-    window.location.href = '/index.html';
-}
-        // Ejecutar al cargar la página
+
         window.addEventListener('DOMContentLoaded', cargarDatosCoordinadora);
     </script>
 </body>

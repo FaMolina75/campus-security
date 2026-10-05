@@ -74,9 +74,9 @@
             </div>
         </div>
 
-        <!-- VISTA 2: RECUPERACIÓN DE CONTRASEÑA (PASO 1: SOLICITAR TOKEN) -->
+        <!-- VISTA 2: RECUPERACIÓN (PASO 1) -->
         <div id="vista-recuperar" class="auth-view">
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; text-align: center;">Ingresa tu correo institucional registrado para recibir un código de recuperación de 6 dígitos.</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; text-align: center;">Ingresa tu correo institucional registrado para recibir un código de recuperación.</p>
             <form id="formRecobrarSolicitar">
                 <div class="input-group">
                     <label>Correo Electrónico</label>
@@ -87,7 +87,7 @@
             <button type="button" class="btn-link" onclick="cambiarVista('login')" style="display: block; width: 100%; text-align: center; margin-top: 15px;">← Volver al Login</button>
         </div>
 
-        <!-- VISTA 3: CAMBIAR CONTRASEÑA (PASO 2: INGRESAR TOKEN Y NUEVA PASS) -->
+        <!-- VISTA 3: CAMBIAR CONTRASEÑA (PASO 2) -->
         <div id="vista-cambiar" class="auth-view">
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; text-align: center;">Introduce el código de 6 dígitos que llegó a tu correo y tu nueva contraseña.</p>
             <form id="formRecobrarCambiar">
@@ -112,10 +112,8 @@
         let correoEnProceso = '';
 
         function limpiarAlertas() {
-            const err = document.getElementById('alertBoxError');
-            const suc = document.getElementById('alertBoxSuccess');
-            err.style.display = 'none';
-            suc.style.display = 'none';
+            document.getElementById('alertBoxError').style.display = 'none';
+            document.getElementById('alertBoxSuccess').style.display = 'none';
         }
 
         function mostrarError(mensaje) {
@@ -139,10 +137,9 @@
         }
 
         function alertaSoporte() {
-            alert('Módulo de Soporte Técnico en desarrollo para la siguiente fase. Contacta al administrador del sistema.');
+            alert('Módulo de Soporte Técnico en desarrollo para la siguiente fase.');
         }
 
-        // --- CAPTCHA Y LOGIN ---
         async function cargarCaptcha() {
             try {
                 const response = await fetch(`${API_URL}/captcha`);
@@ -196,7 +193,6 @@
             }
         });
 
-        // --- FLUJO DE RECUPERACIÓN DE CONTRASEÑA ---
         document.getElementById('formRecobrarSolicitar').addEventListener('submit', async (e) => {
             e.preventDefault();
             limpiarAlertas();
