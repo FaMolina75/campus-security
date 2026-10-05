@@ -102,13 +102,13 @@
                 if (response.ok) {
                     sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
                     
-                    // ENRUTADOR DINÁMICO COMPLETADO
+                    // ENRUTADOR DINÁMICO CORREGIDO HACIA LA CARPETA FRONTEND/DASHBOARDS
                     if (data.usuario.rol === 'admin') {
-                        window.location.href = 'dashboards/admin/index.html';
+                        window.location.href = 'frontend/dashboards/admin/index.html';
                     } else if (data.usuario.rol === 'alumno') {
-                        window.location.href = 'dashboards/alumno/index.html';
+                        window.location.href = 'frontend/dashboards/alumno/index.html';
                     } else if (data.usuario.rol === 'coordinadora') {
-                        window.location.href = 'dashboards/coordinadora/index.html';
+                        window.location.href = 'frontend/dashboards/coordinadora/index.html';
                     } else {
                         alert(`Tu panel de ${data.usuario.rol} estará listo en la siguiente fase.`);
                     }
