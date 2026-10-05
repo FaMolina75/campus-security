@@ -61,7 +61,6 @@
     </div>
 
     <script>
-        // URL configurada directamente hacia tu API pública en Render (AWS TiDB Cloud)
         const API_URL = 'https://campus-security-v4zh.onrender.com/api/auth';
         let currentCaptcha = '';
 
@@ -102,13 +101,13 @@
                 if (response.ok) {
                     sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
                     
-                    // ENRUTADOR DINÁMICO CORREGIDO HACIA LA CARPETA FRONTEND/DASHBOARDS
+                    // ENRUTADOR DINÁMICO CORREGIDO (Sin prefijo frontend, directo a dashboards)
                     if (data.usuario.rol === 'admin') {
-                        window.location.href = 'frontend/dashboards/admin/index.html';
+                        window.location.href = 'dashboards/admin/index.html';
                     } else if (data.usuario.rol === 'alumno') {
-                        window.location.href = 'frontend/dashboards/alumno/index.html';
+                        window.location.href = 'dashboards/alumno/index.html';
                     } else if (data.usuario.rol === 'coordinadora') {
-                        window.location.href = 'frontend/dashboards/coordinadora/index.html';
+                        window.location.href = 'dashboards/coordinadora/index.html';
                     } else {
                         alert(`Tu panel de ${data.usuario.rol} estará listo en la siguiente fase.`);
                     }
