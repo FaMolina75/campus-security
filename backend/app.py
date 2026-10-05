@@ -6,7 +6,6 @@ import mysql.connector
 import random
 import string
 import smtplib
-import threading
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 
@@ -29,7 +28,7 @@ DB_PORT = 4000
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 EMAIL_SISTEMA = "campus.security.test@gmail.com"
-EMAIL_PASSWORD = "xsyi eros rnaw knhq"  # Contraseña de aplicación configurada
+EMAIL_PASSWORD = "xsyi eros rnaw knhq"  # Tus 16 dígitos de la App Password de Google
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -40,26 +39,6 @@ def get_db_connection():
         port=DB_PORT,
         ssl_disabled=False
     )
-
-# Función para enviar correo en segundo plano (Evita Timeouts en Render)
-def enviar_correo_async(destinatario, nombre, token):
-    try:
-        asunto = "Recuperación de Contraseña - Campus Security"
-        cuerpo = f"Hola {nombre},\n\nHas solicitado restablecer tu contraseña. Tu código de recuperación es: {token}\nEste código expira en 15 minutos.\n\nSi no solicitaste esto, ignora este mensaje."
-        
-        msg = MIMEText(cuerpo)
-        msg['Subject'] = asunto
-        msg['From'] = EMAIL_SISTEMA
-        msg['To'] = destinatario
-        
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_SISTEMA, destinatario, msg.as_string())
-        server.quit()
-        print(f"Correo de recuperacion enviado exitosamente a {destinatario}")
-    except Exception as e:
-        print(f"Error al enviar correo en background: {str(e)}")
 
 # ==========================================
 # RUTAS DE SEGURIDAD E IDENTIDAD (IAM)
@@ -109,6 +88,8 @@ def solicitar_recuperacion():
     data = request.json
     correo = data.get('correo')
     
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -127,16 +108,29 @@ def solicitar_recuperacion():
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        # Lanzar el envío de correo con Gmail SMTP en un hilo separado
-        hilo = threading.Thread(target=enviar_correo_async, args=(correo, usuario['nombre'], token))
-        hilo.start()
+        # Envío de correo SMTP directo y síncrono (Blindado)
+        asunto = "Recuperación de Contraseña - Campus Security"
+        cuerpo = f"Hola {usuario['nombre']},\n\nHas solicitado restablecer tu contraseña.\nTu código de recuperación es: {token}\n\nEste código expira en 15 minutos."
+        
+        msg = MIMEText(cuerpo)
+        msg['Subject'] = asunto
+        msg['From'] = EMAIL_SISTEMA
+        msg['To'] = correo
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_SISTEMA, correo, msg.as_string())
+        server.quit()
         
         return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
+        
     except Exception as e:
-        return jsonify({"error": f"Error al procesar la solicitud: {str(e)}"}), 500
+        print(f"❌ ERROR CRITICO EN CORREO: {str(e)}")
+        return jsonify({"error": f"Error al enviar el correo: {str(e)}"}), 500
     finally:
-        if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 @app.route('/api/auth/recuperar-cambiar', methods=['POST'])
 def cambiar_password():
@@ -386,7 +380,7 @@ def list_alumnos(id_carrera):
         return jsonify(cursor.fetchall()), 200
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
+        if 'conn' in locals(): cursor.close()
 
 @app.route('/api/coordinador/grupos_disponibles/<int:id_alumno>', methods=['GET'])
 def grupos_disponibles(id_alumno):
