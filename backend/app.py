@@ -5,8 +5,8 @@ from flask_cors import CORS
 import mysql.connector
 import random
 import string
-import smtplib
-from email.mime.text import MIMEText
+import requests
+import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -23,12 +23,9 @@ DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
 
 # ==========================================
-# CONFIGURACIÓN DE CORREO (SMTP GMAIL CONFIGURADO)
+# CONFIGURACIÓN DE CORREO (RESEND API - SEGURO)
 # ==========================================
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
-EMAIL_SISTEMA = "campus.security.test@gmail.com"
-EMAIL_PASSWORD = "FA200175m@."
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -81,7 +78,7 @@ def login():
         if 'conn' in locals(): conn.close()
 
 # ==========================================
-# RUTAS DE RECUPERACIÓN DE CONTRASEÑA
+# RUTAS DE RECUPERACIÓN DE CONTRASEÑA (RESEND)
 # ==========================================
 @app.route('/api/auth/recuperar-solicitar', methods=['POST'])
 def solicitar_recuperacion():
@@ -97,29 +94,31 @@ def solicitar_recuperacion():
         if not usuario:
             return jsonify({"error": "El correo electrónico no está registrado en el sistema."}), 404
             
-        # Generar token aleatorio de 6 dígitos
+        # Generar token de 6 dígitos
         token = ''.join(random.choice(string.digits) for _ in range(6))
-        expiracion = datetime.now() + timedelta(minutes=15) # Expira en 15 minutos
+        expiracion = datetime.now() + timedelta(minutes=15)
         
-        # Guardar en la base de datos
+        # Guardar en base de datos
         cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", 
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        # Enviar correo vía SMTP de Gmail
-        asunto = "Recuperación de Contraseña - Campus Security"
-        cuerpo = f"Hola {usuario['nombre']},\n\nHas solicitado restablecer tu contraseña. Tu código de recuperación es: {token}\nEste código expira en 15 minutos.\n\nSi no solicitaste esto, ignora este mensaje."
+        # Enviar correo mediante Resend API
+        headers = {
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "from": "Campus Security <onboarding@resend.dev>",
+            "to": [correo],
+            "subject": "Recuperación de Contraseña - Campus Security",
+            "html": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Has solicitado restablecer tu contraseña.</p><p>Tu código de recuperación es: <h2 style='color:#3b82f6;'>{token}</h2></p><p>Este código expira en 15 minutos.</p>"
+        }
         
-        msg = MIMEText(cuerpo)
-        msg['Subject'] = asunto
-        msg['From'] = EMAIL_SISTEMA
-        msg['To'] = correo
+        res = requests.post("https://api.resend.com/emails", json=payload, headers=headers)
         
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_SISTEMA, correo, msg.as_string())
-        server.quit()
+        if res.status_code != 200:
+            return jsonify({"error": f"Error al enviar el correo: {res.text}"}), 500
         
         return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
     except Exception as e:
@@ -150,7 +149,7 @@ def cambiar_password():
         if usuario['token_expiracion'] and datetime.now() > usuario['token_expiracion']:
             return jsonify({"error": "El código ha expirado. Solicita uno nuevo."}), 400
             
-        # Actualizar contraseña y limpiar token usado
+        # Actualizar contraseña y limpiar token
         cursor.execute("""
             UPDATE usuarios 
             SET password = %s, token_recuperacion = NULL, token_expiracion = NULL 
@@ -415,6 +414,6 @@ def coord_inscribir():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-if __name__ == '__main__':
+if __name__ == 'main':
     print("🛡️ Backend de Campus Security v1.0 Iniciado y conectado a AWS TiDB Cloud")
     app.run(debug=True, port=5000)
