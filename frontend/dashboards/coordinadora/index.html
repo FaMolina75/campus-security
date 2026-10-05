@@ -358,7 +358,10 @@
                 alertBox.style.display = 'block';
             }
         });
-
+        function cerrarSesion() {
+    sessionStorage.clear();
+    window.location.href = '/index.html';
+}
         // Ejecutar al cargar la página
         window.addEventListener('DOMContentLoaded', cargarDatosCoordinadora);
     </script>
