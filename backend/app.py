@@ -24,7 +24,7 @@ DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
 
 # ==========================================
-# CONFIGURACIÓN DE CORREO (SMTP GMAIL)
+# CONFIGURACIÓN DE CORREO (SMTP GMAIL DEFINITIVO)
 # ==========================================
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -126,7 +126,7 @@ def solicitar_recuperacion():
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        # Lanzar el envío de correo en un hilo separado (No bloquea a Render)
+        # Lanzar el envío de correo con Gmail SMTP en un hilo separado
         hilo = threading.Thread(target=enviar_correo_async, args=(correo, usuario['nombre'], token))
         hilo.start()
         
