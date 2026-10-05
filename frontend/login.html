@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Seguro | Campus Security v1.0</title>
+    <style>
+        :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; --text: #334155; --error: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        .login-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header h1 { color: var(--primary); font-size: 1.8rem; }
+        .login-header span { color: var(--accent); }
+        
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; font-size: 0.9rem; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.3s; }
+        .input-group input:focus { border-color: var(--accent); }
+        
+        .captcha-box { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .captcha-display { background: #e2e8f0; padding: 12px; border-radius: 8px; font-weight: bold; letter-spacing: 5px; font-size: 1.2rem; color: #0f172a; text-align: center; flex: 1; user-select: none; font-family: monospace; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); }
+        .btn-reload { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        
+        .btn-submit { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
+        .btn-submit:hover { background: #2563eb; }
+        
+        .error-msg { color: var(--error); background: #fef2f2; padding: 10px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px; display: none; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Campus<span>Security</span></h1>
+            <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">Acceso Institucional v1.0</p>
+        </div>
+
+        <div id="errorBox" class="error-msg"></div>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Correo Electrónico</label>
+                <input type="email" id="correo" placeholder="ejemplo@campus.edu.mx" required>
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <div class="input-group">
+                <label>Verificación de Seguridad</label>
+                <div class="captcha-box">
+                    <div id="captchaDisplay" class="captcha-display">Cargando...</div>
+                    <button type="button" id="btnReloadCaptcha" class="btn-reload" title="Recargar Captcha">↻</button>
+                </div>
+                <input type="text" id="captchaInput" placeholder="Escribe el código superior" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn-submit">Ingresar al Sistema</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api/auth';
+        let currentCaptcha = '';
+
+        async function cargarCaptcha() {
+            try {
+                const response = await fetch(`${API_URL}/captcha`);
+                const data = await response.json();
+                currentCaptcha = data.captcha_code;
+                document.getElementById('captchaDisplay').textContent = currentCaptcha;
+                document.getElementById('captchaInput').value = ''; 
+            } catch (error) {
+                document.getElementById('captchaDisplay').textContent = "ERROR";
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', cargarCaptcha);
+        document.getElementById('btnReloadCaptcha').addEventListener('click', cargarCaptcha);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const errorBox = document.getElementById('errorBox');
+            errorBox.style.display = 'none';
+
+            const payload = {
+                correo: document.getElementById('correo').value,
+                password: document.getElementById('password').value,
+                captcha_input: document.getElementById('captchaInput').value,
+                captcha_real: currentCaptcha
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
+                    
+                    // ENRUTADOR DINÁMICO COMPLETADO
+                    if (data.usuario.rol === 'admin') {
+                        window.location.href = 'dashboards/admin/index.html';
+                    } else if (data.usuario.rol === 'alumno') {
+                        window.location.href = 'dashboards/alumno/index.html';
+                    } else if (data.usuario.rol === 'coordinadora') {
+                        window.location.href = 'dashboards/coordinadora/index.html';
+                    } else {
+                        alert(`Tu panel de ${data.usuario.rol} estará listo en la siguiente fase.`);
+                    }
+                } else {
+                    errorBox.textContent = data.error;
+                    errorBox.style.display = 'block';
+                    cargarCaptcha(); 
+                }
+            } catch (error) {
+                errorBox.textContent = "Error de conexión con el servidor.";
+                errorBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

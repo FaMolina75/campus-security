@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Estudiantil | Campus v1.0</title>
+    <style>
+        :root { --primary: #1e293b; --sidebar: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --text: #334155; --white: #ffffff; --success: #10b981; --warn: #f59e0b; --error: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--bg); overflow: hidden; }
+
+        .sidebar { width: 260px; background-color: var(--sidebar); color: var(--white); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #1e293b; }
+        .sidebar-header h2 { color: var(--accent); font-size: 1.5rem; }
+        .nav-links { flex: 1; padding-top: 20px; list-style: none; }
+        .nav-links li { padding: 15px 25px; cursor: pointer; transition: 0.2s; color: #cbd5e1; }
+        .nav-links li:hover, .nav-links li.active { background-color: var(--primary); color: var(--white); border-left: 4px solid var(--accent); }
+        .logout-btn { padding: 15px 25px; background: var(--error); color: white; text-align: center; cursor: pointer; transition: background 0.3s;}
+        .logout-btn:hover { background: #dc2626; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .topbar { background: var(--white); padding: 20px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 30px; }
+        
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .card { background: var(--white); padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card h3 { margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; font-size: 1.2rem; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.9rem; margin-bottom: 8px; font-weight: 600; color: #475569; }
+        .form-group input, .form-group textarea { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-family: inherit; font-size: 0.95rem; transition: border-color 0.3s;}
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+        .form-group input:disabled { background-color: #f8fafc; color: #94a3b8; cursor: not-allowed; border-color: #e2e8f0; }
+        
+        .btn-submit { margin-top: 10px; padding: 14px; background: var(--success); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; grid-column: span 2; transition: background 0.3s;}
+        .btn-submit:hover { background: #059669; }
+        
+        .progress-container { margin-bottom: 25px; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; color: var(--text); }
+        .progress-bar-bg { background-color: #e2e8f0; height: 14px; border-radius: 10px; overflow: hidden; }
+        .progress-bar-fill { background-color: var(--accent); height: 100%; width: 0%; transition: width 1s ease-in-out; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+        .stat-box { padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; background: #f8fafc; }
+        .stat-box span { font-size: 0.85rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;}
+        .stat-box h4 { font-size: 1.6rem; color: var(--primary); margin-top: 8px; }
+        
+        .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: white; }
+        .bg-ok { background-color: var(--success); }
+        .bg-pending { background-color: var(--warn); }
+        .bg-blue { background-color: var(--accent); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f8fafc; font-weight: 600; color: #475569;}
+        
+        .bloqueado { opacity: 0.5; pointer-events: none; }
+        .alert-box { border-left: 5px solid var(--error); background-color: #fef2f2; padding: 20px; border-radius: 8px; margin-bottom: 25px;}
+        .alert-box h3 { color: var(--error); border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
+        .alert-box p { color: #991b1b; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api/alumno';
+        let usuarioSesion = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+        if (!usuarioSesion || usuarioSesion.rol !== 'alumno') window.location.href = '../../login.html';
+    </script>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Campus<span>Security</span></h2>
+            <span>Portal Alumno v1.0</span>
+        </div>
+        <ul class="nav-links">
+            <li id="nav-perfil" onclick="cambiarSeccion('perfil', this)">Mi Expediente</li>
+            <li id="nav-avance" onclick="cambiarSeccion('avance', this)">Mi Avance Reticular</li>
+            <li id="nav-horario" onclick="cambiarSeccion('horario', this)">Mi Horario Actual</li>
+        </ul>
+        <div class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h2 id="tituloCarrera" style="color: var(--primary);">Cargando carrera...</h2>
+            <div class="user-info" id="nombreUsuario" style="font-weight: 600; color: var(--text);">Cargando...</div>
+        </div>
+
+        <div class="content">
+
+            <!-- SECCIÓN 1: MI EXPEDIENTE (PERFIL) -->
+            <div id="sec-perfil" class="section">
+                <!-- Alerta de Primer Ingreso -->
+                <div class="alert-box" id="alerta-perfil" style="display:none;">
+                    <h3>⚠️ Actualización de Expediente y Seguridad Requerida</h3>
+                    <p>Por normatividad de Servicios Escolares y Políticas de Seguridad, es obligatorio completar tus datos de contacto y <strong>cambiar tu contraseña temporal</strong> antes de habilitar los módulos académicos.</p>
+                </div>
+
+                <div class="card">
+                    <h3>Datos Institucionales</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="institucional-nombre" disabled></div>
+                        <div class="form-group"><label>Matrícula Oficial</label><input type="text" id="institucional-matricula" disabled></div>
+                        <div class="form-group" style="grid-column: span 2;"><label>Correo Electrónico Institucional</label><input type="email" id="institucional-correo" disabled></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Actualización de Datos Personales</h3>
+                    <form id="formPerfil" class="form-grid">
+                        <div class="form-group"><label>CURP Oficial (18 caracteres)</label><input type="text" id="perfil-curp" placeholder="Ingresa tu CURP" required maxlength="18" style="text-transform: uppercase;"></div>
+                        <div class="form-group"><label>Teléfono Celular de Contacto</label><input type="tel" id="perfil-tel" placeholder="Ej. 722 123 4567" required></div>
+                        <div class="form-group" style="grid-column: span 2;"><label>Dirección Completa</label><textarea id="perfil-dir" rows="3" placeholder="Ingresa tu dirección actual..." required></textarea></div>
+                        
+                        <!-- Campos OBLIGATORIOS de Nueva Contraseña -->
+                        <div class="form-group">
+                            <label style="color: var(--error);">Crear Nueva Contraseña Segura</label>
+                            <input type="password" id="perfil-password" placeholder="Mínimo 6 caracteres" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: var(--error);">Confirmar Nueva Contraseña</label>
+                            <input type="password" id="perfil-password-conf" placeholder="Repite tu contraseña" required minlength="6">
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="btn-guardar-perfil">Validar, Guardar y Actualizar Contraseña</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: AVANCE RETICULAR -->
+            <div id="sec-avance" class="section">
+                <div class="card" id="panelProgreso">
+                    <h3>Avance Académico Global</h3>
+                    <div class="progress-container">
+                        <div class="progress-header"><span>Porcentaje de Créditos Obtenidos</span><span id="txt-porcentaje">0%</span></div>
+                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="barra-progreso"></div></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box"><span>Créditos</span><h4 id="txt-creditos">0 / 0</h4></div>
+                        <div class="stat-box"><span>Servicio Social</span><h4 id="badge-servicio" class="badge bg-pending" style="display:inline-block; margin-top:10px;">PENDIENTE</h4></div>
+                        <div class="stat-box"><span>Residencia</span><h4 id="badge-residencia" class="badge bg-pending" style="display:inline-block; margin-top:10px;">PENDIENTE</h4></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Mi Historial Académico (Kardex)</h3>
+                    <table>
+                        <thead><tr><th>Sem.</th><th>Clave</th><th>Materia</th><th>Créditos</th><th>Calif.</th><th>Estatus</th></tr></thead>
+                        <tbody id="tablaKardex"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: HORARIO ACTUAL -->
+            <div id="sec-horario" class="section">
+                <div class="card">
+                    <h3>Materias en Curso (Inscritas por el Coordinador)</h3>
+                    <table>
+                        <thead><tr><th>Sem.</th><th>Clave</th><th>Materia</th><th>Créditos</th><th>Tipo</th><th>Estado</th></tr></thead>
+                        <tbody id="tablaHorario"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const matriculaSegura = usuarioSesion.matricula ? usuarioSesion.matricula : 'No asignada';
+        document.getElementById('nombreUsuario').innerText = `Alumno: ${usuarioSesion.nombre} (${matriculaSegura})`;
+        
+        document.getElementById('institucional-nombre').value = usuarioSesion.nombre;
+        document.getElementById('institucional-correo').value = usuarioSesion.correo;
+        document.getElementById('institucional-matricula').value = matriculaSegura;
+        document.getElementById('perfil-curp').value = usuarioSesion.curp || '';
+        document.getElementById('perfil-tel').value = usuarioSesion.telefono || '';
+        document.getElementById('perfil-dir').value = usuarioSesion.direccion || '';
+
+        function verificarCandado() {
+            if (usuarioSesion.perfil_completo == 0 || usuarioSesion.perfil_completo == false) {
+                document.getElementById('nav-avance').classList.add('bloqueado');
+                document.getElementById('nav-horario').classList.add('bloqueado');
+                document.getElementById('alerta-perfil').style.display = 'block';
+                cambiarSeccion('perfil', document.getElementById('nav-perfil'));
+            } else {
+                document.getElementById('nav-avance').classList.remove('bloqueado');
+                document.getElementById('nav-horario').classList.remove('bloqueado');
+                document.getElementById('alerta-perfil').style.display = 'none';
+                cambiarSeccion('avance', document.getElementById('nav-avance'));
+            }
+        }
+
+        function cambiarSeccion(id, elementoLi) {
+            if(elementoLi.classList.contains('bloqueado')) return; 
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+            document.getElementById(`sec-${id}`).classList.add('active');
+            elementoLi.classList.add('active');
+            if (id === 'avance' || id === 'horario') cargarDatosAlumno();
+        }
+
+        document.getElementById('formPerfil').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pass1 = document.getElementById('perfil-password').value;
+            const pass2 = document.getElementById('perfil-password-conf').value;
+            
+            if (pass1 !== pass2) {
+                alert("❌ Las contraseñas no coinciden. Por favor, verifica.");
+                return;
+            }
+
+            const payload = {
+                curp: document.getElementById('perfil-curp').value.toUpperCase(),
+                telefono: document.getElementById('perfil-tel').value,
+                direccion: document.getElementById('perfil-dir').value,
+                password_nueva: pass1 
+            };
+            
+            try {
+                const res = await fetch(`${API_URL}/perfil/${usuarioSesion.id_usuario}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    alert("✅ Expediente y contraseña actualizados correctamente. Por seguridad, el sistema se cerrará para que inicies sesión con tu nueva contraseña.");
+                    cerrarSesion(); 
+                }
+            } catch (error) { alert("Error al conectar con el servidor."); }
+        });
+
+        async function cargarDatosAlumno() {
+            try {
+                const res = await fetch(`${API_URL}/progreso/${usuarioSesion.id_usuario}`);
+                const data = await res.json();
+                
+                if(!res.ok) {
+                    document.getElementById('tituloCarrera').innerText = "Carrera No Asignada";
+                    document.getElementById('panelProgreso').innerHTML = `
+                        <div class="alert-box" style="margin:0;">
+                            <h3>Sin Carga Reticular</h3>
+                            <p>${data.error} Acude a Servicios Escolares para la vinculación de tu expediente.</p>
+                        </div>`;
+                    return;
+                }
+
+                document.getElementById('tituloCarrera').innerText = data.carrera;
+                document.getElementById('txt-creditos').innerText = `${data.creditos_aprobados} / ${data.creditos_totales}`;
+                document.getElementById('txt-porcentaje').innerText = `${data.porcentaje_avance}%`;
+                setTimeout(() => { document.getElementById('barra-progreso').style.width = `${data.porcentaje_avance}%`; }, 300);
+
+                if(data.servicio_liberado) { let b = document.getElementById('badge-servicio'); b.innerText = "LIBERADO"; b.className = "badge bg-ok"; }
+                if(data.residencia_liberada) { let b = document.getElementById('badge-residencia'); b.innerText = "ACREDITADA"; b.className = "badge bg-ok"; }
+
+                const tbodyKardex = document.getElementById('tablaKardex'); tbodyKardex.innerHTML = '';
+                const tbodyHorario = document.getElementById('tablaHorario'); tbodyHorario.innerHTML = '';
+
+                if(data.historial.length === 0) {
+                    tbodyKardex.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b;">No existen registros en tu historial académico.</td></tr>`;
+                    tbodyHorario.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px; color:#64748b;">Tu coordinador académico aún no ha asignado tu carga de materias.</td></tr>`;
+                } else {
+                    data.historial.forEach(m => {
+                        let colorEstatus = m.estatus === 'Aprobada' ? 'green' : (m.estatus === 'Reprobada' ? 'var(--error)' : 'var(--warn)');
+                        tbodyKardex.innerHTML += `<tr><td>${m.semestre}</td><td><strong>${m.clave}</strong></td><td>${m.nombre}</td><td>${m.creditos}</td>
+                            <td><strong>${m.calificacion > 0 ? m.calificacion : '--'}</strong></td><td style="color:${colorEstatus}; font-weight:bold;">${m.estatus.toUpperCase()}</td></tr>`;
+                        
+                        if(m.estatus === 'Cursando') {
+                            tbodyHorario.innerHTML += `<tr><td>${m.semestre}</td><td><strong>${m.clave}</strong></td><td>${m.nombre}</td>
+                            <td>${m.creditos}</td><td><span class="badge bg-blue">${m.tipo}</span></td><td style="color:var(--warn); font-weight:bold;">EN CURSO</td></tr>`;
+                        }
+                    });
+                }
+            } catch (error) {}
+        }
+
+        function cerrarSesion() { sessionStorage.removeItem('usuarioLogueado'); window.location.href = '../../login.html'; }
+        
+        window.addEventListener('DOMContentLoaded', verificarCandado);
+    </script>
+</body>
+</html>

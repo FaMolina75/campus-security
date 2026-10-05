@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Mando Administrador | Campus v1.0</title>
+    <style>
+        :root { --primary: #1e293b; --sidebar: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --text: #334155; --white: #ffffff; --success: #10b981; --error: #ef4444; --warn: #f59e0b; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { display: flex; height: 100vh; background-color: var(--bg); overflow: hidden; }
+
+        .sidebar { width: 260px; background-color: var(--sidebar); color: var(--white); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #1e293b; }
+        .sidebar-header h2 { color: var(--accent); font-size: 1.5rem; }
+        .nav-links { flex: 1; padding-top: 20px; list-style: none; }
+        .nav-links li { padding: 15px 25px; cursor: pointer; transition: 0.2s; color: #cbd5e1; }
+        .nav-links li:hover, .nav-links li.active { background-color: var(--primary); color: var(--white); border-left: 4px solid var(--accent); }
+        .logout-btn { padding: 15px 25px; background: var(--error); color: white; text-align: center; cursor: pointer; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .topbar { background: var(--white); padding: 20px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 30px; }
+        
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--white); padding: 20px; border-radius: 8px; border-left: 5px solid var(--accent); }
+        .stat-card p { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
+
+        .card { background: var(--white); padding: 25px; border-radius: 8px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card h3 { margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.9rem; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; }
+        .btn-submit { margin-top: 15px; padding: 12px; background: var(--success); color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; grid-column: span 2; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f8fafc; font-weight: 600; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; color: white; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; font-size: 0.8rem; }
+        .btn-block { background: var(--error); }
+        .btn-unblock { background: var(--success); }
+    </style>
+</head>
+<body>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api/admin';
+        const usuarioSesion = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+        if (!usuarioSesion || usuarioSesion.rol !== 'admin') window.location.href = '../../login.html';
+    </script>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Campus<span>Security</span></h2>
+            <span>Admin v1.0</span>
+        </div>
+        <ul class="nav-links">
+            <li class="active" onclick="cambiarSeccion('inicio', this)">Dashboard</li>
+            <li onclick="cambiarSeccion('usuarios', this)">Gestión Usuarios</li>
+            <li onclick="cambiarSeccion('catalogo', this)">Catálogo Académico</li>
+            <li onclick="cambiarSeccion('auditoria', this)">Auditoría de Seguridad</li>
+        </ul>
+        <div class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</div>
+    </div>
+
+    <div class="main-content">
+        <div class="topbar">
+            <h2 id="tituloSeccion">Dashboard Principal</h2>
+            <div class="user-info" id="nombreUsuario">Cargando...</div>
+        </div>
+
+        <div class="content">
+            <!-- 1. INICIO -->
+            <div id="sec-inicio" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card"><h3>Usuarios</h3><p id="stat-usuarios">--</p></div>
+                    <div class="stat-card"><h3>Materias</h3><p id="stat-materias">--</p></div>
+                    <div class="stat-card" style="border-left-color: var(--error);"><h3>Bloqueos de Red</h3><p id="stat-alertas">--</p></div>
+                </div>
+            </div>
+
+            <!-- 2. USUARIOS -->
+            <div id="sec-usuarios" class="section">
+                <div class="card">
+                    <h3>Alta de Nuevo Usuario</h3>
+                    <form id="formCrearUsuario" class="form-grid">
+                        <div class="form-group"><label>Matrícula</label><input type="text" id="reg-matricula" required></div>
+                        <div class="form-group"><label>Nombre</label><input type="text" id="reg-nombre" required></div>
+                        <div class="form-group"><label>Correo</label><input type="email" id="reg-correo" required></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" id="reg-password" required></div>
+                        <div class="form-group">
+                            <label>Rol</label>
+                            <select id="reg-rol" required onchange="toggleCarrera(this.value)">
+                                <option value="alumno">Alumno</option>
+                                <option value="profesor">Profesor</option>
+                                <option value="coordinadora">Coordinadora</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Carrera (Si aplica)</label>
+                            <select id="reg-carrera"><option value="">-- Ninguna --</option></select>
+                        </div>
+                        <button type="submit" class="btn-submit">Registrar Usuario</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Directorio</h3>
+                    <table>
+                        <thead><tr><th>Matrícula</th><th>Nombre</th><th>Rol</th><th>Carrera</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <tbody id="tablaUsuarios"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. CATÁLOGO ACADÉMICO -->
+            <div id="sec-catalogo" class="section">
+                <div class="card">
+                    <h3>Agregar Nueva Materia</h3>
+                    <form id="formCrearMateria" class="form-grid">
+                        <div class="form-group">
+                            <label>Carrera a la que pertenece</label>
+                            <select id="mat-carrera" required></select>
+                        </div>
+                        <div class="form-group"><label>Clave Materia (Ej. MAT-102)</label><input type="text" id="mat-clave" required></div>
+                        <div class="form-group"><label>Nombre Materia</label><input type="text" id="mat-nombre" required></div>
+                        <div class="form-group"><label>Semestre</label><input type="number" id="mat-semestre" min="1" max="9" required></div>
+                        <div class="form-group"><label>Créditos</label><input type="number" id="mat-creditos" min="1" required></div>
+                        <div class="form-group">
+                            <label>Tipo</label>
+                            <select id="mat-tipo" required>
+                                <option value="Teoria">Teoría</option>
+                                <option value="Laboratorio">Laboratorio</option>
+                                <option value="Servicio_Social">Servicio Social</option>
+                                <option value="Residencia">Residencia</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-submit">Añadir a la Retícula</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h3>Retícula Registrada</h3>
+                    <table>
+                        <thead><tr><th>Semestre</th><th>Clave</th><th>Materia</th><th>Tipo</th><th>Carrera</th></tr></thead>
+                        <tbody id="tablaMaterias"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. AUDITORÍA -->
+            <div id="sec-auditoria" class="section">
+                <div class="card">
+                    <h3>Registro de Accesos y Bloqueos (Logs)</h3>
+                    <table>
+                        <thead><tr><th>Fecha y Hora</th><th>IP Origen</th><th>Correo Intentado</th><th>Estatus</th></tr></thead>
+                        <tbody id="tablaAuditoria"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('nombreUsuario').innerText = `Hola, ${usuarioSesion.nombre}`;
+        let cacheCarreras = [];
+
+        function cambiarSeccion(id, elementoLi) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+            document.getElementById(`sec-${id}`).classList.add('active');
+            elementoLi.classList.add('active');
+            document.getElementById('tituloSeccion').innerText = elementoLi.innerText;
+
+            if (id === 'inicio') cargarStats();
+            if (id === 'usuarios') { cargarUsuarios(); cargarOpcionesCarreras(); }
+            if (id === 'catalogo') { cargarMaterias(); cargarOpcionesCarreras(); }
+            if (id === 'auditoria') cargarAuditoria();
+        }
+
+        function toggleCarrera(rol) {
+            const req = document.getElementById('reg-carrera');
+            req.disabled = (rol === 'admin'); 
+            if(rol === 'admin') req.value = "";
+        }
+
+        async function cargarStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats`); const data = await res.json();
+                document.getElementById('stat-usuarios').innerText = data.usuarios;
+                document.getElementById('stat-materias').innerText = data.materias;
+                document.getElementById('stat-alertas').innerText = data.alertas;
+            } catch (e) {}
+        }
+
+        async function cargarOpcionesCarreras() {
+            if(cacheCarreras.length === 0){
+                const res = await fetch(`${API_URL}/carreras`);
+                cacheCarreras = await res.json();
+            }
+            let html = '<option value="">-- Seleccionar --</option>';
+            cacheCarreras.forEach(c => html += `<option value="${c.id_carrera}">${c.clave} - ${c.nombre}</option>`);
+            document.getElementById('reg-carrera').innerHTML = html;
+            document.getElementById('mat-carrera').innerHTML = html;
+        }
+
+        async function cargarUsuarios() {
+            const res = await fetch(`${API_URL}/usuarios`); const usuarios = await res.json();
+            const tbody = document.getElementById('tablaUsuarios'); tbody.innerHTML = '';
+            usuarios.forEach(u => {
+                const btnAction = u.bloqueado ? 
+                    `<button class="btn-action btn-unblock" onclick="cambiarEstadoUsuario(${u.id_usuario})">Desbloquear</button>` : 
+                    `<button class="btn-action btn-block" onclick="cambiarEstadoUsuario(${u.id_usuario})">Bloquear</button>`;
+                
+                tbody.innerHTML += `<tr>
+                    <td><strong>${u.matricula}</strong></td><td>${u.nombre}</td>
+                    <td><span class="badge" style="background:#3b82f6">${u.rol.toUpperCase()}</span></td>
+                    <td>${u.carrera || 'N/A'}</td>
+                    <td style="color:${u.bloqueado ? 'red':'green'}; font-weight:bold;">${u.bloqueado ? 'Bloqueado':'Activo'}</td>
+                    <td>${btnAction}</td>
+                </tr>`;
+            });
+        }
+
+        async function cambiarEstadoUsuario(id) {
+            if(confirm('¿Seguro que deseas cambiar el acceso de este usuario?')) {
+                await fetch(`${API_URL}/usuarios/${id}/bloquear`, { method: 'PUT' });
+                cargarUsuarios();
+            }
+        }
+
+        document.getElementById('formCrearUsuario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                matricula: document.getElementById('reg-matricula').value, nombre: document.getElementById('reg-nombre').value,
+                correo: document.getElementById('reg-correo').value, password: document.getElementById('reg-password').value,
+                rol: document.getElementById('reg-rol').value, id_carrera: document.getElementById('reg-carrera').value || null
+            };
+            const res = await fetch(`${API_URL}/usuarios`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            if (res.ok) { alert("Usuario Creado"); document.getElementById('formCrearUsuario').reset(); cargarUsuarios(); }
+            else alert((await res.json()).error);
+        });
+
+        async function cargarMaterias() {
+            const res = await fetch(`${API_URL}/materias`); const materias = await res.json();
+            const tbody = document.getElementById('tablaMaterias'); tbody.innerHTML = '';
+            materias.forEach(m => {
+                tbody.innerHTML += `<tr><td>Sem. ${m.semestre}</td><td><strong>${m.clave}</strong></td><td>${m.nombre}</td>
+                <td><span class="badge" style="background:#10b981">${m.tipo}</span></td><td>${m.carrera}</td></tr>`;
+            });
+        }
+
+        document.getElementById('formCrearMateria').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                id_carrera: document.getElementById('mat-carrera').value, clave: document.getElementById('mat-clave').value,
+                nombre: document.getElementById('mat-nombre').value, semestre: document.getElementById('mat-semestre').value,
+                creditos: document.getElementById('mat-creditos').value, tipo: document.getElementById('mat-tipo').value
+            };
+            const res = await fetch(`${API_URL}/materias`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            if (res.ok) { alert("Materia Añadida"); document.getElementById('formCrearMateria').reset(); cargarMaterias(); }
+        });
+
+        async function cargarAuditoria() {
+            const res = await fetch(`${API_URL}/auditoria`); const logs = await res.json();
+            const tbody = document.getElementById('tablaAuditoria'); tbody.innerHTML = '';
+            logs.forEach(l => {
+                const color = l.exitoso ? 'green' : 'red'; const texto = l.exitoso ? 'Acceso Permitido' : 'Acceso Denegado';
+                tbody.innerHTML += `<tr><td>${l.fecha}</td><td>${l.ip_origen}</td><td>${l.correo_intentado}</td><td style="color:${color}; font-weight:bold;">${texto}</td></tr>`;
+            });
+        }
+
+        function cerrarSesion() { sessionStorage.removeItem('usuarioLogueado'); window.location.href = '../../login.html'; }
+        window.addEventListener('DOMContentLoaded', cargarStats);
+    </script>
+</body>
+</html>
