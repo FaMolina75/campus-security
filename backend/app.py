@@ -5,6 +5,9 @@ from flask_cors import CORS
 import mysql.connector
 import random
 import string
+import smtplib
+from email.mime.text import MIMEText
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = 'super_clave_secreta_campus_v1' 
@@ -18,6 +21,14 @@ DB_USER = 't6BEupECtGTsvUW.root'
 DB_PASSWORD = 'GlrkiYV1MsMMGoIf'
 DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
+
+# ==========================================
+# CONFIGURACIÓN DE CORREO (SMTP GMAIL CONFIGURADO)
+# ==========================================
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+EMAIL_SISTEMA = "campus.security.test@gmail.com"
+EMAIL_PASSWORD = "FA200175m@."
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -65,6 +76,89 @@ def login():
         else:
             registrar_intento(correo, ip, False)
             return jsonify({"error": "Credenciales inválidas"}), 401
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# RUTAS DE RECUPERACIÓN DE CONTRASEÑA
+# ==========================================
+@app.route('/api/auth/recuperar-solicitar', methods=['POST'])
+def solicitar_recuperacion():
+    data = request.json
+    correo = data.get('correo')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_usuario, nombre FROM usuarios WHERE correo = %s", (correo,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            return jsonify({"error": "El correo electrónico no está registrado en el sistema."}), 404
+            
+        # Generar token aleatorio de 6 dígitos
+        token = ''.join(random.choice(string.digits) for _ in range(6))
+        expiracion = datetime.now() + timedelta(minutes=15) # Expira en 15 minutos
+        
+        # Guardar en la base de datos
+        cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", 
+                       (token, expiracion, usuario['id_usuario']))
+        conn.commit()
+        
+        # Enviar correo vía SMTP de Gmail
+        asunto = "Recuperación de Contraseña - Campus Security"
+        cuerpo = f"Hola {usuario['nombre']},\n\nHas solicitado restablecer tu contraseña. Tu código de recuperación es: {token}\nEste código expira en 15 minutos.\n\nSi no solicitaste esto, ignora este mensaje."
+        
+        msg = MIMEText(cuerpo)
+        msg['Subject'] = asunto
+        msg['From'] = EMAIL_SISTEMA
+        msg['To'] = correo
+        
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_SISTEMA, correo, msg.as_string())
+        server.quit()
+        
+        return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al procesar la solicitud: {str(e)}"}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/auth/recuperar-cambiar', methods=['POST'])
+def cambiar_password():
+    data = request.json
+    correo = data.get('correo')
+    token = data.get('token')
+    nueva_password = data.get('nueva_password')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_usuario, token_recuperacion, token_expiracion FROM usuarios WHERE correo = %s", (correo,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            return jsonify({"error": "Usuario no encontrado."}), 404
+            
+        if usuario['token_recuperacion'] != token:
+            return jsonify({"error": "Código de recuperación incorrecto."}), 400
+            
+        if usuario['token_expiracion'] and datetime.now() > usuario['token_expiracion']:
+            return jsonify({"error": "El código ha expirado. Solicita uno nuevo."}), 400
+            
+        # Actualizar contraseña y limpiar token usado
+        cursor.execute("""
+            UPDATE usuarios 
+            SET password = %s, token_recuperacion = NULL, token_expiracion = NULL 
+            WHERE id_usuario = %s
+        """, (nueva_password, usuario['id_usuario']))
+        conn.commit()
+        
+        return jsonify({"mensaje": "Contraseña actualizada exitosamente. Ya puedes iniciar sesión."}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()

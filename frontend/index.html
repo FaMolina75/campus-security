@@ -5,28 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso Seguro | Campus Security v1.0</title>
     <style>
-        :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; --text: #334155; --error: #ef4444; }
+        :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; --text: #334155; --error: #ef4444; --success: #10b981; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg); display: flex; justify-content: center; align-items: center; height: 100vh; }
         
-        .login-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; }
-        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 420px; }
+        .login-header { text-align: center; margin-bottom: 25px; }
         .login-header h1 { color: var(--primary); font-size: 1.8rem; }
         .login-header span { color: var(--accent); }
         
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; font-size: 0.9rem; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.3s; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 6px; color: var(--text); font-weight: 500; font-size: 0.85rem; }
+        .input-group input { width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.3s; }
         .input-group input:focus { border-color: var(--accent); }
         
         .captcha-box { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        .captcha-display { background: #e2e8f0; padding: 12px; border-radius: 8px; font-weight: bold; letter-spacing: 5px; font-size: 1.2rem; color: #0f172a; text-align: center; flex: 1; user-select: none; font-family: monospace; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); }
-        .btn-reload { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; }
+        .captcha-display { background: #e2e8f0; padding: 10px; border-radius: 8px; font-weight: bold; letter-spacing: 5px; font-size: 1.1rem; color: #0f172a; text-align: center; flex: 1; user-select: none; font-family: monospace; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.05) 10px, rgba(0,0,0,0.05) 20px); }
+        .btn-reload { background: var(--primary); color: white; border: none; padding: 11px 14px; border-radius: 8px; cursor: pointer; }
         
-        .btn-submit { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 10px; }
+        .btn-submit { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.3s; margin-top: 5px; }
         .btn-submit:hover { background: #2563eb; }
         
+        .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.85rem; text-decoration: underline; padding: 0; margin-top: 10px; display: inline-block; }
+        .links-footer { display: flex; justify-content: space-between; margin-top: 15px; align-items: center; font-size: 0.85rem; }
+
         .error-msg { color: var(--error); background: #fef2f2; padding: 10px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px; display: none; border: 1px solid #fecaca; }
+        .success-msg { color: var(--success); background: #ecfdf5; padding: 10px; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 15px; display: none; border: 1px solid #a7f3d0; }
+
+        .auth-view { display: none; }
+        .auth-view.active { display: block; }
     </style>
 </head>
 <body>
@@ -34,36 +41,108 @@
     <div class="login-container">
         <div class="login-header">
             <h1>Campus<span>Security</span></h1>
-            <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">Acceso Institucional v1.0</p>
+            <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Plataforma Institucional</p>
         </div>
 
-        <div id="errorBox" class="error-msg"></div>
+        <div id="alertBoxError" class="error-msg"></div>
+        <div id="alertBoxSuccess" class="success-msg"></div>
 
-        <form id="loginForm">
-            <div class="input-group">
-                <label>Correo Electrónico</label>
-                <input type="email" id="correo" placeholder="ejemplo@campus.edu.mx" required>
-            </div>
-            <div class="input-group">
-                <label>Contraseña</label>
-                <input type="password" id="password" placeholder="••••••••" required>
-            </div>
-            <div class="input-group">
-                <label>Verificación de Seguridad</label>
-                <div class="captcha-box">
-                    <div id="captchaDisplay" class="captcha-display">Cargando...</div>
-                    <button type="button" id="btnReloadCaptcha" class="btn-reload" title="Recargar Captcha">↻</button>
+        <!-- VISTA 1: INICIO DE SESIÓN -->
+        <div id="vista-login" class="auth-view active">
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="correo" placeholder="ejemplo@campus.edu.mx" required>
                 </div>
-                <input type="text" id="captchaInput" placeholder="Escribe el código superior" required autocomplete="off">
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <div class="input-group">
+                    <label>Verificación de Seguridad</label>
+                    <div class="captcha-box">
+                        <div id="captchaDisplay" class="captcha-display">Cargando...</div>
+                        <button type="button" id="btnReloadCaptcha" class="btn-reload" title="Recargar Captcha">↻</button>
+                    </div>
+                    <input type="text" id="captchaInput" placeholder="Escribe el código superior" required autocomplete="off">
+                </div>
+                <button type="submit" class="btn-submit">Ingresar al Sistema</button>
+            </form>
+            <div class="links-footer">
+                <button type="button" class="btn-link" onclick="cambiarVista('recuperar')">¿Olvidaste tu contraseña?</button>
+                <button type="button" class="btn-link" onclick="alertaSoporte()" style="color: #64748b;">Soporte Técnico</button>
             </div>
-            <button type="submit" class="btn-submit">Ingresar al Sistema</button>
-        </form>
+        </div>
+
+        <!-- VISTA 2: RECUPERACIÓN DE CONTRASEÑA (PASO 1: SOLICITAR TOKEN) -->
+        <div id="vista-recuperar" class="auth-view">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; text-align: center;">Ingresa tu correo institucional registrado para recibir un código de recuperación de 6 dígitos.</p>
+            <form id="formRecobrarSolicitar">
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="correoRecuperar" placeholder="ejemplo@campus.edu.mx" required>
+                </div>
+                <button type="submit" class="btn-submit">Enviar Código</button>
+            </form>
+            <button type="button" class="btn-link" onclick="cambiarVista('login')" style="display: block; width: 100%; text-align: center; margin-top: 15px;">← Volver al Login</button>
+        </div>
+
+        <!-- VISTA 3: CAMBIAR CONTRASEÑA (PASO 2: INGRESAR TOKEN Y NUEVA PASS) -->
+        <div id="vista-cambiar" class="auth-view">
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 15px; text-align: center;">Introduce el código de 6 dígitos que llegó a tu correo y tu nueva contraseña.</p>
+            <form id="formRecobrarCambiar">
+                <div class="input-group">
+                    <label>Código de 6 dígitos</label>
+                    <input type="text" id="tokenInput" placeholder="Ej. 482910" maxlength="6" required>
+                </div>
+                <div class="input-group">
+                    <label>Nueva Contraseña</label>
+                    <input type="password" id="nuevaPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-submit">Restablecer Contraseña</button>
+            </form>
+            <button type="button" class="btn-link" onclick="cambiarVista('login')" style="display: block; width: 100%; text-align: center; margin-top: 15px;">← Cancelar</button>
+        </div>
+
     </div>
 
     <script>
         const API_URL = 'https://campus-security-v4zh.onrender.com/api/auth';
         let currentCaptcha = '';
+        let correoEnProceso = '';
 
+        function limpiarAlertas() {
+            const err = document.getElementById('alertBoxError');
+            const suc = document.getElementById('alertBoxSuccess');
+            err.style.display = 'none';
+            suc.style.display = 'none';
+        }
+
+        function mostrarError(mensaje) {
+            limpiarAlertas();
+            const err = document.getElementById('alertBoxError');
+            err.textContent = mensaje;
+            err.style.display = 'block';
+        }
+
+        function mostrarExito(mensaje) {
+            limpiarAlertas();
+            const suc = document.getElementById('alertBoxSuccess');
+            suc.textContent = mensaje;
+            suc.style.display = 'block';
+        }
+
+        function cambiarVista(vista) {
+            limpiarAlertas();
+            document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+            document.getElementById(`vista-${vista}`).classList.add('active');
+        }
+
+        function alertaSoporte() {
+            alert('Módulo de Soporte Técnico en desarrollo para la siguiente fase. Contacta al administrador del sistema.');
+        }
+
+        // --- CAPTCHA Y LOGIN ---
         async function cargarCaptcha() {
             try {
                 const response = await fetch(`${API_URL}/captcha`);
@@ -81,9 +160,7 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const errorBox = document.getElementById('errorBox');
-            errorBox.style.display = 'none';
+            limpiarAlertas();
 
             const payload = {
                 correo: document.getElementById('correo').value,
@@ -101,7 +178,6 @@
                 if (response.ok) {
                     sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
                     
-                    // ENRUTADOR DINÁMICO CORREGIDO (Sin prefijo frontend, directo a dashboards)
                     if (data.usuario.rol === 'admin') {
                         window.location.href = 'dashboards/admin/index.html';
                     } else if (data.usuario.rol === 'alumno') {
@@ -112,13 +188,66 @@
                         alert(`Tu panel de ${data.usuario.rol} estará listo en la siguiente fase.`);
                     }
                 } else {
-                    errorBox.textContent = data.error;
-                    errorBox.style.display = 'block';
+                    mostrarError(data.error);
                     cargarCaptcha(); 
                 }
             } catch (error) {
-                errorBox.textContent = "Error de conexión con el servidor.";
-                errorBox.style.display = 'block';
+                mostrarError("Error de conexión con el servidor.");
+            }
+        });
+
+        // --- FLUJO DE RECUPERACIÓN DE CONTRASEÑA ---
+        document.getElementById('formRecobrarSolicitar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            limpiarAlertas();
+            correoEnProceso = document.getElementById('correoRecuperar').value;
+
+            try {
+                const res = await fetch(`${API_URL}/recuperar-solicitar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo: correoEnProceso })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    mostrarExito(data.mensaje);
+                    setTimeout(() => cambiarVista('cambiar'), 1500);
+                } else {
+                    mostrarError(data.error || 'No se pudo procesar la solicitud');
+                }
+            } catch (err) {
+                mostrarError('Error de conexión al solicitar recuperación.');
+            }
+        });
+
+        document.getElementById('formRecobrarCambiar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            limpiarAlertas();
+
+            const token = document.getElementById('tokenInput').value;
+            const nueva_password = document.getElementById('nuevaPassword').value;
+
+            try {
+                const res = await fetch(`${API_URL}/recuperar-cambiar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo: correoEnProceso, token, nueva_password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    mostrarExito(data.mensaje);
+                    setTimeout(() => {
+                        document.getElementById('formRecobrarSolicitar').reset();
+                        document.getElementById('formRecobrarCambiar').reset();
+                        cambiarVista('login');
+                    }, 2000);
+                } else {
+                    mostrarError(data.error || 'Código incorrecto o expirado');
+                }
+            } catch (err) {
+                mostrarError('Error de conexión al actualizar contraseña.');
             }
         });
     </script>
