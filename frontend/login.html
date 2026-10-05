@@ -61,7 +61,8 @@
     </div>
 
     <script>
-        const API_URL = 'http://127.0.0.1:5000/api/auth';
+        // URL configurada directamente hacia tu API pública en Render (AWS TiDB Cloud)
+        const API_URL = 'https://campus-security-v4zh.onrender.com/api/auth';
         let currentCaptcha = '';
 
         async function cargarCaptcha() {
