@@ -29,7 +29,7 @@ DB_PORT = 4000
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 EMAIL_SISTEMA = "campus.security.test@gmail.com"
-EMAIL_PASSWORD = "FA200175m@."
+EMAIL_PASSWORD = "xsyi eros rnaw knhq"  # Contraseña de aplicación configurada
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -57,6 +57,7 @@ def enviar_correo_async(destinatario, nombre, token):
         server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
         server.sendmail(EMAIL_SISTEMA, destinatario, msg.as_string())
         server.quit()
+        print(f"Correo de recuperacion enviado exitosamente a {destinatario}")
     except Exception as e:
         print(f"Error al enviar correo en background: {str(e)}")
 
