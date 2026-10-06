@@ -5,8 +5,8 @@ from flask_cors import CORS
 import mysql.connector
 import random
 import string
-import smtplib
-from email.mime.text import MIMEText
+import requests
+import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -23,12 +23,10 @@ DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
 
 # ==========================================
-# CONFIGURACIÓN DE CORREO (SMTP GMAIL DEFINITIVO)
+# CONFIGURACIÓN DE CORREO (BREVO API - SEGURO)
 # ==========================================
-SMTP_SERVER = "smtp.gmail.com"
-SMTP_PORT = 587
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 EMAIL_SISTEMA = "campus.security.test@gmail.com"
-EMAIL_PASSWORD = "xsyi eros rnaw knhq"  # Tus 16 dígitos de la App Password de Google
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -80,8 +78,19 @@ def login():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
+def registrar_intento(correo, ip, exitoso):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO seguridad_accesos (correo_intentado, ip_origen, exitoso) VALUES (%s, %s, %s)", (correo, ip, exitoso))
+        conn.commit()
+    except Exception: pass
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
 # ==========================================
-# RUTAS DE RECUPERACIÓN DE CONTRASEÑA
+# RUTAS DE RECUPERACIÓN DE CONTRASEÑA (BREVO)
 # ==========================================
 @app.route('/api/auth/recuperar-solicitar', methods=['POST'])
 def solicitar_recuperacion():
@@ -99,35 +108,36 @@ def solicitar_recuperacion():
         if not usuario:
             return jsonify({"error": "El correo electrónico no está registrado en el sistema."}), 404
             
-        # Generar token de 6 dígitos
         token = ''.join(random.choice(string.digits) for _ in range(6))
         expiracion = datetime.now() + timedelta(minutes=15)
         
-        # Guardar en base de datos
         cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", 
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        # Envío de correo SMTP directo y síncrono (Blindado)
-        asunto = "Recuperación de Contraseña - Campus Security"
-        cuerpo = f"Hola {usuario['nombre']},\n\nHas solicitado restablecer tu contraseña.\nTu código de recuperación es: {token}\n\nEste código expira en 15 minutos."
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "api-key": BREVO_API_KEY,
+            "content-type": "application/json"
+        }
+        payload = {
+            "sender": {"name": "Campus Security", "email": EMAIL_SISTEMA},
+            "to": [{"email": correo, "name": usuario['nombre']}],
+            "subject": "Recuperación de Contraseña - Campus Security",
+            "htmlContent": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Has solicitado restablecer tu contraseña.</p><p>Tu código de recuperación es: <h2 style='color:#3b82f6;'>{token}</h2></p><p>Este código expira en 15 minutos.</p>"
+        }
         
-        msg = MIMEText(cuerpo)
-        msg['Subject'] = asunto
-        msg['From'] = EMAIL_SISTEMA
-        msg['To'] = correo
+        response = requests.post(url, json=payload, headers=headers)
         
-        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
-        server.starttls()
-        server.login(EMAIL_SISTEMA, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_SISTEMA, correo, msg.as_string())
-        server.quit()
+        if response.status_code != 201 and response.status_code != 200:
+            print(f"❌ Error en Brevo: {response.text}")
+            return jsonify({"error": f"Error al enviar el correo: {response.text}"}), 500
         
         return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
-        
     except Exception as e:
-        print(f"❌ ERROR CRITICO EN CORREO: {str(e)}")
-        return jsonify({"error": f"Error al enviar el correo: {str(e)}"}), 500
+        print(f"❌ ERROR CRITICO: {str(e)}")
+        return jsonify({"error": f"Error al procesar la solicitud: {str(e)}"}), 500
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
@@ -154,7 +164,6 @@ def cambiar_password():
         if usuario['token_expiracion'] and datetime.now() > usuario['token_expiracion']:
             return jsonify({"error": "El código ha expirado. Solicita uno nuevo."}), 400
             
-        # Actualizar contraseña y limpiar token
         cursor.execute("""
             UPDATE usuarios 
             SET password = %s, token_recuperacion = NULL, token_expiracion = NULL 
@@ -163,17 +172,6 @@ def cambiar_password():
         conn.commit()
         
         return jsonify({"mensaje": "Contraseña actualizada exitosamente. Ya puedes iniciar sesión."}), 200
-    finally:
-        if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
-
-def registrar_intento(correo, ip, exitoso):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO seguridad_accesos (correo_intentado, ip_origen, exitoso) VALUES (%s, %s, %s)", (correo, ip, exitoso))
-        conn.commit()
-    except Exception: pass
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
@@ -380,7 +378,7 @@ def list_alumnos(id_carrera):
         return jsonify(cursor.fetchall()), 200
     finally:
         if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
 
 @app.route('/api/coordinador/grupos_disponibles/<int:id_alumno>', methods=['GET'])
 def grupos_disponibles(id_alumno):
@@ -418,6 +416,81 @@ def coord_inscribir():
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
+
+# ==========================================
+# RUTAS DEL ROL DE PROFESOR
+# ==========================================
+@app.route('/api/profesor/grupos/<int:id_profesor>', methods=['GET'])
+def profesor_get_grupos(id_profesor):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        sql = """
+            SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, 
+                   m.id_materia, m.clave as clave_materia, m.nombre as nombre_materia, m.semestre,
+                   c.nombre as carrera
+            FROM grupos g
+            JOIN materias m ON g.id_materia = m.id_materia
+            JOIN carreras c ON m.id_carrera = c.id_carrera
+            WHERE g.id_profesor = %s
+            ORDER BY m.semestre ASC
+        """
+        cursor.execute(sql, (id_profesor,))
+        return jsonify(cursor.fetchall()), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener grupos: {str(e)}"}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/profesor/grupo/<int:id_grupo>/alumnos', methods=['GET'])
+def profesor_get_alumnos_grupo(id_grupo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        sql = """
+            SELECT k.id_kardex, u.id_usuario as id_alumno, u.matricula, u.nombre, u.correo, 
+                   k.estatus, k.calificacion
+            FROM kardex k
+            JOIN usuarios u ON k.id_alumno = u.id_usuario
+            WHERE k.id_grupo = %s
+            ORDER BY u.nombre ASC
+        """
+        cursor.execute(sql, (id_grupo,))
+        return jsonify(cursor.fetchall()), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener alumnos del grupo: {str(e)}"}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/profesor/calificar', methods=['POST'])
+def profesor_calificar_alumno():
+    data = request.json
+    id_kardex = data.get('id_kardex')
+    calificacion = data.get('calificacion')
+    estatus = data.get('estatus')
+
+    if id_kardex is None or calificacion is None or not estatus:
+        return jsonify({"error": "Faltan datos obligatorios (id_kardex, calificacion, estatus)"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        sql = """
+            UPDATE kardex 
+            SET calificacion = %s, estatus = %s 
+            WHERE id_kardex = %s
+        """
+        cursor.execute(sql, (calificacion, estatus, id_kardex))
+        conn.commit()
+        return jsonify({"mensaje": "Calificación registrada exitosamente"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al guardar calificación: {str(e)}"}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
 
 if __name__ == '__main__':
     print("🛡️ Backend de Campus Security v1.0 Iniciado y conectado a AWS TiDB Cloud")
