@@ -23,9 +23,8 @@ DB_NAME = 'campus_security_v1'
 DB_PORT = 4000
 
 # ==========================================
-# CONFIGURACIÓN DE CORREO (BREVO API - SEGURO)
+# CONFIGURACIÓN DE CORREO 
 # ==========================================
-BREVO_API_KEY = os.environ.get("BREVO_API_KEY")
 EMAIL_SISTEMA = "campus.security.test@gmail.com"
 
 def get_db_connection():
@@ -115,10 +114,17 @@ def solicitar_recuperacion():
                        (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
+        # LECTURA DINÁMICA DE LA LLAVE (Destruye caché y espacios invisibles)
+        llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
+        
+        if not llave_actual:
+            print("❌ ERROR INTERNO: Render está leyendo la variable BREVO_API_KEY como vacía.")
+            return jsonify({"error": "Error interno del servidor. Llave de correo no encontrada."}), 500
+            
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {
             "accept": "application/json",
-            "api-key": BREVO_API_KEY,
+            "api-key": llave_actual,
             "content-type": "application/json"
         }
         payload = {
@@ -130,13 +136,13 @@ def solicitar_recuperacion():
         
         response = requests.post(url, json=payload, headers=headers)
         
-        if response.status_code != 201 and response.status_code != 200:
-            print(f"❌ Error en Brevo: {response.text}")
+        if response.status_code not in [200, 201]:
+            print(f"❌ Error devuelto por Brevo: {response.text}")
             return jsonify({"error": f"Error al enviar el correo: {response.text}"}), 500
         
         return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
     except Exception as e:
-        print(f"❌ ERROR CRITICO: {str(e)}")
+        print(f"❌ ERROR CRÍTICO: {str(e)}")
         return jsonify({"error": f"Error al procesar la solicitud: {str(e)}"}), 500
     finally:
         if cursor: cursor.close()
