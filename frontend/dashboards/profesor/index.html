@@ -3,251 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Security - Panel de Profesor</title>
-    <!-- Bootstrap 5 CSS -->
+    <title>Portal Docente | ERP Académico</title>
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 para alertas modernas -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        body { background-color: #f4f6f9; }
-        .navbar-custom { background-color: #1e293b; color: white; }
-        .card-custom { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
-        .btn-calificar { background-color: #3b82f6; color: white; }
-        .btn-calificar:hover { background-color: #2563eb; color: white; }
+        :root { --primary-color: #0f172a; --accent-color: #0ea5e9; --bg-color: #f1f5f9; }
+        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
+        
+        /* Sidebar */
+        .sidebar { background-color: var(--primary-color); min-height: 100vh; color: white; padding-top: 20px; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .brand { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
+        .brand span { color: #7dd3fc; }
+        .nav-link { color: #94a3b8; padding: 12px 20px; margin: 5px 15px; border-radius: 8px; transition: all 0.3s; font-weight: 500; cursor: pointer;}
+        .nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; border-left: 4px solid var(--accent-color); }
+        .nav-link i { width: 25px; text-align: center; margin-right: 10px; }
+        
+        /* Contenido Principal */
+        .main-content { padding: 30px; height: 100vh; overflow-y: auto; }
+        .header-top { background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .card-custom { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; padding: 25px; }
+        
+        /* Vistas y Tablas */
+        .section-view { display: none; animation: fadeIn 0.4s; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .table > :not(caption) > * > * { padding: 12px 15px; border-bottom-color: #e2e8f0; vertical-align: middle; }
+        .badge-soft { background-color: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-custom py-3">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand text-white fw-bold" href="#">
-                <i class="fa-solid fa-shield-halved me-2"></i>Campus Security | Profesor
-            </a>
-            <div class="d-flex align-items-center">
-                <span id="nombre-profesor" class="me-4 fw-medium text-light">Cargando...</span>
-                <button onclick="cerrarSesion()" class="btn btn-outline-light btn-sm">
-                    <i class="fa-solid fa-right-from-bracket me-1"></i> Salir
-                </button>
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        <!-- SIDEBAR -->
+        <div class="col-md-2 sidebar d-flex flex-column justify-content-between">
+            <div>
+                <div class="brand">ERP<span>Académico</span><br><small class="text-muted fw-normal fs-6">Catedrático</small></div>
+                <ul class="nav flex-column mt-4">
+                    <li class="nav-item"><a class="nav-link active" onclick="cambiarSeccion('dashboard', this)"><i class="fa-solid fa-chalkboard-user"></i> Mis Clases</a></li>
+                </ul>
             </div>
-        </div>
-    </nav>
-
-    <div class="container mt-5">
-        
-        <!-- SECCIÓN 1: LISTA DE GRUPOS -->
-        <div id="seccion-grupos">
-            <h3 class="fw-bold mb-4 text-secondary"><i class="fa-solid fa-users-rectangle me-2"></i>Mis Grupos Asignados</h3>
-            <div class="row" id="contenedor-grupos">
-                <!-- Los grupos se inyectarán aquí con JavaScript -->
+            <div class="p-4">
+                <button class="btn btn-danger w-100 shadow-sm rounded-3 fw-bold" onclick="cerrarSesion()"><i class="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button>
             </div>
         </div>
 
-        <!-- SECCIÓN 2: LISTA DE ALUMNOS (Oculta por defecto) -->
-        <div id="seccion-alumnos" style="display: none;">
-            <button onclick="volverAGrupos()" class="btn btn-secondary mb-3">
-                <i class="fa-solid fa-arrow-left me-1"></i> Volver a mis grupos
-            </button>
-            <div class="card card-custom p-4">
-                <h4 class="fw-bold text-primary mb-1" id="titulo-materia">Materia</h4>
-                <p class="text-muted mb-4" id="subtitulo-grupo">Grupo: -- | Horario: --</p>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Matrícula</th>
-                                <th>Nombre del Alumno</th>
-                                <th>Calificación</th>
-                                <th>Estatus</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-alumnos">
-                            <!-- Los alumnos se inyectarán aquí -->
-                        </tbody>
-                    </table>
+        <!-- MAIN CONTENT -->
+        <div class="col-md-10 main-content">
+            <div class="header-top">
+                <h5 class="m-0 text-secondary fw-bold"><i class="fa-solid fa-book-open-reader text-info me-2"></i> Portal de Evaluación Académica</h5>
+                <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
+                    <i class="fa-solid fa-chalkboard-user text-info me-2"></i>
+                    <span id="nombreUsuario" class="fw-bold text-dark fs-6">Cargando...</span>
                 </div>
             </div>
+
+            <!-- SECCIÓN 1: DASHBOARD DE GRUPOS -->
+            <div id="seccion-dashboard" class="section-view active">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card-custom border-start border-info border-4 text-center h-100">
+                            <h6 class="text-muted text-uppercase fw-bold">Grupos Asignados este Ciclo</h6>
+                            <h1 class="fw-bold text-info mb-0 display-4" id="statGrupos">0</h1>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-custom text-center h-100 py-4">
+                            <i class="fa-solid fa-shield-halved fs-2 text-warning mb-2"></i>
+                            <h5 class="fw-bold text-dark">Aislamiento de Cátedra Activo</h5>
+                            <p class="text-muted small m-0">Solo puedes visualizar y emitir calificaciones para las listas de alumnos que los coordinadores han matriculado en tus clases.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-4"><i class="fa-solid fa-layer-group text-info me-2"></i> Mis Grupos y Horarios</h5>
+                    <input type="text" id="buscadorGrupos" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar materia o carrera..." onkeyup="filtrarTabla('tablaMisGruposBody', this.value)">
+                    
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover border">
+                            <thead class="table-light text-muted">
+                                <tr>
+                                    <th>Grupo / Semestre</th>
+                                    <th>Asignatura</th>
+                                    <th>Programa Académico</th>
+                                    <th>Aula y Horario</th>
+                                    <th class="text-center">Listas y Calificaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMisGruposBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: LISTA DE ALUMNOS DEL GRUPO (Se muestra al hacer clic en un grupo) -->
+            <div id="seccion-evaluacion" class="section-view">
+                <div class="card-custom">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary mb-2" onclick="volverAGrupos()"><i class="fa-solid fa-arrow-left me-1"></i> Regresar a mis clases</button>
+                            <h4 class="fw-bold m-0 text-primary" id="tituloGrupoEval">Grupo Seleccionado</h4>
+                            <p class="text-muted m-0" id="subtituloGrupoEval">Asignatura</p>
+                        </div>
+                        <button class="btn btn-outline-info"><i class="fa-solid fa-print me-1"></i> Imprimir Acta</button>
+                    </div>
+
+                    <input type="text" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar alumno por nombre o matrícula..." onkeyup="filtrarTabla('tablaAlumnosEvalBody', this.value)">
+
+                    <div class="table-responsive">
+                        <table class="table align-middle table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Matrícula</th>
+                                    <th>Nombre del Alumno</th>
+                                    <th class="text-center">Calificación</th>
+                                    <th class="text-center">Estatus Final</th>
+                                    <th class="text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAlumnosEvalBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
-
     </div>
+</div>
 
-    <!-- LÓGICA JAVASCRIPT -->
-    <script>
-        // URL de tu backend en Render
-        const API_URL = "https://campus-security-v4zh.onrender.com/api";
-        let usuarioActual = null;
+<!-- ==========================================
+                 MODAL PARA CALIFICAR
+=========================================== -->
+<div class="modal fade" id="modalCalificar" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header text-white" style="background-color: var(--accent-color);">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i> Asentar Calificación Ordinaria</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <h6 class="fw-bold text-dark mb-4 text-center">Alumno: <span id="califNombreAlumno" class="text-primary"></span></h6>
+        
+        <form id="formCalificar" onsubmit="guardarCalificacion(event)">
+            <input type="hidden" id="califIdKardex">
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Calificación Obtenida</label>
+                    <input type="number" id="califValor" class="form-control form-control-lg text-center fw-bold text-primary" min="0" max="100" placeholder="0 - 100" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Resolución Final</label>
+                    <select id="califEstatus" class="form-select form-select-lg border-primary" required>
+                        <option value="Aprobada" class="text-success fw-bold">Aprobada</option>
+                        <option value="Reprobada" class="text-danger fw-bold">Reprobada</option>
+                        <option value="Cursando" class="text-warning fw-bold">Cursando (Sin asentar)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="alert alert-info border-0 shadow-sm small">
+                <i class="fa-solid fa-info-circle me-1"></i> Una vez asentada la calificación, se reflejará inmediatamente en el Kárdex oficial del estudiante.
+            </div>
 
-        // 1. Validar Sesión al cargar la página
-        document.addEventListener("DOMContentLoaded", () => {
-            const usuarioJSON = localStorage.getItem('usuario');
-            if (!usuarioJSON) {
-                window.location.href = 'login.html'; // Cambia esto por tu página de login real
+            <div class="mt-4 text-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-info text-white px-4 fw-bold" id="btnGuardarCalif"><i class="fa-solid fa-stamp me-2"></i> Firmar Calificación</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+    
+    // Validación de Sesión Segura
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+    if (!usuario || usuario.rol !== 'profesor') {
+        window.location.href = '../../index.html';
+    } else {
+        document.getElementById('nombreUsuario').innerText = `Prof. ${usuario.nombre}`;
+    }
+
+    const idProfesor = usuario.id_usuario;
+    let grupoActualId = null;
+
+    function cambiarSeccion(seccionId, elementoLi) {
+        document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
+        if(elementoLi) {
+            document.querySelectorAll('.nav-link').forEach(li => li.classList.remove('active'));
+            elementoLi.classList.add('active');
+        }
+        document.getElementById(`seccion-${seccionId}`).classList.add('active');
+    }
+
+    function volverAGrupos() { cambiarSeccion('dashboard'); }
+    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
+
+    function filtrarTabla(idTabla, texto) {
+        const filas = document.getElementById(idTabla).getElementsByTagName('tr');
+        texto = texto.toLowerCase();
+        for (let i = 0; i < filas.length; i++) {
+            filas[i].style.display = filas[i].innerText.toLowerCase().includes(texto) ? '' : 'none';
+        }
+    }
+
+    // ==========================================
+    // CARGAR MIS GRUPOS (AL INICIAR)
+    // ==========================================
+    async function cargarMisGrupos() {
+        try {
+            const res = await fetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
+            const grupos = await res.json();
+            const tbody = document.getElementById('tablaMisGruposBody');
+            tbody.innerHTML = '';
+            
+            document.getElementById('statGrupos').innerText = grupos.length;
+
+            if (grupos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fa-solid fa-mug-hot fs-3 mb-2 d-block"></i> No tienes grupos asignados en este ciclo escolar.</td></tr>';
                 return;
             }
-            
-            usuarioActual = JSON.parse(usuarioJSON);
-            
-            // Validar que realmente sea profesor
-            if (usuarioActual.rol !== 'profesor') {
-                alert("Acceso denegado. No eres profesor.");
-                window.location.href = 'login.html';
+
+            grupos.forEach(g => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <span class="badge bg-primary font-monospace fs-6">Gpo: ${g.nombre_grupo}</span><br>
+                            <span class="badge-soft mt-1 d-inline-block">Semestre ${g.semestre}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark d-block">${g.nombre_materia}</span>
+                            <span class="badge bg-light text-muted border font-monospace mt-1">${g.clave_materia}</span>
+                        </td>
+                        <td class="fw-bold text-secondary">${g.carrera}</td>
+                        <td class="text-muted"><i class="fa-regular fa-clock text-info me-1"></i> ${g.horario} <br> <i class="fa-solid fa-door-open text-info me-1"></i> ${g.aula}</td>
+                        <td class="text-center">
+                            <button class="btn btn-info text-white fw-bold shadow-sm" onclick="abrirListaAlumnos(${g.id_grupo}, '${g.nombre_grupo}', '${g.nombre_materia}', '${g.carrera}')">
+                                <i class="fa-solid fa-users-viewfinder me-1"></i> Ver Lista
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    // ==========================================
+    // CARGAR LISTA DE ALUMNOS DE UN GRUPO
+    // ==========================================
+    async function abrirListaAlumnos(id_grupo, nombre_grupo, materia, carrera) {
+        grupoActualId = id_grupo;
+        document.getElementById('tituloGrupoEval').innerText = `Grupo ${nombre_grupo} - ${carrera}`;
+        document.getElementById('subtituloGrupoEval').innerText = `Asignatura: ${materia}`;
+        
+        cambiarSeccion('evaluacion'); // Ocultar dashboard, mostrar tabla de evaluación
+
+        try {
+            const res = await fetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
+            const alumnos = await res.json();
+            const tbody = document.getElementById('tablaAlumnosEvalBody');
+            tbody.innerHTML = '';
+
+            if (alumnos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fa-solid fa-user-xmark fs-3 mb-2 d-block"></i> Ningún alumno ha sido inscrito en este grupo aún.</td></tr>';
                 return;
             }
 
-            document.getElementById('nombre-profesor').innerText = `Prof. ${usuarioActual.nombre}`;
-            cargarGrupos();
+            alumnos.forEach(a => {
+                let badgeStatus = 'bg-warning text-dark';
+                if (a.estatus === 'Aprobada') badgeStatus = 'bg-success';
+                if (a.estatus === 'Reprobada') badgeStatus = 'bg-danger';
+
+                const califTexto = a.calificacion > 0 ? a.calificacion : '--';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge bg-light text-dark border p-2 font-monospace">${a.matricula}</span></td>
+                        <td class="fw-bold">${a.nombre}</td>
+                        <td class="text-center fw-bold fs-5 text-primary">${califTexto}</td>
+                        <td class="text-center"><span class="badge ${badgeStatus} px-3 py-2 text-uppercase">${a.estatus}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="prepararCalificacion(${a.id_kardex}, '${a.nombre}', ${a.calificacion}, '${a.estatus}')">
+                                <i class="fa-solid fa-pen-nib me-1"></i> Asentar Calif.
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    // ==========================================
+    // EVALUACIÓN (CALIFICAR ALUMNO)
+    // ==========================================
+    function prepararCalificacion(id_kardex, nombre, calificacion_actual, estatus_actual) {
+        document.getElementById('califIdKardex').value = id_kardex;
+        document.getElementById('califNombreAlumno').innerText = nombre;
+        
+        // Pre-llenar valores si ya existen
+        document.getElementById('califValor').value = calificacion_actual > 0 ? calificacion_actual : '';
+        document.getElementById('califEstatus').value = estatus_actual || 'Cursando';
+        
+        // Auto-cambiar estatus al escribir calificación (Lógica visual)
+        document.getElementById('califValor').addEventListener('input', function() {
+            const num = parseInt(this.value);
+            const select = document.getElementById('califEstatus');
+            if (num >= 70) select.value = 'Aprobada'; // Suponiendo que la mínima aprobatoria es 70
+            else if (num < 70 && num > 0) select.value = 'Reprobada';
         });
 
-        // 2. Obtener y Mostrar los Grupos del Profesor
-        async function cargarGrupos() {
-            try {
-                const response = await fetch(`${API_URL}/profesor/grupos/${usuarioActual.id_usuario}`);
-                const grupos = await response.json();
-                
-                const contenedor = document.getElementById('contenedor-grupos');
-                contenedor.innerHTML = '';
+        const modal = new bootstrap.Modal(document.getElementById('modalCalificar'));
+        modal.show();
+    }
 
-                if (grupos.length === 0) {
-                    contenedor.innerHTML = `<div class="alert alert-info">No tienes grupos asignados en este momento.</div>`;
-                    return;
-                }
+    async function guardarCalificacion(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnGuardarCalif');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; btn.disabled = true;
 
-                grupos.forEach(grupo => {
-                    const card = `
-                        <div class="col-md-4 mb-4">
-                            <div class="card card-custom h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title fw-bold text-primary">${grupo.nombre_materia}</h5>
-                                    <h6 class="card-subtitle mb-3 text-muted">${grupo.carrera}</h6>
-                                    <p class="card-text mb-1"><i class="fa-regular fa-clock me-2"></i><strong>Horario:</strong> ${grupo.horario}</p>
-                                    <p class="card-text mb-1"><i class="fa-solid fa-door-open me-2"></i><strong>Aula:</strong> ${grupo.aula}</p>
-                                    <p class="card-text mb-3"><i class="fa-solid fa-layer-group me-2"></i><strong>Grupo:</strong> ${grupo.nombre_grupo}</p>
-                                    <button onclick="verAlumnos(${grupo.id_grupo}, '${grupo.nombre_materia}', '${grupo.nombre_grupo}', '${grupo.horario}')" class="btn btn-calificar w-100">
-                                        <i class="fa-solid fa-list-check me-1"></i> Ver Alumnos y Calificar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    contenedor.innerHTML += card;
-                });
-            } catch (error) {
-                Swal.fire('Error', 'No se pudieron cargar los grupos', 'error');
-                console.error(error);
-            }
-        }
+        const payload = {
+            id_kardex: document.getElementById('califIdKardex').value,
+            calificacion: document.getElementById('califValor').value,
+            estatus: document.getElementById('califEstatus').value
+        };
 
-        // 3. Obtener y Mostrar los Alumnos de un Grupo Específico
-        async function verAlumnos(idGrupo, materia, grupo, horario) {
-            document.getElementById('seccion-grupos').style.display = 'none';
-            document.getElementById('seccion-alumnos').style.display = 'block';
-            
-            document.getElementById('titulo-materia').innerText = materia;
-            document.getElementById('subtitulo-grupo').innerText = `Grupo: ${grupo} | Horario: ${horario}`;
-            
-            const tbody = document.getElementById('tabla-alumnos');
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Cargando alumnos...</td></tr>';
+        try {
+            const res = await fetch(`${API_BASE}/profesor/calificar`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            const data = await res.json();
 
-            try {
-                const response = await fetch(`${API_URL}/profesor/grupo/${idGrupo}/alumnos`);
-                const alumnos = await response.json();
-                
-                tbody.innerHTML = '';
-                
-                if (alumnos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay alumnos inscritos en este grupo aún.</td></tr>';
-                    return;
-                }
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
+                Swal.fire({ icon: 'success', title: 'Acta Actualizada', text: data.mensaje, timer: 1500, showConfirmButton: false });
+                // Recargar solo la lista de este grupo para ver el cambio instantáneo
+                abrirListaAlumnos(grupoActualId, document.getElementById('tituloGrupoEval').innerText.split(' - ')[0].replace('Grupo ', ''), document.getElementById('subtituloGrupoEval').innerText.replace('Asignatura: ', ''), '');
+            } else { Swal.fire('Error', data.error, 'error'); }
+        } catch (err) { Swal.fire('Error', 'Problema de conexión.', 'error'); }
+        finally { btn.innerHTML = '<i class="fa-solid fa-stamp me-2"></i> Firmar Calificación'; btn.disabled = false; }
+    }
 
-                alumnos.forEach(alumno => {
-                    // Pre-seleccionar el estatus actual
-                    const selectCursando = alumno.estatus === 'Cursando' ? 'selected' : '';
-                    const selectAprobada = alumno.estatus === 'Aprobada' ? 'selected' : '';
-                    const selectReprobada = alumno.estatus === 'Reprobada' ? 'selected' : '';
-                    
-                    const califValue = alumno.calificacion !== null ? alumno.calificacion : '';
-
-                    const fila = `
-                        <tr>
-                            <td class="fw-bold">${alumno.matricula}</td>
-                            <td>${alumno.nombre}</td>
-                            <td>
-                                <input type="number" id="calif-${alumno.id_kardex}" class="form-control form-control-sm" value="${califValue}" min="0" max="100" placeholder="0 - 100">
-                            </td>
-                            <td>
-                                <select id="estatus-${alumno.id_kardex}" class="form-select form-select-sm">
-                                    <option value="Cursando" ${selectCursando}>Cursando</option>
-                                    <option value="Aprobada" ${selectAprobada}>Aprobada</option>
-                                    <option value="Reprobada" ${selectReprobada}>Reprobada</option>
-                                </select>
-                            </td>
-                            <td>
-                                <button onclick="guardarCalificacion(${alumno.id_kardex}, '${alumno.nombre}')" class="btn btn-success btn-sm">
-                                    <i class="fa-solid fa-floppy-disk"></i> Guardar
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += fila;
-                });
-            } catch (error) {
-                Swal.fire('Error', 'No se pudieron cargar los alumnos', 'error');
-            }
-        }
-
-        // 4. Guardar la Calificación mediante POST al Backend
-        async function guardarCalificacion(idKardex, nombreAlumno) {
-            const calificacionInput = document.getElementById(`calif-${idKardex}`).value;
-            const estatusInput = document.getElementById(`estatus-${idKardex}`).value;
-
-            if (calificacionInput === '') {
-                Swal.fire('Atención', 'Ingresa una calificación válida', 'warning');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/profesor/calificar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id_kardex: idKardex,
-                        calificacion: parseFloat(calificacionInput),
-                        estatus: estatusInput
-                    })
-                });
-
-                const resultado = await response.json();
-
-                if (response.ok) {
-                    Swal.fire({
-                        title: '¡Guardado!',
-                        text: `Calificación de ${nombreAlumno} actualizada.`,
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire('Error', resultado.error, 'error');
-                }
-            } catch (error) {
-                Swal.fire('Error', 'Ocurrió un problema de red', 'error');
-            }
-        }
-
-        // 5. Utilidades de la interfaz
-        function volverAGrupos() {
-            document.getElementById('seccion-alumnos').style.display = 'none';
-            document.getElementById('seccion-grupos').style.display = 'block';
-        }
-
-        function cerrarSesion() {
-            localStorage.removeItem('usuario');
-            window.location.href = 'login.html'; // Cambia por tu archivo de login
-        }
-    </script>
+    // Arrancar la maquinaria
+    window.addEventListener('DOMContentLoaded', cargarMisGrupos);
+</script>
 </body>
 </html>
