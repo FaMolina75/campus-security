@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Bootstrap Bundle JS (Para modales y dropdowns) -->
+    <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         :root { --primary-color: #0f172a; --accent-color: #2563eb; --bg-color: #f1f5f9; }
@@ -40,7 +40,6 @@
         .action-btn { background: #f1f5f9; border: none; padding: 5px 10px; border-radius: 6px; color: #475569; transition: 0.2s; }
         .action-btn:hover { background: #e2e8f0; color: #0f172a; }
         
-        /* Dropdown custom */
         .dropdown-menu { border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 10px; }
         .dropdown-item { padding: 8px 20px; font-size: 0.9rem; }
         .dropdown-item i { width: 20px; text-align: center; }
@@ -58,7 +57,7 @@
                     <li class="nav-item"><a class="nav-link active" onclick="cambiarSeccion('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" onclick="cambiarSeccion('usuarios', this)"><i class="fa-solid fa-users-gear"></i> Identidades (IAM)</a></li>
                     <li class="nav-item"><a class="nav-link" onclick="cambiarSeccion('materias', this)"><i class="fa-solid fa-layer-group"></i> Planes de Estudio</a></li>
-                    <li class="nav-item"><a class="nav-link text-warning" onclick="cambiarSeccion('auditoria', this)"><i class="fa-solid fa-shield-halved"></i> Auditoría de Red</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning" onclick="cambiarSeccion('auditoria', this)"><i class="fa-solid fa-shield-halved"></i> Auditoría Avanzada</a></li>
                 </ul>
             </div>
             <div class="p-4">
@@ -163,17 +162,65 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN 4: AUDITORÍA -->
+            <!-- SECCIÓN 4: AUDITORÍA AVANZADA (NUEVA VERSIÓN COMPLETA) -->
             <div id="seccion-auditoria" class="section-view">
-                <div class="card-custom">
-                    <h5 class="fw-bold mb-3 text-warning"><i class="fa-solid fa-server me-2"></i> Monitor IAM (Identity & Access Management)</h5>
-                    <div class="table-responsive mt-4">
-                        <table class="table table-sm align-middle table-hover">
-                            <thead class="table-dark">
-                                <tr><th>ID</th><th>Timestamp</th><th>Usuario Solicitado</th><th>Dirección IP</th><th>Resolución</th></tr>
-                            </thead>
-                            <tbody id="tablaAuditoriaBody"></tbody>
-                        </table>
+                <div class="card-custom p-0 overflow-hidden">
+                    <div class="bg-dark p-4 text-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="fw-bold mb-1"><i class="fa-solid fa-user-secret text-warning me-2"></i> Centro Forense y Auditoría</h4>
+                            <p class="m-0 text-muted small">Monitor de actividad en tiempo real y reglas de Firewall (WAF).</p>
+                        </div>
+                    </div>
+
+                    <ul class="nav nav-tabs px-4 pt-3 bg-light" id="auditoriaTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-red" type="button"><i class="fa-solid fa-network-wired me-1"></i> Accesos y Firewall (IAM)</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-operaciones" type="button"><i class="fa-solid fa-magnifying-glass-chart me-1"></i> Trazabilidad Interna</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content p-4">
+                        <!-- TAB 1: IAM y Firewall -->
+                        <div class="tab-pane fade show active" id="tab-red">
+                            <div class="d-flex justify-content-between mb-3">
+                                <input type="text" class="form-control w-50" placeholder="🔍 Buscar IP o Correo..." onkeyup="filtrarTabla('tablaAuditoriaRed', this.value)">
+                                <button class="btn btn-outline-success" onclick="exportarCSV('Log_Firewall', 'tablaAuditoriaRed')"><i class="fa-solid fa-file-csv me-1"></i> Exportar CSV</button>
+                            </div>
+                            <div class="table-responsive" style="max-height: 500px;">
+                                <table class="table table-sm align-middle table-hover">
+                                    <thead class="table-dark" style="position: sticky; top: 0; z-index: 1;">
+                                        <tr><th>ID Log</th><th>Timestamp</th><th>Usuario Solicitado</th><th>Dirección IP</th><th>Resolución</th><th>Firewall</th></tr>
+                                    </thead>
+                                    <tbody id="tablaAuditoriaRed"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Operaciones Internas -->
+                        <div class="tab-pane fade" id="tab-operaciones">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex gap-2 w-75">
+                                    <input type="text" class="form-control w-50" placeholder="🔍 Buscar palabra clave..." onkeyup="filtrarTabla('tablaAuditoriaOps', this.value)">
+                                    <select class="form-select w-25" onchange="filtrarTabla('tablaAuditoriaOps', this.value)">
+                                        <option value="">Todos los Roles</option>
+                                        <option value="admin">Administrador</option>
+                                        <option value="coordinadora">Coordinador</option>
+                                        <option value="profesor">Profesor</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-outline-success" onclick="exportarCSV('Log_Operaciones', 'tablaAuditoriaOps')"><i class="fa-solid fa-file-csv me-1"></i> Exportar CSV</button>
+                            </div>
+                            <div class="table-responsive" style="max-height: 500px;">
+                                <table class="table table-sm align-middle table-hover">
+                                    <thead class="table-secondary" style="position: sticky; top: 0; z-index: 1;">
+                                        <tr><th>Fecha y Hora</th><th>Usuario Autor</th><th>Rol</th><th>Tipo de Acción</th><th>Detalles del Evento</th><th>IP Origen</th></tr>
+                                    </thead>
+                                    <tbody id="tablaAuditoriaOps"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -183,7 +230,7 @@
 </div>
 
 <!-- ==========================================
-                 MODALES DINÁMICOS
+                 MODALES DINÁMICOS COMPLETOS
 =========================================== -->
 
 <!-- Modal Crear Alumno -->
@@ -196,7 +243,7 @@
       </div>
       <div class="modal-body p-4 bg-light">
         <div class="alert alert-info border-0 shadow-sm">
-            <i class="fa-solid fa-circle-info me-2"></i> <strong>Automatización:</strong> La matrícula estudiantil y la contraseña temporal se generarán automáticamente al guardar el registro. El alumno ingresará por defecto a Semestre 1.
+            <i class="fa-solid fa-circle-info me-2"></i> <strong>Automatización:</strong> La matrícula y contraseña temporal se generarán solas.
         </div>
         <form id="formAlumno" onsubmit="guardarUsuarioEstandar(event, 'alumno')">
             <div class="row g-3">
@@ -207,7 +254,7 @@
                     <select id="alCarrera" class="form-select border-primary" required><option value="">Cargando...</option></select>
                 </div>
                 <hr class="my-4">
-                <h6 class="fw-bold text-muted mb-0">Datos Personales Complementarios</h6>
+                <h6 class="fw-bold text-muted mb-0">Datos Personales Complementarios (Opcional por ahora)</h6>
                 <div class="col-md-6"><label class="form-label">CURP</label><input type="text" id="alCurp" class="form-control text-uppercase" maxlength="18"></div>
                 <div class="col-md-6"><label class="form-label">Teléfono / WhatsApp</label><input type="tel" id="alTel" class="form-control"></div>
                 <div class="col-md-12"><label class="form-label">Dirección Completa</label><input type="text" id="alDir" class="form-control"></div>
@@ -234,7 +281,7 @@
         <form id="formDocente" onsubmit="guardarUsuarioEstandar(event, 'profesor')">
             <div class="mb-3"><label class="form-label">Nombre del Profesor</label><input type="text" id="profNombre" class="form-control" required></div>
             <div class="mb-3"><label class="form-label">Correo Institucional</label><input type="email" id="profCorreo" class="form-control" required></div>
-            <div class="alert alert-secondary small mt-3">Las credenciales (ID Docente y Contraseña) se generarán al guardar y el perfil será global (aplicable a todas las carreras).</div>
+            <div class="alert alert-secondary small mt-3">Las credenciales se generarán automáticamente. El perfil será global.</div>
             <div class="mt-4 text-end">
                 <button type="submit" class="btn btn-info text-white px-4">Contratar Docente</button>
             </div>
@@ -259,7 +306,6 @@
             <div class="mb-3">
                 <label class="form-label fw-bold text-danger">Territorio Asignado (Carrera)</label>
                 <select id="coordCarrera" class="form-select border-danger" required><option value="">Cargando...</option></select>
-                <small class="text-muted">Un coordinador solo puede administrar los grupos de esta carrera.</small>
             </div>
             <div class="mt-4 text-end">
                 <button type="submit" class="btn btn-dark px-4">Asignar Coordinador</button>
@@ -287,7 +333,6 @@
             <div class="mb-3">
                 <label class="form-label text-primary fw-bold">Clave / Prefijo (Obligatorio)</label>
                 <input type="text" id="carClave" class="form-control text-uppercase border-primary" maxlength="5" placeholder="Ej. ISC" required>
-                <small class="text-muted">Se usará para generar las claves automáticas de las materias (Ej. ISC-101).</small>
             </div>
             <div class="row g-3 mb-3">
                 <div class="col-6"><label class="form-label">Total de Semestres</label><input type="number" id="carSemestres" class="form-control" min="1" max="14" value="9" required></div>
@@ -329,7 +374,6 @@
                     <option value="Residencia">Residencia Profesional</option>
                 </select>
             </div>
-            <div class="alert alert-success small">La clave oficial (Ej. ISC-101) será calculada y asignada por el motor de la base de datos automáticamente.</div>
             <div class="mt-4 text-end">
                 <button type="submit" class="btn btn-success px-4">Inyectar a Retícula</button>
             </div>
@@ -350,7 +394,7 @@
         document.getElementById('nombreAdmin').textContent = usuario.nombre;
     }
 
-    // Funciones de Motor de UI
+    // Funciones de UI
     function cambiarSeccion(seccionId, elementoLi) {
         document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(li => li.classList.remove('active'));
@@ -360,7 +404,7 @@
         if (seccionId === 'dashboard') cargarStats();
         if (seccionId === 'usuarios') { cargarUsuarios(); cargarCarrerasSelects(); }
         if (seccionId === 'materias') { cargarMaterias(); cargarCarrerasSelects(); }
-        if (seccionId === 'auditoria') cargarAuditoria();
+        if (seccionId === 'auditoria') { cargarAuditoriaIAM(); cargarAuditoriaOperaciones(); }
     }
 
     function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
@@ -373,9 +417,9 @@
         }
     }
 
-    // ----------------------------------------------------
-    // LÓGICA CORE: OBTENER DATOS
-    // ----------------------------------------------------
+    // =====================================
+    // OBTENER DATOS (GET)
+    // =====================================
     async function cargarCarrerasSelects() {
         try {
             const res = await fetch(`${API_BASE}/admin/carreras`);
@@ -414,7 +458,6 @@
                 let carreraInfo = u.carrera ? `<span class="fw-bold text-secondary">${u.carrera}</span>` : '<span class="text-muted">Global</span>';
                 if(u.rol === 'alumno') carreraInfo += `<br><small class="text-primary fw-bold">Semestre ${u.semestre_actual}</small>`;
 
-                // Menú de Acciones Corporativo
                 let menuAcciones = '';
                 if(u.rol !== 'admin') {
                     const iconLock = u.bloqueado ? '<i class="fa-solid fa-unlock text-success w-20px"></i> Desbloquear' : '<i class="fa-solid fa-lock text-danger w-20px"></i> Bloquear Acceso';
@@ -463,29 +506,109 @@
         } catch (err) {}
     }
 
-    async function cargarAuditoria() {
+    // =====================================
+    // LÓGICA DE AUDITORÍA AVANZADA
+    // =====================================
+    async function cargarAuditoriaIAM() {
         try {
-            const res = await fetch(`${API_BASE}/admin/auditoria`);
+            const res = await fetch(`${API_BASE}/admin/auditoria/accesos`);
             const logs = await res.json();
-            const tbody = document.getElementById('tablaAuditoriaBody');
+            const tbody = document.getElementById('tablaAuditoriaRed');
             tbody.innerHTML = '';
             logs.forEach(log => {
-                const badge = log.exitoso ? '<span class="badge bg-success">Concedido</span>' : '<span class="badge bg-danger">Bloqueado</span>';
+                const badgeExito = log.exitoso ? '<span class="badge bg-success">Concedido</span>' : '<span class="badge bg-danger">Denegado</span>';
+                let btnFirewall = `<span class="badge bg-dark text-white"><i class="fa-solid fa-ban"></i> BANEADA</span>`;
+                
+                if(log.esta_baneada == 0 && log.exitoso == 0) {
+                    btnFirewall = `<button class="btn btn-sm btn-outline-danger fw-bold" onclick="banearIP('${log.ip_origen}')">Bloquear IP</button>`;
+                } else if (log.exitoso == 1) {
+                    btnFirewall = `<span class="text-muted small">Acceso Seguro</span>`;
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="text-muted">#${log.id_acceso}</td>
                         <td class="small">${new Date(log.fecha_intento).toLocaleString()}</td>
                         <td class="fw-bold">${log.correo_intentado}</td>
-                        <td class="font-monospace text-muted">${log.ip_origen}</td>
-                        <td>${badge}</td>
+                        <td class="font-monospace fw-bold text-primary">${log.ip_origen}</td>
+                        <td>${badgeExito}</td>
+                        <td>${btnFirewall}</td>
                     </tr>`;
             });
         } catch (err) {}
     }
 
-    // ----------------------------------------------------
-    // LÓGICA CORE: GENERACIÓN Y GUARDADO (MOTOR)
-    // ----------------------------------------------------
+    async function cargarAuditoriaOperaciones() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/auditoria/operaciones`);
+            const logs = await res.json();
+            const tbody = document.getElementById('tablaAuditoriaOps');
+            tbody.innerHTML = '';
+            logs.forEach(log => {
+                let badgeRol = log.rol === 'admin' ? 'bg-dark' : (log.rol === 'coordinadora' ? 'bg-danger' : (log.rol === 'profesor' ? 'bg-info' : 'bg-primary'));
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="small text-muted">${new Date(log.fecha).toLocaleString()}</td>
+                        <td class="fw-bold">${log.usuario}</td>
+                        <td><span class="badge ${badgeRol} text-uppercase">${log.rol}</span></td>
+                        <td><span class="badge bg-light text-dark border border-secondary">${log.accion}</span></td>
+                        <td class="small text-dark">${log.detalles}</td>
+                        <td class="font-monospace small text-muted">${log.ip_origen}</td>
+                    </tr>`;
+            });
+        } catch (err) {}
+    }
+
+    function banearIP(ip_atacante) {
+        Swal.fire({
+            title: '¿Bloquear IP en Firewall?',
+            text: `La red ${ip_atacante} no podrá hacer peticiones al servidor.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, aplicar baneo'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`${API_BASE}/admin/ban_ip`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ip: ip_atacante})
+                }).then(async (res) => {
+                    const data = await res.json();
+                    if(res.ok) {
+                        Swal.fire('Bloqueada', 'La IP ha sido añadida a la lista negra.', 'success');
+                        cargarAuditoriaIAM(); 
+                    } else {
+                        Swal.fire('Atención', data.error, 'info');
+                    }
+                });
+            }
+        });
+    }
+
+    function exportarCSV(nombreBase, idTabla) {
+        let tabla = document.getElementById(idTabla);
+        let filas = tabla.querySelectorAll('tr');
+        let csv = [];
+        for (let i = 0; i < filas.length; i++) {
+            let fila = [], cols = filas[i].querySelectorAll('td, th');
+            for (let j = 0; j < cols.length; j++) {
+                let texto = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                fila.push('"' + texto + '"');
+            }
+            if(filas[i].style.display !== 'none' && fila.length > 0) {
+                csv.push(fila.join(','));
+            }
+        }
+        let csvFile = new Blob([csv.join('\n')], {type: "text/csv;charset=utf-8;"});
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(csvFile);
+        link.download = `${nombreBase}_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    // =====================================
+    // GUARDADO (POST / PUT)
+    // =====================================
     async function guardarUsuarioEstandar(e, rol) {
         e.preventDefault();
         
@@ -493,11 +616,7 @@
         const matriculaAuto = `${prefijo}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
         const passAuto = `Campus${Math.floor(100 + Math.random() * 900)}!`;
 
-        let payload = {
-            matricula: matriculaAuto,
-            password: passAuto,
-            rol: rol
-        };
+        let payload = { matricula: matriculaAuto, password: passAuto, rol: rol };
 
         if(rol === 'alumno') {
             payload.nombre = document.getElementById('alNombre').value;
@@ -521,24 +640,18 @@
             if (res.ok) {
                 bootstrap.Modal.getInstance(document.getElementById(`modal${rol.charAt(0).toUpperCase() + rol.slice(1).replace('oordinadora', 'oordinador')}`)).hide();
                 Swal.fire({
-                    icon: 'success',
-                    title: '¡Registro Exitoso!',
+                    icon: 'success', title: '¡Registro Exitoso!',
                     html: `Entregue estas credenciales al usuario:<br><br>
                            <div class="bg-light p-3 rounded font-monospace fs-5 border">
                              <strong>ID:</strong> ${matriculaAuto}<br>
                              <strong>Pass:</strong> ${passAuto}
                            </div>`,
-                    confirmButtonText: 'Entendido',
-                    confirmButtonColor: '#2563eb'
+                    confirmButtonText: 'Entendido', confirmButtonColor: '#2563eb'
                 });
                 cargarUsuarios();
                 e.target.reset();
-            } else {
-                Swal.fire('Error', data.error, 'error');
-            }
-        } catch (err) {
-            Swal.fire('Error', 'Problema de red con TiDB', 'error');
-        }
+            } else { Swal.fire('Error', data.error, 'error'); }
+        } catch (err) { Swal.fire('Error', 'Problema de red con TiDB', 'error'); }
     }
 
     async function guardarCarrera(e) {
@@ -565,14 +678,9 @@
                 Swal.fire({ icon: 'success', title: 'Plan de Estudios Creado', text: data.mensaje, timer: 2500, showConfirmButton: false });
                 cargarCarrerasSelects();
                 e.target.reset();
-            } else {
-                Swal.fire('Error de Integridad', data.error, 'error');
-            }
-        } catch (err) {
-            Swal.fire('Error de Red', 'Problema de conexión con TiDB', 'error');
-        } finally {
-            btn.innerHTML = textoOriginal; btn.disabled = false;
-        }
+            } else { Swal.fire('Error de Integridad', data.error, 'error'); }
+        } catch (err) { Swal.fire('Error de Red', 'Problema de conexión con TiDB', 'error'); } 
+        finally { btn.innerHTML = textoOriginal; btn.disabled = false; }
     }
 
     async function guardarMateriaAuto(e) {
@@ -584,11 +692,9 @@
         const claveAuto = `${prefijoCarrera}-S${semestre}-${Math.floor(10 + Math.random() * 90)}`;
 
         const payload = {
-            id_carrera: selectCarrera.value,
-            clave: claveAuto,
+            id_carrera: selectCarrera.value, clave: claveAuto,
             nombre: document.getElementById('matNombre').value,
-            semestre: semestre,
-            creditos: document.getElementById('matCreditos').value,
+            semestre: semestre, creditos: document.getElementById('matCreditos').value,
             tipo: document.getElementById('matTipo').value
         };
 
@@ -600,7 +706,7 @@
 
             if (res.ok) {
                 bootstrap.Modal.getInstance(document.getElementById('modalMateria')).hide();
-                Swal.fire({ icon: 'success', title: 'Materia Añadida', text: `Clave oficial generada: ${claveAuto}`, showConfirmButton: false, timer: 2000 });
+                Swal.fire({ icon: 'success', title: 'Materia Añadida', text: `Clave oficial: ${claveAuto}`, showConfirmButton: false, timer: 2000 });
                 cargarMaterias();
                 e.target.reset();
             } else { Swal.fire('Error', data.error, 'error'); }
@@ -615,24 +721,17 @@
     function resetearPassword(correo) {
         Swal.fire({
             title: '¿Forzar restablecimiento?',
-            text: `Se enviará un correo con un código de recuperación a ${correo}`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#2563eb',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, enviar enlace'
+            text: `Se enviará un código de recuperación a ${correo}`,
+            icon: 'warning', showCancelButton: true, confirmButtonColor: '#2563eb', cancelButtonColor: '#d33', confirmButtonText: 'Sí, enviar enlace'
         }).then((result) => {
             if (result.isConfirmed) {
                 fetch(`${API_BASE}/auth/recuperar-solicitar`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({correo: correo})
-                }).then(() => {
-                    Swal.fire('¡Enviado!', 'Instrucciones enviadas al correo del usuario.', 'success');
-                });
+                }).then(() => { Swal.fire('¡Enviado!', 'Instrucciones enviadas al usuario.', 'success'); });
             }
-        })
+        });
     }
 
-    // Inicialización de la vista
     window.addEventListener('DOMContentLoaded', () => {
         cargarStats();
         cargarCarrerasSelects();
