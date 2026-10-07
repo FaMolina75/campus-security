@@ -175,7 +175,7 @@ def cambiar_password():
         if 'conn' in locals(): conn.close()
 
 # ==========================================
-# RUTAS DEL ADMINISTRADOR (AHORA CON AUDITORÍA)
+# RUTAS DEL ADMINISTRADOR
 # ==========================================
 @app.route('/api/admin/stats', methods=['GET'])
 def get_stats():
@@ -188,7 +188,6 @@ def get_stats():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-# NUEVO: Bloqueo de IPs (Lista Negra)
 @app.route('/api/admin/ban_ip', methods=['POST'])
 def ban_ip():
     ip_a_bloquear = request.json.get('ip')
@@ -205,13 +204,11 @@ def ban_ip():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-# RUTAS DE OBTENCIÓN DE AUDITORÍA
 @app.route('/api/admin/auditoria/accesos', methods=['GET'])
 def get_auditoria_accesos():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # Traemos también si la IP está bloqueada para mostrarlo en el front
         sql = """SELECT s.*, IF(i.ip IS NOT NULL, 1, 0) as esta_baneada 
                  FROM seguridad_accesos s LEFT JOIN ips_bloqueadas i ON s.ip_origen = i.ip 
                  ORDER BY s.fecha_intento DESC LIMIT 200"""
@@ -241,16 +238,12 @@ def gestionar_usuarios():
             data = request.json
             rol, id_carrera = data['rol'], data.get('id_carrera')
             semestre_actual = 1 if rol == 'alumno' else 0
-            
             hashed_password = generate_password_hash(data['password'])
             cursor.execute("INSERT INTO usuarios (matricula, nombre, correo, password, rol, id_carrera, semestre_actual) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
                            (data['matricula'], data['nombre'], data['correo'], hashed_password, rol, id_carrera, semestre_actual))
             conn.commit()
-            
-            # Auditoría
-            registrar_operacion("Administrador", "admin", f"ALTA_{rol.upper()}", f"Creó usuario {data['matricula']} ({data['correo']})", request.remote_addr)
+            registrar_operacion("Administrador", "admin", f"ALTA_{rol.upper()}", f"Creó usuario {data['matricula']}", request.remote_addr)
             return jsonify({"mensaje": "Usuario creado"}), 201
-            
         elif request.method == 'GET':
             cursor.execute("SELECT u.id_usuario, u.matricula, u.nombre, u.correo, u.rol, u.bloqueado, u.semestre_actual, c.clave as carrera FROM usuarios u LEFT JOIN carreras c ON u.id_carrera = c.id_carrera ORDER BY u.id_usuario DESC")
             return jsonify(cursor.fetchall()), 200
@@ -266,7 +259,6 @@ def toggle_bloqueo(id_usuario):
         cursor = conn.cursor()
         cursor.execute("UPDATE usuarios SET bloqueado = NOT bloqueado WHERE id_usuario = %s", (id_usuario,))
         conn.commit()
-        registrar_operacion("Administrador", "admin", "TOGGLE_BLOQUEO", f"Cambió estatus de acceso al ID Usuario {id_usuario}", request.remote_addr)
         return jsonify({"mensaje": "Actualizado"}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
@@ -281,7 +273,6 @@ def gestionar_carreras():
             data = request.json
             cursor.execute("INSERT INTO carreras (clave, nombre, duracion_semestres, creditos_totales) VALUES (%s, %s, %s, %s)", (data['clave'].upper(), data['nombre'], data['duracion_semestres'], data['creditos_totales']))
             conn.commit()
-            registrar_operacion("Administrador", "admin", "NUEVA_CARRERA", f"Creó la carrera {data['clave'].upper()}", request.remote_addr)
             return jsonify({"mensaje": "Carrera creada"}), 201
         elif request.method == 'GET':
             cursor.execute("SELECT id_carrera, clave, nombre, duracion_semestres, creditos_totales FROM carreras ORDER BY nombre ASC")
@@ -299,7 +290,6 @@ def gestionar_materias():
             data = request.json
             cursor.execute("INSERT INTO materias (id_carrera, clave, nombre, semestre, creditos, tipo) VALUES (%s, %s, %s, %s, %s, %s)", (data['id_carrera'], data['clave'], data['nombre'], data['semestre'], data['creditos'], data['tipo']))
             conn.commit()
-            registrar_operacion("Administrador", "admin", "NUEVA_MATERIA", f"Añadió la materia {data['clave']} al catálogo", request.remote_addr)
             return jsonify({"mensaje": "Materia agregada"}), 201
         elif request.method == 'GET':
             cursor.execute("SELECT m.clave, m.nombre, m.semestre, m.creditos, m.tipo, c.clave as carrera FROM materias m JOIN carreras c ON m.id_carrera = c.id_carrera ORDER BY m.semestre ASC")
@@ -308,7 +298,6 @@ def gestionar_materias():
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-# LAS RUTAS DE ALUMNO, PROFESOR Y COORDINADOR SIGUEN IGUALES
 # ==========================================
 # RUTAS DE ALUMNO
 # ==========================================
@@ -326,7 +315,6 @@ def actualizar_perfil(id_usuario):
             sql = "UPDATE usuarios SET curp = %s, telefono = %s, direccion = %s, perfil_completo = 1 WHERE id_usuario = %s"
             cursor.execute(sql, (data['curp'], data['telefono'], data['direccion'], id_usuario))
         conn.commit()
-        registrar_operacion(f"ID Alumno {id_usuario}", "alumno", "ACTUALIZAR_PERFIL", "Completó su expediente institucional", request.remote_addr)
         return jsonify({"mensaje": "Expediente actualizado"}), 200
     except Exception as e: return jsonify({"error": str(e)}), 500
     finally:
@@ -351,9 +339,8 @@ def progreso_alumno(id_alumno):
         if 'conn' in locals(): conn.close()
 
 # ==========================================
-# RUTAS DE COORDINADOR Y PROFESOR
+# RUTAS DE COORDINADOR
 # ==========================================
-# (Se conservan intactas, solo agregando auditoría a sus POSTs)
 @app.route('/api/coordinador/inscribir', methods=['POST'])
 def coord_inscribir():
     try:
@@ -362,27 +349,11 @@ def coord_inscribir():
         cursor = conn.cursor()
         cursor.execute("INSERT INTO kardex (id_alumno, id_materia, id_grupo, estatus) VALUES (%s, %s, %s, 'Cursando')", (data['id_alumno'], data['id_materia'], data['id_grupo']))
         conn.commit()
-        registrar_operacion("Coordinador", "coordinadora", "INSCRIPCION_MATERIA", f"Inscribió al alumno ID {data['id_alumno']} en el grupo {data['id_grupo']}", request.remote_addr)
         return jsonify({"mensaje": "Inscrito"}), 201
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
-@app.route('/api/profesor/calificar', methods=['POST'])
-def profesor_calificar_alumno():
-    try:
-        data = request.json
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE kardex SET calificacion = %s, estatus = %s WHERE id_kardex = %s", (data['calificacion'], data['estatus'], data['id_kardex']))
-        conn.commit()
-        registrar_operacion("Profesor", "profesor", "EMISION_CALIFICACION", f"Asentó calificación {data['calificacion']} en Kardex {data['id_kardex']}", request.remote_addr)
-        return jsonify({"mensaje": "Calificación asentada"}), 200
-    finally:
-        if 'cursor' in locals(): cursor.close()
-        if 'conn' in locals(): conn.close()
-
-# (Las rutas GET de profesor y coordinador se mantienen activas para no alargar el script innecesariamente, pero funcionan igual)
 @app.route('/api/coordinador/profesores', methods=['GET'])
 def list_profesores():
     try:
@@ -403,7 +374,6 @@ def gestionar_grupos(id_carrera):
             data = request.json
             cursor.execute("INSERT INTO grupos (id_materia, id_profesor, nombre_grupo, horario, aula) VALUES (%s, %s, %s, %s, %s)", (data['id_materia'], data['id_profesor'], data['nombre_grupo'], data['horario'], data['aula']))
             conn.commit()
-            registrar_operacion("Coordinador", "coordinadora", "APERTURA_GRUPO", f"Creó grupo {data['nombre_grupo']} para carrera {id_carrera}", request.remote_addr)
             return jsonify({"mensaje": "Grupo creado"}), 201
         elif request.method == 'GET':
             cursor.execute("SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, m.nombre as materia, m.semestre, p.nombre as profesor FROM grupos g JOIN materias m ON g.id_materia = m.id_materia LEFT JOIN usuarios p ON g.id_profesor = p.id_usuario WHERE m.id_carrera = %s ORDER BY m.semestre ASC", (id_carrera,))
@@ -448,6 +418,9 @@ def grupos_disponibles(id_alumno):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
+# ==========================================
+# RUTAS DEL PROFESOR
+# ==========================================
 @app.route('/api/profesor/grupos/<int:id_profesor>', methods=['GET'])
 def profesor_get_grupos(id_profesor):
     try:
@@ -471,6 +444,64 @@ def profesor_get_alumnos_grupo(id_grupo):
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
+
+@app.route('/api/profesor/calificar', methods=['POST'])
+def profesor_calificar_alumno():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE kardex SET calificacion = %s, estatus = %s WHERE id_kardex = %s", (data['calificacion'], data['estatus'], data['id_kardex']))
+        conn.commit()
+        return jsonify({"mensaje": "Calificación asentada"}), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# NUEVA RUTA DE SOPORTE TÉCNICO (BREVO)
+# ==========================================
+@app.route('/api/soporte/enviar', methods=['POST'])
+@limiter.limit("3 per hour")
+def enviar_soporte():
+    data = request.json
+    nombre, correo = data.get('nombre'), data.get('correo')
+    asunto, mensaje = data.get('asunto'), data.get('mensaje')
+
+    if not all([nombre, correo, asunto, mensaje]):
+        return jsonify({"error": "Todos los campos son obligatorios"}), 400
+
+    try:
+        llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {"accept": "application/json", "api-key": llave_actual, "content-type": "application/json"}
+        
+        payload = {
+            "sender": {"name": "Campus Soporte IT", "email": EMAIL_SISTEMA},
+            "to": [{"email": EMAIL_SISTEMA, "name": "Administrador"}],
+            "replyTo": {"email": correo, "name": nombre},
+            "subject": f"Ticket de Soporte: {asunto}",
+            "htmlContent": f"""
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #2563eb;">Nuevo Ticket de Asistencia</h2>
+                <p><strong>Usuario:</strong> {nombre}</p>
+                <p><strong>Contacto:</strong> {correo}</p>
+                <hr>
+                <p><strong>Mensaje:</strong></p>
+                <p style="background-color: #f8fafc; padding: 15px; border-left: 4px solid #2563eb;">{mensaje}</p>
+                <hr>
+                <small>Responde directamente a este correo para contactar al usuario.</small>
+            </div>
+            """
+        }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code not in [200, 201]:
+            return jsonify({"error": "Error interno del proveedor de correo."}), 500
+            
+        return jsonify({"mensaje": "Tu mensaje ha sido enviado al equipo de TI. Te contactaremos pronto."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

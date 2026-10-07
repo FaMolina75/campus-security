@@ -3,405 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Seguro | Campus Security v1.0</title>
-    <!-- Fuentes de Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome para iconos -->
+    <title>Campus Security | Iniciar Sesión</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 para alertas pro -->
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
-        :root {
-            --primary: #0f172a; 
-            --accent: #2563eb; 
-            --accent-hover: #1d4ed8;
-            --bg: #f8fafc; 
-            --text: #334155;
-            --border: #e2e8f0;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-
-        body { 
-            display: flex; 
-            height: 100vh; 
-            background-color: var(--bg);
-            overflow: hidden;
-        }
-
-        /* Lado Izquierdo: Imagen Corporativa */
-        .login-banner {
-            flex: 1.2;
-            background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(37,99,235,0.85) 100%), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            padding: 40px;
-            position: relative;
-        }
+        :root { --primary-color: #0f172a; --accent-color: #2563eb; --bg-color: #f1f5f9; }
+        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         
-        .login-banner h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: center; }
-        .login-banner p { font-size: 1.1rem; opacity: 0.9; text-align: center; max-width: 80%; }
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px; }
+        .brand { font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; color: var(--primary-color); }
+        .brand span { color: var(--accent-color); }
         
-        /* Lado Derecho: Formulario */
-        .login-form-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: white;
-            position: relative;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
-        }
-
-        .login-box { width: 100%; max-width: 420px; padding: 40px; }
-
-        .login-header { text-align: center; margin-bottom: 35px; }
-        .login-header h1 { color: var(--primary); font-size: 2rem; font-weight: 700; }
-        .login-header span { color: var(--accent); }
-        .login-header p { color: #64748b; font-size: 0.9rem; margin-top: 5px; }
-
-        .input-group { margin-bottom: 20px; position: relative; }
-        .input-group label { display: block; margin-bottom: 8px; color: var(--text); font-weight: 500; font-size: 0.85rem; }
+        .form-control { padding: 12px 15px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .form-control:focus { border-color: var(--accent-color); box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1); }
         
-        /* Inputs con Iconos */
-        .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
-        .input-wrapper input { 
-            width: 100%; padding: 12px 15px 12px 45px; 
-            border: 1.5px solid var(--border); border-radius: 10px; 
-            font-size: 0.95rem; outline: none; transition: all 0.3s ease; 
-            background: #f8fafc;
-        }
-        .input-wrapper input:focus { border-color: var(--accent); background: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
-        .input-wrapper input:focus + i { color: var(--accent); }
-
-        /* Captcha */
-        .captcha-container { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
-        .captcha-display { 
-            background: #f1f5f9; border-radius: 10px; font-weight: 700; letter-spacing: 8px; 
-            font-size: 1.2rem; color: var(--primary); text-align: center; flex: 1; padding: 12px;
-            user-select: none; font-family: 'Courier New', Courier, monospace; 
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px); 
-            border: 1px dashed #cbd5e1;
-        }
-        .btn-reload { background: #e2e8f0; color: var(--text); border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
-        .btn-reload:hover { background: #cbd5e1; color: var(--primary); }
-
-        /* Botones principales */
-        .btn-submit { 
-            width: 100%; padding: 14px; background: var(--accent); color: white; 
-            border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; 
-            cursor: pointer; transition: all 0.3s; margin-top: 10px;
-            display: flex; justify-content: center; align-items: center; gap: 10px;
-        }
-        .btn-submit:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(37,99,235,0.2); }
-        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: 0.3s; }
-        .btn-link:hover { color: var(--primary); text-decoration: underline; }
+        .btn-login { background-color: var(--accent-color); color: white; padding: 12px; font-weight: bold; border-radius: 8px; border: none; width: 100%; margin-top: 15px; transition: 0.3s; }
+        .btn-login:hover { background-color: #1d4ed8; }
         
-        .links-footer { display: flex; justify-content: space-between; margin-top: 20px; align-items: center; }
-
-        /* Vistas y Animaciones */
-        .auth-view { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
-        .auth-view.active { display: block; opacity: 1; animation: fadeIn 0.4s ease-in-out forwards; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Responsividad */
-        @media (max-width: 850px) {
-            .login-banner { display: none; }
-            .login-form-container { flex: 1; box-shadow: none; }
-            .login-box { padding: 30px; }
-        }
+        .captcha-box { background: #e2e8f0; padding: 15px; border-radius: 8px; text-align: center; font-size: 1.5rem; letter-spacing: 5px; font-family: monospace; font-weight: bold; text-decoration: line-through; user-select: none; }
+        .btn-refresh { background: none; border: none; color: #64748b; cursor: pointer; transition: 0.2s; }
+        .btn-refresh:hover { color: var(--primary-color); }
+        
+        .footer-links { text-align: center; margin-top: 20px; font-size: 0.9rem; }
+        .footer-links a { color: var(--accent-color); text-decoration: none; font-weight: 500; transition: 0.2s; }
+        .footer-links a:hover { color: var(--primary-color); text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <!-- LADO IZQUIERDO: BANNER CORPORATIVO -->
-    <div class="login-banner">
-        <h2>Campus Security</h2>
-        <p>Plataforma integral de gestión académica y control de acceso institucional.</p>
-    </div>
-
-    <!-- LADO DERECHO: FORMULARIOS -->
-    <div class="login-form-container">
-        <div class="login-box">
-            
-            <div class="login-header">
-                <h1>Campus<span>Security</span></h1>
-                <p>Acceso Seguro al Sistema</p>
+<div class="login-card">
+    <div class="brand">Campus<span>Security</span></div>
+    
+    <form id="formLogin" onsubmit="realizarLogin(event)">
+        <div class="mb-3">
+            <label class="form-label text-muted fw-bold small">Correo Electrónico</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+                <input type="email" id="logCorreo" class="form-control border-start-0" placeholder="usuario@campus.edu.mx" required>
             </div>
-
-            <!-- VISTA 1: INICIO DE SESIÓN -->
-            <div id="vista-login" class="auth-view active">
-                <form id="loginForm">
-                    <div class="input-group">
-                        <label>Correo Institucional</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-envelope"></i>
-                            <input type="email" id="correo" placeholder="ejemplo@campus.edu.mx" required>
-                        </div>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label>Contraseña</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="password" placeholder="••••••••" required>
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Verificación de Seguridad</label>
-                        <div class="captcha-container">
-                            <div id="captchaDisplay" class="captcha-display">-----</div>
-                            <button type="button" id="btnReloadCaptcha" class="btn-reload" title="Generar otro código">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                            </button>
-                        </div>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-shield-halved"></i>
-                            <input type="text" id="captchaInput" placeholder="Escribe el código superior" required autocomplete="off">
-                        </div>
-                    </div>
-
-                    <button type="submit" id="btnIngresar" class="btn-submit">
-                        Ingresar al Sistema <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </form>
-
-                <div class="links-footer">
-                    <button type="button" class="btn-link" onclick="cambiarVista('recuperar')">¿Olvidaste tu contraseña?</button>
-                    <button type="button" class="btn-link" onclick="alertaSoporte()" style="color: #64748b;">
-                        <i class="fa-solid fa-headset me-1"></i> Soporte
-                    </button>
-                </div>
-            </div>
-
-            <!-- VISTA 2: RECUPERACIÓN (SOLICITAR) -->
-            <div id="vista-recuperar" class="auth-view">
-                <div class="text-center mb-4">
-                    <i class="fa-solid fa-key" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 10px;"></i>
-                    <p style="font-size: 0.9rem; color: #64748b;">Ingresa tu correo institucional registrado para recibir un código de recuperación.</p>
-                </div>
-                
-                <form id="formRecobrarSolicitar">
-                    <div class="input-group">
-                        <label>Correo Electrónico</label>
-                        <div class="input-wrapper">
-                            <i class="fa-regular fa-envelope"></i>
-                            <input type="email" id="correoRecuperar" placeholder="ejemplo@campus.edu.mx" required>
-                        </div>
-                    </div>
-                    <button type="submit" id="btnSolicitarRec" class="btn-submit">
-                        Enviar Código <i class="fa-regular fa-paper-plane"></i>
-                    </button>
-                </form>
-                <div class="text-center mt-4">
-                    <button type="button" class="btn-link" onclick="cambiarVista('login')"><i class="fa-solid fa-arrow-left"></i> Volver al Acceso</button>
-                </div>
-            </div>
-
-            <!-- VISTA 3: RECUPERACIÓN (CAMBIAR) -->
-            <div id="vista-cambiar" class="auth-view">
-                <div class="text-center mb-4">
-                    <i class="fa-solid fa-unlock-keyhole" style="font-size: 2.5rem; color: var(--success); margin-bottom: 10px;"></i>
-                    <p style="font-size: 0.9rem; color: #64748b;">Introduce el código de 6 dígitos que enviamos a tu correo y tu nueva contraseña.</p>
-                </div>
-
-                <form id="formRecobrarCambiar">
-                    <div class="input-group">
-                        <label>Código de Seguridad (6 dígitos)</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-hashtag"></i>
-                            <input type="text" id="tokenInput" placeholder="Ej. 482910" maxlength="6" required>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>Nueva Contraseña</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="nuevaPassword" placeholder="••••••••" required>
-                        </div>
-                    </div>
-                    <button type="submit" id="btnCambiarPass" class="btn-submit">
-                        Restablecer Contraseña <i class="fa-solid fa-check"></i>
-                    </button>
-                </form>
-                <div class="text-center mt-4">
-                    <button type="button" class="btn-link" onclick="cambiarVista('login')" style="color: #64748b;">Cancelar operación</button>
-                </div>
-            </div>
-
         </div>
+        
+        <div class="mb-3">
+            <label class="form-label text-muted fw-bold small">Contraseña</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" id="logPass" class="form-control border-start-0" placeholder="••••••••" required>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-muted fw-bold small d-flex justify-content-between">
+                Verificación de Seguridad
+                <button type="button" class="btn-refresh" onclick="cargarCaptcha()" title="Generar nuevo código"><i class="fa-solid fa-arrows-rotate"></i></button>
+            </label>
+            <div class="captcha-box text-dark mb-2" id="boxCaptcha">Cargando...</div>
+            <input type="hidden" id="captchaOculto">
+            <input type="text" id="logCaptcha" class="form-control text-center text-uppercase font-monospace fw-bold" placeholder="Escribe el código superior" maxlength="5" required>
+        </div>
+
+        <button type="submit" class="btn-login" id="btnLogin"><i class="fa-solid fa-right-to-bracket me-2"></i> Acceder al Portal</button>
+    </form>
+
+    <div class="footer-links">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#modalRecuperar">¿Olvidaste tu contraseña?</a>
+        <span class="text-muted mx-2">|</span>
+        <a href="#" data-bs-toggle="modal" data-bs-target="#modalSoporte" class="text-danger"><i class="fa-solid fa-headset me-1"></i> Soporte TI</a>
     </div>
+</div>
 
-    <!-- LÓGICA DEL SISTEMA -->
-    <script>
-        const API_URL = 'https://campus-security-v4zh.onrender.com/api/auth';
-        let currentCaptcha = '';
-        let correoEnProceso = '';
+<!-- ==========================================
+     MODAL: RECUPERAR CONTRASEÑA
+=========================================== -->
+<div class="modal fade" id="modalRecuperar" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header text-white" style="background-color: var(--primary-color);">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-key me-2"></i> Restablecer Credenciales</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <p class="text-muted small mb-4">Ingresa tu correo institucional. Te enviaremos un código temporal de recuperación que será válido por 15 minutos.</p>
+        <form id="formRecuperar" onsubmit="solicitarRecuperacion(event)">
+            <div class="mb-4">
+                <label class="form-label fw-bold">Correo Institucional Registrado</label>
+                <input type="email" id="recCorreo" class="form-control" required>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4 fw-bold" id="btnSolicitarRecuperacion"><i class="fa-solid fa-envelope me-2"></i> Enviar Código</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
-        // Función para cambiar vistas con transición
-        function cambiarVista(vista) {
-            document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
-            setTimeout(() => {
-                document.getElementById(`vista-${vista}`).classList.add('active');
-            }, 100);
-            if (vista === 'login') cargarCaptcha();
+<!-- ==========================================
+     MODAL: SOPORTE TÉCNICO (NUEVO)
+=========================================== -->
+<div class="modal fade" id="modalSoporte" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-headset me-2"></i> Centro de Ayuda TI</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <p class="text-muted small mb-4">Si tienes problemas de acceso, tu cuenta está bloqueada o no ves tu información, levanta un ticket y el administrador te contactará por correo.</p>
+        
+        <form id="formSoporte" onsubmit="enviarTicketSoporte(event)">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nombre Completo</label>
+                <input type="text" id="sopNombre" class="form-control" placeholder="Ej. Fabián Molina" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Correo de Contacto</label>
+                <input type="email" id="sopCorreo" class="form-control" placeholder="Donde recibirás la respuesta" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Asunto</label>
+                <select id="sopAsunto" class="form-select" required>
+                    <option value="" selected disabled>Selecciona el problema...</option>
+                    <option value="Cuenta Bloqueada">Cuenta Bloqueada / Suspendida</option>
+                    <option value="Error de Credenciales">Problemas de Contraseña</option>
+                    <option value="Falta de Modulos">Faltan materias / módulos en mi panel</option>
+                    <option value="Otro">Otro problema técnico</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-bold">Descripción del Problema</label>
+                <textarea id="sopMensaje" class="form-control" rows="3" placeholder="Explica detalladamente lo que ocurre..." required></textarea>
+            </div>
+            
+            <div class="text-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-dark px-4 fw-bold" id="btnSoporte">
+                    <i class="fa-solid fa-paper-plane me-2"></i> Enviar Ticket
+                </button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+
+    // Limpiar sesión siempre que entren al login
+    sessionStorage.clear();
+
+    // 1. CARGAR CAPTCHA INICIAL
+    async function cargarCaptcha() {
+        try {
+            const res = await fetch(`${API_BASE}/auth/captcha`);
+            const data = await res.json();
+            document.getElementById('boxCaptcha').innerText = data.captcha_code;
+            document.getElementById('captchaOculto').value = data.captcha_code;
+            document.getElementById('logCaptcha').value = '';
+        } catch (error) {
+            document.getElementById('boxCaptcha').innerText = 'ERROR';
         }
+    }
 
-        // Alerta de Soporte Pro
-        function alertaSoporte() {
-            Swal.fire({
-                icon: 'info',
-                title: 'Soporte Técnico',
-                text: 'El módulo de tickets de soporte estará disponible en la Fase 2 del proyecto.',
-                confirmButtonColor: '#2563eb'
+    // 2. LÓGICA DE INICIO DE SESIÓN
+    async function realizarLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnLogin');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Autenticando...';
+        btn.disabled = true;
+
+        const payload = {
+            correo: document.getElementById('logCorreo').value,
+            password: document.getElementById('logPass').value,
+            captcha_input: document.getElementById('logCaptcha').value.toUpperCase(),
+            captcha_real: document.getElementById('captchaOculto').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
-        }
+            const data = await res.json();
 
-        // Animación de Botón Cargando
-        function setBotonCargando(idBoton, cargando, textoOriginal) {
-            const btn = document.getElementById(idBoton);
-            if (cargando) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Procesando...`;
+            if (res.ok) {
+                // Guardar usuario en sesión local
+                sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
+                
+                // Redirección del Enrutador
+                const rol = data.usuario.rol;
+                if(rol === 'admin') window.location.href = 'dashboards/admin/index.html';
+                else if(rol === 'alumno') window.location.href = 'dashboards/alumno/index.html';
+                else if(rol === 'coordinadora') window.location.href = 'dashboards/coordinador/index.html';
+                else if(rol === 'profesor') window.location.href = 'dashboards/profesor/index.html';
+                else Swal.fire('Error', 'Rol no reconocido en el sistema', 'error');
+
             } else {
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
+                Swal.fire('Acceso Denegado', data.error, 'error');
+                cargarCaptcha();
+                document.getElementById('logPass').value = '';
             }
+        } catch (err) {
+            Swal.fire('Error de Red', 'No se pudo conectar al servidor.', 'error');
+            cargarCaptcha();
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
+    }
 
-        // Lógica Captcha
-        async function cargarCaptcha() {
-            try {
-                const response = await fetch(`${API_URL}/captcha`);
-                const data = await response.json();
-                currentCaptcha = data.captcha_code;
-                document.getElementById('captchaDisplay').textContent = currentCaptcha;
-                document.getElementById('captchaInput').value = ''; 
-            } catch (error) {
-                document.getElementById('captchaDisplay').textContent = "ERROR";
+    // 3. RECUPERAR CONTRASEÑA
+    async function solicitarRecuperacion(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSolicitarRecuperacion');
+        const textBtn = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Procesando...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/recuperar-solicitar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ correo: document.getElementById('recCorreo').value })
+            });
+            const data = await res.json();
+
+            if(res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalRecuperar')).hide();
+                Swal.fire('Código Enviado', 'Revisa tu bandeja de entrada. Recibirás un enlace para ingresar tu código.', 'success');
+            } else {
+                Swal.fire('Error', data.error, 'error');
             }
+        } catch (err) {
+            Swal.fire('Error', 'Problema al contactar al servidor', 'error');
+        } finally {
+            btn.innerHTML = textBtn;
+            btn.disabled = false;
         }
+    }
 
-        window.addEventListener('DOMContentLoaded', cargarCaptcha);
-        document.getElementById('btnReloadCaptcha').addEventListener('click', cargarCaptcha);
+    // 4. NUEVA FUNCIÓN: ENVIAR TICKET DE SOPORTE
+    async function enviarTicketSoporte(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSoporte');
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Enviando...'; 
+        btn.disabled = true;
 
-        // 1. INICIAR SESIÓN
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            setBotonCargando('btnIngresar', true, '');
+        const payload = {
+            nombre: document.getElementById('sopNombre').value,
+            correo: document.getElementById('sopCorreo').value,
+            asunto: document.getElementById('sopAsunto').value,
+            mensaje: document.getElementById('sopMensaje').value
+        };
 
-            const payload = {
-                correo: document.getElementById('correo').value,
-                password: document.getElementById('password').value,
-                captcha_input: document.getElementById('captchaInput').value,
-                captcha_real: currentCaptcha
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        try {
+            const res = await fetch(`${API_BASE}/soporte/enviar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalSoporte')).hide();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Ticket Generado',
+                    text: data.mensaje,
+                    confirmButtonColor: '#0f172a'
                 });
-                const data = await response.json();
-
-                if (response.ok) {
-                    sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Acceso Concedido!',
-                        text: `Bienvenido, ${data.usuario.nombre}`,
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(() => {
-                        // Ruteo por roles
-                        if (data.usuario.rol === 'admin') window.location.href = 'dashboards/admin/index.html';
-                        else if (data.usuario.rol === 'alumno') window.location.href = 'dashboards/alumno/index.html';
-                        else if (data.usuario.rol === 'coordinadora') window.location.href = 'dashboards/coordinadora/index.html';
-                        else if (data.usuario.rol === 'profesor') window.location.href = 'dashboards/profesor/index.html'; // Agregado el rol de profesor
-                        else Swal.fire('Aviso', `Tu panel de ${data.usuario.rol} estará listo pronto.`, 'info');
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: data.error, confirmButtonColor: '#2563eb' });
-                    cargarCaptcha(); 
-                }
-            } catch (error) {
-                Swal.fire({ icon: 'error', title: 'Error de Conexión', text: 'No se pudo contactar con el servidor.', confirmButtonColor: '#2563eb' });
-            } finally {
-                setBotonCargando('btnIngresar', false, 'Ingresar al Sistema <i class="fa-solid fa-arrow-right"></i>');
+                e.target.reset();
+            } else {
+                Swal.fire('Atención', data.error, 'warning');
             }
-        });
+        } catch (error) {
+            Swal.fire('Error de Red', 'No se pudo contactar al servidor de correos.', 'error');
+        } finally {
+            btn.innerHTML = textoOriginal; 
+            btn.disabled = false;
+        }
+    }
 
-        // 2. SOLICITAR RECUPERACIÓN
-        document.getElementById('formRecobrarSolicitar').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            setBotonCargando('btnSolicitarRec', true, '');
-            correoEnProceso = document.getElementById('correoRecuperar').value;
-
-            try {
-                const res = await fetch(`${API_URL}/recuperar-solicitar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ correo: correoEnProceso })
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    Swal.fire({ icon: 'success', title: '¡Código Enviado!', text: data.mensaje, confirmButtonColor: '#2563eb' });
-                    cambiarVista('cambiar');
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo procesar la solicitud', confirmButtonColor: '#2563eb' });
-                }
-            } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Error de Red', text: 'Error de conexión al solicitar recuperación.', confirmButtonColor: '#2563eb' });
-            } finally {
-                setBotonCargando('btnSolicitarRec', false, 'Enviar Código <i class="fa-regular fa-paper-plane"></i>');
-            }
-        });
-
-        // 3. CAMBIAR CONTRASEÑA
-        document.getElementById('formRecobrarCambiar').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            setBotonCargando('btnCambiarPass', true, '');
-
-            const token = document.getElementById('tokenInput').value;
-            const nueva_password = document.getElementById('nuevaPassword').value;
-
-            try {
-                const res = await fetch(`${API_URL}/recuperar-cambiar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ correo: correoEnProceso, token, nueva_password })
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    Swal.fire({
-                        icon: 'success', title: '¡Contraseña Actualizada!', text: data.mensaje, showConfirmButton: false, timer: 2500
-                    }).then(() => {
-                        document.getElementById('formRecobrarSolicitar').reset();
-                        document.getElementById('formRecobrarCambiar').reset();
-                        cambiarVista('login');
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Operación Fallida', text: data.error || 'Código incorrecto o expirado', confirmButtonColor: '#2563eb' });
-                }
-            } catch (err) {
-                Swal.fire({ icon: 'error', title: 'Error de Red', text: 'No se pudo actualizar la contraseña.', confirmButtonColor: '#2563eb' });
-            } finally {
-                setBotonCargando('btnCambiarPass', false, 'Restablecer Contraseña <i class="fa-solid fa-check"></i>');
-            }
-        });
-    </script>
+    // Inicialización al cargar la página
+    window.addEventListener('DOMContentLoaded', cargarCaptcha);
+</script>
 </body>
 </html>
