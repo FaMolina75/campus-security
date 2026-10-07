@@ -4,455 +4,522 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración | Campus Security</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root { --primary: #1e293b; --accent: #3b82f6; --bg: #f8fafc; --text: #334155; --danger: #ef4444; --success: #10b981; --border: #cbd5e1; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        :root { --primary-color: #1e293b; --accent-color: #3b82f6; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
         
-        aside { width: 260px; background: var(--primary); color: white; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; }
-        .sidebar-brand h2 { font-size: 1.4rem; color: white; margin-bottom: 5px; }
-        .sidebar-brand span { color: var(--accent); }
-        .sidebar-menu { list-style: none; margin-top: 30px; }
-        .sidebar-menu li { padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.3s; font-size: 0.95rem; }
-        .sidebar-menu li:hover, .sidebar-menu li.active { background: rgba(255,255,255,0.1); }
+        /* Sidebar Styles */
+        .sidebar { background-color: var(--primary-color); min-height: 100vh; color: white; padding-top: 20px; transition: all 0.3s; }
+        .sidebar .brand { font-size: 1.5rem; font-weight: bold; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
+        .sidebar .brand span { color: var(--accent-color); }
+        .nav-link { color: #cbd5e1; padding: 12px 20px; margin: 5px 15px; border-radius: 8px; transition: all 0.3s; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { background-color: rgba(255,255,255,0.1); color: white; }
+        .nav-link i { width: 25px; text-align: center; margin-right: 10px; }
         
-        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        header { background: white; padding: 20px 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
-        .user-info { font-weight: 500; font-size: 0.9rem; color: #64748b; }
+        /* Main Content Styles */
+        .main-content { padding: 30px; height: 100vh; overflow-y: auto; }
+        .top-header { background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .card-custom { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; padding: 25px; }
         
-        .content-body { padding: 30px; }
+        /* Badges */
+        .badge-admin { background-color: #1e293b; }
+        .badge-coordinadora { background-color: #8b5cf6; }
+        .badge-profesor { background-color: #0ea5e9; }
+        .badge-alumno { background-color: #10b981; }
+
         .section-view { display: none; }
-        .section-view.active { display: block; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border-left: 4px solid var(--accent); }
-        .stat-card h4 { font-size: 0.85rem; color: #64748b; margin-bottom: 8px; }
-        .stat-card .value { font-size: 1.8rem; font-weight: bold; color: var(--primary); }
-
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 25px; }
-        .card h3 { margin-bottom: 15px; color: var(--primary); font-size: 1.2rem; }
-        
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.85rem; }
-        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; }
-        .input-group input:focus, .input-group select:focus { border-color: var(--accent); }
-        
-        .btn { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
-        .btn:hover { background: #2563eb; }
-        .btn-logout { background: var(--danger); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-logout:hover { background: #dc2626; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-        th { background: #f1f5f9; color: var(--primary); font-weight: 600; }
-        
-        .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; display: none; }
-        .alert-success { background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
-        .alert-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+        .section-view.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <aside>
-        <div>
-            <div class="sidebar-brand">
-                <h2>Campus<span>Security</span></h2>
-                <p style="font-size: 0.8rem; color: #94a3b8;">Admin v1.0</p>
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        <!-- Sidebar -->
+        <div class="col-md-2 sidebar d-flex flex-column justify-content-between">
+            <div>
+                <div class="brand">Campus<span>Security</span></div>
+                <ul class="nav flex-column mt-4">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="cambiarSeccion('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="cambiarSeccion('usuarios', this)"><i class="fa-solid fa-users-gear"></i> Gestión Usuarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="cambiarSeccion('materias', this)"><i class="fa-solid fa-book"></i> Catálogo Académico</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" onclick="cambiarSeccion('auditoria', this)"><i class="fa-solid fa-shield-halved"></i> Auditoría (Logs)</a>
+                    </li>
+                </ul>
             </div>
-            <ul class="sidebar-menu">
-                <li class="active" onclick="cambiarSeccion('dashboard', this)">📊 Dashboard</li>
-                <li onclick="cambiarSeccion('usuarios', this)">👥 Gestión Usuarios</li>
-                <li onclick="cambiarSeccion('materias', this)">📚 Catálogo Académico</li>
-            </ul>
+            <div class="p-3">
+                <button class="btn btn-danger w-100 shadow-sm" onclick="cerrarSesion()"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+            </div>
         </div>
-        <button class="btn-logout" onclick="cerrarSesion()">Cerrar Sesión</button>
-    </aside>
 
-    <main>
-        <header>
-            <h2 id="tituloSeccion">Dashboard Principal</h2>
-            <div class="user-info">Hola, <span id="nombreAdmin">Administrador General</span></div>
-        </header>
+        <!-- Main Content -->
+        <div class="col-md-10 main-content bg-light">
+            <div class="top-header">
+                <h4 id="tituloSeccion" class="m-0 text-secondary fw-bold">Dashboard Principal</h4>
+                <div class="d-flex align-items-center">
+                    <i class="fa-solid fa-user-shield fs-4 text-primary me-2"></i>
+                    <span id="nombreAdmin" class="fw-bold text-dark">Admin</span>
+                </div>
+            </div>
 
-        <div class="content-body">
-            
-            <!-- SECCIÓN 1: DASHBOARD / STATS -->
+            <!-- SECCIÓN 1: DASHBOARD -->
             <div id="seccion-dashboard" class="section-view active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h4>Total Usuarios</h4>
-                        <div class="value" id="statUsuarios">--</div>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card-custom border-start border-primary border-4">
+                            <h6 class="text-muted">Total Usuarios Registrados</h6>
+                            <h2 class="fw-bold text-primary mb-0" id="statUsuarios">0</h2>
+                        </div>
                     </div>
-                    <div class="stat-card" style="border-left-color: var(--success);">
-                        <h4>Materias Registradas</h4>
-                        <div class="value" id="statMaterias">--</div>
+                    <div class="col-md-4">
+                        <div class="card-custom border-start border-success border-4">
+                            <h6 class="text-muted">Materias Activas</h6>
+                            <h2 class="fw-bold text-success mb-0" id="statMaterias">0</h2>
+                        </div>
                     </div>
-                    <div class="stat-card" style="border-left-color: var(--danger);">
-                        <h4>Bloqueos / Alertas</h4>
-                        <div class="value" id="statAlertas">--</div>
+                    <div class="col-md-4">
+                        <div class="card-custom border-start border-danger border-4">
+                            <h6 class="text-muted">Alertas de Seguridad</h6>
+                            <h2 class="fw-bold text-danger mb-0" id="statAlertas">0</h2>
+                        </div>
                     </div>
                 </div>
-                <div class="card">
-                    <h3>Estado del Sistema en la Nube</h3>
-                    <p style="color: #64748b; font-size: 0.9rem;">El sistema se encuentra conectado correctamente a la base de datos distribuida en AWS TiDB Cloud con sincronización en tiempo real vía Flask y Render.</p>
+                <div class="card-custom text-center py-5">
+                    <i class="fa-brands fa-aws fs-1 text-warning mb-3"></i>
+                    <h4>Sistema Conectado a AWS TiDB Cloud</h4>
+                    <p class="text-muted">La infraestructura distribuida opera con normalidad y baja latencia.</p>
                 </div>
             </div>
 
             <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
             <div id="seccion-usuarios" class="section-view">
-                <div class="card">
-                    <h3>Registrar Nuevo Usuario</h3>
-                    <div id="alertUsuario" class="alert"></div>
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-user-plus me-2"></i> Alta de Nuevo Usuario</h5>
                     <form id="formUsuario">
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label>Matrícula</label>
-                                <input type="text" id="matUsuario" placeholder="Ej. PROF-2026-001" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Nombre Completo</label>
-                                <input type="text" id="nomUsuario" placeholder="Nombre y apellidos" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Correo Institucional</label>
-                                <input type="email" id="correoUsuario" placeholder="usuario@campus.edu.mx" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Contraseña Temporal</label>
-                                <input type="text" id="passUsuario" placeholder="••••••••" required>
-                            </div>
-                            <div class="input-group">
-                                <label>Rol del Sistema</label>
-                                <select id="rolUsuario" required onchange="toggleCarreraSelect(this.value)">
-                                    <option value="admin">Administrador</option>
-                                    <option value="coordinadora">Coordinadora</option>
-                                    <option value="profesor">Profesor</option>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Rol del Sistema</label>
+                                <select class="form-select" id="rolUsuario" required onchange="toggleCarreraSelect(this.value)">
+                                    <option value="" disabled selected>Seleccione un rol...</option>
+                                    <option value="admin">Administrador General</option>
+                                    <option value="coordinadora">Coordinador de Carrera</option>
+                                    <option value="profesor">Profesor (Docente)</option>
                                     <option value="alumno">Alumno</option>
                                 </select>
                             </div>
-                            <div class="input-group" id="groupCarrera" style="display: none;">
-                                <label>Carrera Asignada (Solo Coordinadora)</label>
-                                <select id="selectCarreraCoord">
-                                    <option value="">Seleccione carrera...</option>
+                            <div class="col-md-4">
+                                <label class="form-label">Matrícula / ID</label>
+                                <input type="text" class="form-control" id="matUsuario" placeholder="Ej. AL-2026-001" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="nomUsuario" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Correo Institucional</label>
+                                <input type="email" class="form-control" id="correoUsuario" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contraseña Temporal</label>
+                                <input type="password" class="form-control" id="passUsuario" required>
+                            </div>
+                            <div class="col-md-4" id="groupCarrera" style="display: none;">
+                                <label class="form-label text-danger fw-bold"><i class="fa-solid fa-graduation-cap"></i> Carrera Asignada</label>
+                                <select class="form-select border-danger" id="selectCarreraCoord">
+                                    <option value="">Cargando...</option>
                                 </select>
+                                <small class="text-muted" id="hintCarrera"></small>
                             </div>
                         </div>
-                        <button type="submit" class="btn">Guardar Usuario</button>
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm" id="btnGuardarUser">
+                                <i class="fa-solid fa-save"></i> Registrar Usuario
+                            </button>
+                        </div>
                     </form>
                 </div>
 
-                <div class="card">
-                    <h3>Directorio de Usuarios del Sistema</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Matrícula</th>
-                                <th>Nombre</th>
-                                <th>Correo</th>
-                                <th>Rol</th>
-                                <th>Carrera</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaUsuariosBody">
-                            <tr><td colspan="6" style="text-align: center;">Cargando usuarios...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="card-custom">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0"><i class="fa-solid fa-address-book me-2"></i> Directorio Activo</h5>
+                        <input type="text" id="buscadorUsuarios" class="form-control w-25" placeholder="🔍 Buscar matrícula o nombre..." onkeyup="filtrarTabla('tablaUsuariosBody', this.value)">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Matrícula</th>
+                                    <th>Nombre</th>
+                                    <th>Correo</th>
+                                    <th>Rol</th>
+                                    <th>Carrera / Semestre</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUsuariosBody">
+                                <!-- Llenado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- SECCIÓN 3: CATÁLOGO ACADÉMICO -->
             <div id="seccion-materias" class="section-view">
-                <div class="card">
-                    <h3>Agregar Materia al Plan de Estudios</h3>
-                    <div id="alertMateria" class="alert"></div>
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-folder-plus me-2"></i> Nueva Materia al Plan</h5>
                     <form id="formMateria">
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label>Carrera</label>
-                                <select id="selectCarreraMateria" required><option value="">Cargando carreras...</option></select>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Carrera Perteneciente</label>
+                                <select class="form-select" id="selectCarreraMateria" required></select>
                             </div>
-                            <div class="input-group">
-                                <label>Clave de Materia</label>
-                                <input type="text" id="claveMateria" placeholder="Ej. TIC-103" required>
+                            <div class="col-md-3">
+                                <label class="form-label">Clave Oficial</label>
+                                <input type="text" class="form-control" id="claveMateria" required>
                             </div>
-                            <div class="input-group">
-                                <label>Nombre de la Materia</label>
-                                <input type="text" id="nombreMateria" placeholder="Ej. Estructuras de Datos" required>
+                            <div class="col-md-3">
+                                <label class="form-label">Semestre</label>
+                                <input type="number" class="form-control" id="semestreMateria" min="1" max="12" required>
                             </div>
-                            <div class="input-group">
-                                <label>Semestre</label>
-                                <input type="number" id="semestreMateria" min="1" max="10" placeholder="1" required>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de la Materia</label>
+                                <input type="text" class="form-control" id="nombreMateria" required>
                             </div>
-                            <div class="input-group">
-                                <label>Créditos</label>
-                                <input type="number" id="creditosMateria" min="1" max="15" placeholder="5" required>
+                            <div class="col-md-3">
+                                <label class="form-label">Créditos</label>
+                                <input type="number" class="form-control" id="creditosMateria" min="1" max="20" required>
                             </div>
-                            <div class="input-group">
-                                <label>Tipo</label>
-                                <select id="tipoMateria" required>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipo de Asignatura</label>
+                                <select class="form-select" id="tipoMateria" required>
                                     <option value="Normal">Normal</option>
                                     <option value="Servicio_Social">Servicio Social</option>
-                                    <option value="Residencia">Residencia Profesional</option>
+                                    <option value="Residencia">Residencia</option>
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn">Registrar Materia</button>
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-success px-4 shadow-sm" id="btnGuardarMateria">
+                                <i class="fa-solid fa-plus"></i> Añadir Materia
+                            </button>
+                        </div>
                     </form>
                 </div>
 
-                <div class="card">
-                    <h3>Materias Activas</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Clave</th>
-                                <th>Materia</th>
-                                <th>Semestre</th>
-                                <th>Créditos</th>
-                                <th>Tipo</th>
-                                <th>Carrera</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaMateriasBody">
-                            <tr><td colspan="6" style="text-align: center;">Cargando materias...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="card-custom">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold m-0"><i class="fa-solid fa-list me-2"></i> Retícula Activa</h5>
+                        <input type="text" class="form-control w-25" placeholder="🔍 Buscar materia..." onkeyup="filtrarTabla('tablaMateriasBody', this.value)">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Materia</th>
+                                    <th>Semestre</th>
+                                    <th>Créditos</th>
+                                    <th>Tipo</th>
+                                    <th>Carrera</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMateriasBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: AUDITORÍA DE SEGURIDAD (NUEVO) -->
+            <div id="seccion-auditoria" class="section-view">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3 text-warning"><i class="fa-solid fa-user-secret me-2"></i> Monitor de Intentos de Acceso (IAM)</h5>
+                    <p class="text-muted small">Este log registra todas las peticiones de inicio de sesión a la API. Los fallos pueden indicar olvido de contraseña o intentos de ataque por fuerza bruta.</p>
+                    
+                    <div class="table-responsive mt-4">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID Evento</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Correo Intentado</th>
+                                    <th>IP Origen</th>
+                                    <th>Estatus de Red</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaAuditoriaBody">
+                                <tr><td colspan="5" class="text-center">Cargando logs de seguridad...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
         </div>
-    </main>
+    </div>
+</div>
 
-    <script>
-        const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
-        const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+<script>
+    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+    
+    // Validación de Sesión
+    const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+    if (!usuario || usuario.rol !== 'admin') {
+        Swal.fire({ icon: 'error', title: 'Acceso Denegado', text: 'No tienes privilegios de Administrador', confirmButtonColor: '#1e293b' })
+        .then(() => window.location.href = '../../index.html');
+    } else {
+        document.getElementById('nombreAdmin').textContent = usuario.nombre;
+    }
 
-        if (!usuario || usuario.rol !== 'admin') {
-            alert('Acceso no autorizado.');
-            window.location.href = '../../index.html';
+    // Navegación
+    function cambiarSeccion(seccionId, elementoLi) {
+        document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(li => li.classList.remove('active'));
+        document.getElementById(`seccion-${seccionId}`).classList.add('active');
+        elementoLi.classList.add('active');
+
+        const titulos = {
+            'dashboard': 'Dashboard Principal',
+            'usuarios': 'Gestión de Roles e Identidades',
+            'materias': 'Catálogo y Plan de Estudios',
+            'auditoria': 'Auditoría y Monitoreo de Red'
+        };
+        document.getElementById('tituloSeccion').textContent = titulos[seccionId];
+
+        if (seccionId === 'dashboard') cargarStats();
+        if (seccionId === 'usuarios') { cargarUsuarios(); cargarCarrerasSelects(); }
+        if (seccionId === 'materias') { cargarMaterias(); cargarCarrerasSelects(); }
+        if (seccionId === 'auditoria') cargarAuditoria();
+    }
+
+    function cerrarSesion() {
+        sessionStorage.clear();
+        window.location.href = '/index.html';
+    }
+
+    // Buscador genérico de tablas
+    function filtrarTabla(idTabla, texto) {
+        const filas = document.getElementById(idTabla).getElementsByTagName('tr');
+        texto = texto.toLowerCase();
+        for (let i = 0; i < filas.length; i++) {
+            filas[i].style.display = filas[i].innerText.toLowerCase().includes(texto) ? '' : 'none';
+        }
+    }
+
+    // Lógica Estricta de Formularios
+    function toggleCarreraSelect(rol) {
+        const group = document.getElementById('groupCarrera');
+        const select = document.getElementById('selectCarreraCoord');
+        const hint = document.getElementById('hintCarrera');
+        
+        if (rol === 'coordinadora' || rol === 'alumno') {
+            group.style.display = 'block';
+            select.required = true;
+            hint.textContent = rol === 'alumno' ? 'El alumno ingresará automáticamente a Semestre 1.' : 'El coordinador solo tendrá acceso a esta carrera.';
         } else {
-            document.getElementById('nombreAdmin').textContent = usuario.nombre || 'Administrador General';
+            group.style.display = 'none';
+            select.required = false;
+            select.value = "";
         }
+    }
 
-        function cambiarSeccion(seccionId, elementoLi) {
-            document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
-            document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
-            document.getElementById(`seccion-${seccionId}`).classList.add('active');
-            elementoLi.classList.add('active');
+    // Carga de Selects de Carrera
+    async function cargarCarrerasSelects() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/carreras`);
+            const carreras = await res.json();
+            const selCoord = document.getElementById('selectCarreraCoord');
+            const selMat = document.getElementById('selectCarreraMateria');
+            
+            selCoord.innerHTML = '<option value="" selected disabled>Seleccione la carrera...</option>';
+            selMat.innerHTML = '<option value="" selected disabled>Seleccione la carrera...</option>';
+            
+            carreras.forEach(c => {
+                selCoord.innerHTML += `<option value="${c.id_carrera}">${c.nombre} (${c.clave})</option>`;
+                selMat.innerHTML += `<option value="${c.id_carrera}">${c.nombre} (${c.clave})</option>`;
+            });
+        } catch (err) { console.error("Error al cargar carreras:", err); }
+    }
 
-            const titulos = {
-                'dashboard': 'Dashboard Principal',
-                'usuarios': 'Gestión de Usuarios',
-                'materias': 'Catálogo Académico'
-            };
-            document.getElementById('tituloSeccion').textContent = titulos[seccionId];
+    // API Calls - Lectura
+    async function cargarStats() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/stats`);
+            const stats = await res.json();
+            document.getElementById('statUsuarios').textContent = stats.usuarios || 0;
+            document.getElementById('statMaterias').textContent = stats.materias || 0;
+            document.getElementById('statAlertas').textContent = stats.alertas || 0;
+        } catch (err) {}
+    }
 
-            if (seccionId === 'dashboard') cargarStats();
-            if (seccionId === 'usuarios') cargarUsuarios();
-            if (seccionId === 'materias') cargarMaterias();
-        }
+    async function cargarAuditoria() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/auditoria`);
+            const logs = await res.json();
+            const tbody = document.getElementById('tablaAuditoriaBody');
+            tbody.innerHTML = '';
+            
+            logs.forEach(log => {
+                const badge = log.exitoso ? '<span class="badge bg-success">Acceso Concedido</span>' : '<span class="badge bg-danger">Bloqueado / Fallido</span>';
+                const fecha = new Date(log.fecha_intento).toLocaleString('es-MX');
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="text-muted fw-bold">#${log.id_acceso}</td>
+                        <td>${fecha}</td>
+                        <td class="fw-bold">${log.correo_intentado}</td>
+                        <td><code>${log.ip_origen}</code></td>
+                        <td>${badge}</td>
+                    </tr>`;
+            });
+        } catch (err) {}
+    }
 
-        function cerrarSesion() {
-            sessionStorage.clear();
-            window.location.href = '/index.html';
-        }
-
-        function toggleCarreraSelect(rol) {
-            const group = document.getElementById('groupCarrera');
-            group.style.display = rol === 'coordinadora' ? 'block' : 'none';
-        }
-
-        async function cargarCarrerasSelects() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/carreras`);
-                const carreras = await res.json();
+    async function cargarUsuarios() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/usuarios`);
+            const usuarios = await res.json();
+            const tbody = document.getElementById('tablaUsuariosBody');
+            tbody.innerHTML = '';
+            
+            usuarios.forEach(u => {
+                const btnLock = u.bloqueado 
+                    ? `<button onclick="toggleBloqueo(${u.id_usuario})" class="btn btn-sm btn-success"><i class="fa-solid fa-unlock"></i> Desbloquear</button>`
+                    : `<button onclick="toggleBloqueo(${u.id_usuario})" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-lock"></i> Bloquear</button>`;
                 
-                const selCoord = document.getElementById('selectCarreraCoord');
-                const selMat = document.getElementById('selectCarreraMateria');
-                
-                selCoord.innerHTML = '<option value="">Seleccione carrera...</option>';
-                selMat.innerHTML = '<option value="">Seleccione carrera...</option>';
-                
-                carreras.forEach(c => {
-                    selCoord.innerHTML += `<option value="${c.id_carrera}">${c.nombre} (${c.clave})</option>`;
-                    selMat.innerHTML += `<option value="${c.id_carrera}">${c.nombre} (${c.clave})</option>`;
-                });
-            } catch (err) {
-                console.error("Error al cargar carreras:", err);
+                let carreraTexto = u.carrera || '<span class="text-muted">Global (Todas)</span>';
+                if(u.rol === 'alumno') carreraTexto += ` <br><small class="text-primary fw-bold">Semestre ${u.semestre_actual}</small>`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold text-secondary">${u.matricula}</td>
+                        <td>${u.nombre}</td>
+                        <td>${u.correo}</td>
+                        <td><span class="badge badge-${u.rol} text-uppercase px-2 py-1">${u.rol}</span></td>
+                        <td>${carreraTexto}</td>
+                        <td>${u.rol !== 'admin' ? btnLock : '<span class="text-muted small">No aplicable</span>'}</td>
+                    </tr>`;
+            });
+        } catch (err) {}
+    }
+
+    async function cargarMaterias() {
+        try {
+            const res = await fetch(`${API_BASE}/admin/materias`);
+            const materias = await res.json();
+            const tbody = document.getElementById('tablaMateriasBody');
+            tbody.innerHTML = '';
+
+            materias.forEach(m => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="fw-bold text-primary">${m.clave}</td>
+                        <td>${m.nombre}</td>
+                        <td><span class="badge bg-secondary">Semestre ${m.semestre}</span></td>
+                        <td>${m.creditos}</td>
+                        <td>${m.tipo}</td>
+                        <td class="text-muted">${m.carrera}</td>
+                    </tr>`;
+            });
+        } catch (err) {}
+    }
+
+    // Formularios Submit (Alta de Datos con SweetAlert)
+    document.getElementById('formUsuario').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnGuardarUser');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
+
+        const payload = {
+            matricula: document.getElementById('matUsuario').value,
+            nombre: document.getElementById('nomUsuario').value,
+            correo: document.getElementById('correoUsuario').value,
+            password: document.getElementById('passUsuario').value,
+            rol: document.getElementById('rolUsuario').value,
+            id_carrera: document.getElementById('selectCarreraCoord').value || null
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/usuarios`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                Swal.fire({ icon: 'success', title: '¡Usuario Creado!', text: data.mensaje, timer: 2000, showConfirmButton: false });
+                document.getElementById('formUsuario').reset();
+                toggleCarreraSelect('');
+                cargarUsuarios();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error de validación', text: data.error });
             }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error de Red', text: 'No se pudo conectar con el servidor AWS.' });
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-save"></i> Registrar Usuario'; btn.disabled = false;
         }
+    });
 
-        async function cargarStats() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/stats`);
-                const stats = await res.json();
-                document.getElementById('statUsuarios').textContent = stats.usuarios || 0;
-                document.getElementById('statMaterias').textContent = stats.materias || 0;
-                document.getElementById('statAlertas').textContent = stats.alertas || 0;
-            } catch (err) {
-                console.error("Error al cargar estadísticas:", err);
+    document.getElementById('formMateria').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnGuardarMateria');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
+
+        const payload = {
+            id_carrera: document.getElementById('selectCarreraMateria').value,
+            clave: document.getElementById('claveMateria').value,
+            nombre: document.getElementById('nombreMateria').value,
+            semestre: document.getElementById('semestreMateria').value,
+            creditos: document.getElementById('creditosMateria').value,
+            tipo: document.getElementById('tipoMateria').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/materias`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                Swal.fire({ icon: 'success', title: '¡Materia Añadida!', text: data.mensaje, timer: 2000, showConfirmButton: false });
+                document.getElementById('formMateria').reset();
+                cargarMaterias();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Error', text: data.error });
             }
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error de Red', text: 'No se pudo conectar con el servidor AWS.' });
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> Añadir Materia'; btn.disabled = false;
         }
+    });
 
-        async function cargarUsuarios() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/usuarios`);
-                const usuarios = await res.json();
-                const tbody = document.getElementById('tablaUsuariosBody');
-                tbody.innerHTML = '';
-                
-                if (usuarios.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay usuarios registrados.</td></tr>';
-                    return;
-                }
-
-                usuarios.forEach(u => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${u.matricula}</strong></td>
-                            <td>${u.nombre}</td>
-                            <td>${u.correo}</td>
-                            <td><span style="padding: 3px 8px; border-radius: 4px; background: #e2e8f0; font-size: 0.8rem;">${u.rol}</span></td>
-                            <td>${u.carrera || 'N/A'}</td>
-                            <td>
-                                <button onclick="toggleBloqueo(${u.id_usuario})" class="btn" style="padding: 5px 10px; font-size: 0.75rem; background: ${u.bloqueado ? '#10b981' : '#ef4444'};">
-                                    ${u.bloqueado ? 'Desbloquear' : 'Bloquear'}
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (err) {
-                console.error("Error al cargar usuarios:", err);
-            }
+    async function toggleBloqueo(idUsuario) {
+        const res = await fetch(`${API_BASE}/admin/usuarios/${idUsuario}/bloquear`, { method: 'PUT' });
+        if (res.ok) {
+            Swal.fire({ icon: 'success', title: 'Estado Actualizado', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            cargarUsuarios();
         }
+    }
 
-        async function cargarMaterias() {
-            try {
-                const res = await fetch(`${API_BASE}/admin/materias`);
-                const materias = await res.json();
-                const tbody = document.getElementById('tablaMateriasBody');
-                tbody.innerHTML = '';
-
-                if (materias.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay materias registradas.</td></tr>';
-                    return;
-                }
-
-                materias.forEach(m => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${m.clave}</strong></td>
-                            <td>${m.nombre}</td>
-                            <td>Semestre ${m.semestre}</td>
-                            <td>${m.creditos}</td>
-                            <td>${m.tipo}</td>
-                            <td>${m.carrera}</td>
-                        </tr>
-                    `;
-                });
-            } catch (err) {
-                console.error("Error al cargar materias:", err);
-            }
-        }
-
-        document.getElementById('formUsuario').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const alertBox = document.getElementById('alertUsuario');
-            alertBox.style.display = 'none';
-
-            const payload = {
-                matricula: document.getElementById('matUsuario').value,
-                nombre: document.getElementById('nomUsuario').value,
-                correo: document.getElementById('correoUsuario').value,
-                password: document.getElementById('passUsuario').value,
-                rol: document.getElementById('rolUsuario').value,
-                id_carrera: document.getElementById('selectCarreraCoord').value || null
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/admin/usuarios`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    alertBox.className = 'alert alert-success';
-                    alertBox.textContent = data.mensaje;
-                    alertBox.style.display = 'block';
-                    document.getElementById('formUsuario').reset();
-                    document.getElementById('groupCarrera').style.display = 'none';
-                    cargarUsuarios();
-                } else {
-                    alertBox.className = 'alert alert-error';
-                    alertBox.textContent = data.error || 'Error al registrar usuario';
-                    alertBox.style.display = 'block';
-                }
-            } catch (err) {
-                alertBox.className = 'alert alert-error';
-                alertBox.textContent = 'Error de conexión con el servidor.';
-                alertBox.style.display = 'block';
-            }
-        });
-
-        document.getElementById('formMateria').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const alertBox = document.getElementById('alertMateria');
-            alertBox.style.display = 'none';
-
-            const payload = {
-                id_carrera: document.getElementById('selectCarreraMateria').value,
-                clave: document.getElementById('claveMateria').value,
-                nombre: document.getElementById('nombreMateria').value,
-                semestre: document.getElementById('semestreMateria').value,
-                creditos: document.getElementById('creditosMateria').value,
-                tipo: document.getElementById('tipoMateria').value
-            };
-
-            try {
-                const res = await fetch(`${API_BASE}/admin/materias`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-
-                if (res.ok) {
-                    alertBox.className = 'alert alert-success';
-                    alertBox.textContent = data.mensaje;
-                    alertBox.style.display = 'block';
-                    document.getElementById('formMateria').reset();
-                    cargarMaterias();
-                } else {
-                    alertBox.className = 'alert alert-error';
-                    alertBox.textContent = data.error || 'Error al registrar materia';
-                    alertBox.style.display = 'block';
-                }
-            } catch (err) {
-                alertBox.className = 'alert alert-error';
-                alertBox.textContent = 'Error de conexión con el servidor.';
-                alertBox.style.display = 'block';
-            }
-        });
-
-        async function toggleBloqueo(idUsuario) {
-            try {
-                const res = await fetch(`${API_BASE}/admin/usuarios/${idUsuario}/bloquear`, { method: 'PUT' });
-                if (res.ok) {
-                    cargarUsuarios();
-                }
-            } catch (err) {
-                console.error("Error al actualizar estado del usuario:", err);
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            cargarStats();
-            cargarCarrerasSelects();
-        });
-    </script>
+    // Inicialización
+    window.addEventListener('DOMContentLoaded', () => {
+        cargarStats();
+        cargarCarrerasSelects();
+    });
+</script>
 </body>
 </html>
