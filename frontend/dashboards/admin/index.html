@@ -138,7 +138,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-bold m-0"><i class="fa-solid fa-book-open text-success me-2"></i> Retícula Académica</h5>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline-dark" onclick="abrirModalCarrera()"><i class="fa-solid fa-building-columns me-1"></i> Nueva Carrera</button>
+                            <button class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalCarrera"><i class="fa-solid fa-building-columns me-1"></i> Nueva Carrera</button>
                             <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalMateria"><i class="fa-solid fa-folder-plus me-1"></i> + Materia</button>
                         </div>
                     </div>
@@ -263,6 +263,38 @@
             </div>
             <div class="mt-4 text-end">
                 <button type="submit" class="btn btn-dark px-4">Asignar Coordinador</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear Carrera -->
+<div class="modal fade" id="modalCarrera" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-building-columns me-2"></i> Alta de Nueva Carrera</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <form id="formCarrera" onsubmit="guardarCarrera(event)">
+            <div class="mb-3">
+                <label class="form-label">Nombre Oficial de la Carrera</label>
+                <input type="text" id="carNombre" class="form-control" placeholder="Ej. Ingeniería en Sistemas Computacionales" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-primary fw-bold">Clave / Prefijo (Obligatorio)</label>
+                <input type="text" id="carClave" class="form-control text-uppercase border-primary" maxlength="5" placeholder="Ej. ISC" required>
+                <small class="text-muted">Se usará para generar las claves automáticas de las materias (Ej. ISC-101).</small>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-6"><label class="form-label">Total de Semestres</label><input type="number" id="carSemestres" class="form-control" min="1" max="14" value="9" required></div>
+                <div class="col-6"><label class="form-label">Créditos Totales</label><input type="number" id="carCreditos" class="form-control" min="1" value="260" required></div>
+            </div>
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-secondary px-4"><i class="fa-solid fa-save me-2"></i> Registrar Carrera</button>
             </div>
         </form>
       </div>
@@ -457,7 +489,6 @@
     async function guardarUsuarioEstandar(e, rol) {
         e.preventDefault();
         
-        // Simulación de Generador Automático (Backend lo hará oficial en el futuro)
         const prefijo = rol === 'alumno' ? 'AL' : (rol === 'profesor' ? 'PR' : 'CO');
         const matriculaAuto = `${prefijo}-2026-${Math.floor(1000 + Math.random() * 9000)}`;
         const passAuto = `Campus${Math.floor(100 + Math.random() * 900)}!`;
@@ -468,7 +499,6 @@
             rol: rol
         };
 
-        // Recolectar datos según el rol
         if(rol === 'alumno') {
             payload.nombre = document.getElementById('alNombre').value;
             payload.correo = document.getElementById('alCorreo').value;
@@ -489,10 +519,7 @@
             const data = await res.json();
 
             if (res.ok) {
-                // Cerrar modal actual
                 bootstrap.Modal.getInstance(document.getElementById(`modal${rol.charAt(0).toUpperCase() + rol.slice(1).replace('oordinadora', 'oordinador')}`)).hide();
-                
-                // Mostrar credenciales al administrador
                 Swal.fire({
                     icon: 'success',
                     title: '¡Registro Exitoso!',
@@ -514,10 +541,43 @@
         }
     }
 
+    async function guardarCarrera(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const textoOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
+
+        const payload = {
+            clave: document.getElementById('carClave').value.toUpperCase(),
+            nombre: document.getElementById('carNombre').value,
+            duracion_semestres: document.getElementById('carSemestres').value,
+            creditos_totales: document.getElementById('carCreditos').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/admin/carreras`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalCarrera')).hide();
+                Swal.fire({ icon: 'success', title: 'Plan de Estudios Creado', text: data.mensaje, timer: 2500, showConfirmButton: false });
+                cargarCarrerasSelects();
+                e.target.reset();
+            } else {
+                Swal.fire('Error de Integridad', data.error, 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error de Red', 'Problema de conexión con TiDB', 'error');
+        } finally {
+            btn.innerHTML = textoOriginal; btn.disabled = false;
+        }
+    }
+
     async function guardarMateriaAuto(e) {
         e.preventDefault();
         
-        // Generador Automático de Claves para Materias (Prefijo Carrera + Semestre + Random)
         const selectCarrera = document.getElementById('matSelectCarrera');
         const prefijoCarrera = selectCarrera.options[selectCarrera.selectedIndex].dataset.clave || 'GEN';
         const semestre = document.getElementById('matSemestre').value;
@@ -563,7 +623,6 @@
             confirmButtonText: 'Sí, enviar enlace'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Aquí conectarías a tu ruta de recuperar-solicitar que ya programamos en app.py
                 fetch(`${API_BASE}/auth/recuperar-solicitar`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({correo: correo})
                 }).then(() => {
@@ -571,15 +630,6 @@
                 });
             }
         })
-    }
-
-    function abrirModalCarrera() {
-        Swal.fire({
-            title: 'Módulo en desarrollo',
-            text: 'La creación de carreras (Ingeniería Civil, Arquitectura, etc.) debe ser inyectada desde la base de datos por el equipo de TI para garantizar la estructura del clúster.',
-            icon: 'info',
-            confirmButtonColor: '#0f172a'
-        });
     }
 
     // Inicialización de la vista
