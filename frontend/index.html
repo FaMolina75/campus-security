@@ -124,7 +124,7 @@
 </div>
 
 <!-- ==========================================
-     MODAL: RECUPERAR CONTRASEÑA
+     MODAL 1: SOLICITAR RECUPERAR CONTRASEÑA
 =========================================== -->
 <div class="modal fade" id="modalRecuperar" tabindex="-1">
   <div class="modal-dialog">
@@ -151,7 +151,49 @@
 </div>
 
 <!-- ==========================================
-     MODAL: SOPORTE TÉCNICO (BREVO)
+     MODAL 2: INGRESAR CÓDIGO Y NUEVA CONTRASEÑA (¡EL QUE FALTABA!)
+=========================================== -->
+<div class="modal fade" id="modalCambiarPass" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header text-white" style="background-color: var(--accent-color);">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-unlock-keyhole me-2"></i> Validar Código de Seguridad</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4 bg-light">
+        <p class="text-muted small mb-4">Ingresa el código de 6 dígitos que enviamos a tu correo y escribe tu nueva contraseña.</p>
+        <form id="formCambiarPass" onsubmit="ejecutarCambioPass(event)">
+            
+            <!-- Campo oculto para arrastrar el correo que solicitó el cambio -->
+            <input type="hidden" id="cambioCorreo">
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Código de Recuperación</label>
+                <input type="text" id="cambioToken" class="form-control text-center font-monospace fw-bold fs-4 text-primary" placeholder="Ej. 123456" maxlength="6" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Nueva Contraseña</label>
+                <input type="password" id="cambioPass1" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" required>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Confirmar Nueva Contraseña</label>
+                <input type="password" id="cambioPass2" class="form-control" placeholder="Repite la contraseña" minlength="6" required>
+            </div>
+            
+            <div class="text-end">
+                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary px-4 fw-bold" id="btnGuardarCambioPass"><i class="fa-solid fa-floppy-disk me-2"></i> Cambiar Contraseña</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     MODAL 3: SOPORTE TÉCNICO (BREVO)
 =========================================== -->
 <div class="modal fade" id="modalSoporte" tabindex="-1">
   <div class="modal-dialog">
@@ -161,7 +203,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4 bg-light">
-        <p class="text-muted small mb-4">Si tienes problemas de acceso, tu cuenta está bloqueada o no ves tu información, levanta un ticket y el administrador te contactará por correo.</p>
+        <p class="text-muted small mb-4">Si tienes problemas de acceso, levanta un ticket y el administrador te contactará por correo.</p>
         
         <form id="formSoporte" onsubmit="enviarTicketSoporte(event)">
             <div class="mb-3">
@@ -200,7 +242,6 @@
 </div>
 
 <script>
-    // === REEMPLAZA CON TU ENLACE DE RENDER ===
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
 
     // Limpiar sesión siempre que entren al login
@@ -268,7 +309,7 @@
         }
     }
 
-    // 3. RECUPERAR CONTRASEÑA
+    // 3. RECUPERAR CONTRASEÑA (Paso 1: Pedir Código)
     async function solicitarRecuperacion(e) {
         e.preventDefault();
         const btn = document.getElementById('btnSolicitarRecuperacion');
@@ -276,17 +317,37 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Procesando...';
         btn.disabled = true;
 
+        const correoIngresado = document.getElementById('recCorreo').value;
+
         try {
             const res = await fetch(`${API_BASE}/auth/recuperar-solicitar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ correo: document.getElementById('recCorreo').value })
+                body: JSON.stringify({ correo: correoIngresado })
             });
             const data = await res.json();
 
             if(res.ok) {
+                // Ocultar modal de correo
                 bootstrap.Modal.getInstance(document.getElementById('modalRecuperar')).hide();
-                Swal.fire('Código Enviado', 'Revisa tu bandeja de entrada. Recibirás un enlace para ingresar tu código.', 'success');
+                
+                // Limpiar modal nuevo y arrastrar el correo oculto
+                document.getElementById('formCambiarPass').reset();
+                document.getElementById('cambioCorreo').value = correoIngresado;
+                
+                // Abrir el modal nuevo del código
+                const modalCambio = new bootstrap.Modal(document.getElementById('modalCambiarPass'));
+                modalCambio.show();
+                
+                // Avisarle sutilmente que revise su correo
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Código Enviado',
+                    text: 'Revisa tu bandeja de entrada. Ingresa el código en la nueva ventana.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+
             } else {
                 Swal.fire('Error', data.error, 'error');
             }
@@ -298,7 +359,53 @@
         }
     }
 
-    // 4. NUEVA FUNCIÓN: ENVIAR TICKET DE SOPORTE
+    // 4. CAMBIAR CONTRASEÑA (Paso 2: Validar Código y Cambiar)
+    async function ejecutarCambioPass(e) {
+        e.preventDefault();
+        
+        const pass1 = document.getElementById('cambioPass1').value;
+        const pass2 = document.getElementById('cambioPass2').value;
+        
+        if (pass1 !== pass2) {
+            Swal.fire('Atención', 'Las nuevas contraseñas no coinciden. Verifícalas.', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardarCambioPass');
+        const textBtn = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Validando...';
+        btn.disabled = true;
+
+        const payload = {
+            correo: document.getElementById('cambioCorreo').value,
+            token: document.getElementById('cambioToken').value,
+            nueva_password: pass1
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/recuperar-cambiar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if(res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalCambiarPass')).hide();
+                Swal.fire('¡Contraseña Actualizada!', 'Tu credencial ha sido restablecida con éxito. Ya puedes iniciar sesión de forma segura.', 'success');
+                e.target.reset();
+            } else {
+                Swal.fire('Acceso Denegado', data.error, 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'Problema al contactar al servidor de seguridad.', 'error');
+        } finally {
+            btn.innerHTML = textBtn;
+            btn.disabled = false;
+        }
+    }
+
+    // 5. ENVIAR TICKET DE SOPORTE (BREVO)
     async function enviarTicketSoporte(e) {
         e.preventDefault();
         const btn = document.getElementById('btnSoporte');
