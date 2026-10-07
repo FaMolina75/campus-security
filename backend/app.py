@@ -17,9 +17,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_clave_secreta_campus_v1') 
 CORS(app, supports_credentials=True)
 
-# ==========================================
-# SEGURIDAD: RATE LIMITING (Anti Fuerza Bruta)
-# ==========================================
 limiter = Limiter(
     get_remote_address,
     app=app,
@@ -27,9 +24,6 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# ==========================================
-# CONFIGURACIÓN Y POOL DE BASE DE DATOS
-# ==========================================
 dbconfig = {
     "host": os.environ.get("DB_HOST", "gateway01.us-east-1.prod.aws.tidbcloud.com"),
     "user": os.environ.get("DB_USER", "t6BEupECtGTsvUW.root"),
@@ -117,40 +111,26 @@ def solicitar_recuperacion():
         cursor.execute("SELECT id_usuario, nombre FROM usuarios WHERE correo = %s", (correo,))
         usuario = cursor.fetchone()
         
-        if not usuario:
-            return jsonify({"error": "El correo electrónico no está registrado en el sistema."}), 404
+        if not usuario: return jsonify({"error": "Correo no registrado."}), 404
             
         token = ''.join(random.choice(string.digits) for _ in range(6))
         expiracion = datetime.now() + timedelta(minutes=15)
         
-        cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", 
-                       (token, expiracion, usuario['id_usuario']))
+        cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
         llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
-        if not llave_actual:
-            return jsonify({"error": "Error interno del servidor. Llave de correo no encontrada."}), 500
-            
         url = "https://api.brevo.com/v3/smtp/email"
-        headers = {
-            "accept": "application/json",
-            "api-key": llave_actual,
-            "content-type": "application/json"
-        }
+        headers = {"accept": "application/json", "api-key": llave_actual, "content-type": "application/json"}
         payload = {
             "sender": {"name": "Campus Security", "email": EMAIL_SISTEMA},
             "to": [{"email": correo, "name": usuario['nombre']}],
-            "subject": "Recuperación de Contraseña - Campus Security",
-            "htmlContent": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Has solicitado restablecer tu contraseña o el administrador forzó un reseteo.</p><p>Tu código de recuperación es: <h2 style='color:#3b82f6;'>{token}</h2></p><p>Este código expira en 15 minutos.</p>"
+            "subject": "Recuperación de Contraseña",
+            "htmlContent": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Tu código de recuperación es: <h2>{token}</h2></p><p>Expira en 15 minutos.</p>"
         }
         
-        response = requests.post(url, json=payload, headers=headers)
-        if response.status_code not in [200, 201]:
-            return jsonify({"error": f"Error al enviar el correo: {response.text}"}), 500
-        
-        return jsonify({"mensaje": "Código de recuperación enviado a tu correo exitosamente."}), 200
-    except Exception as e:
-        return jsonify({"error": f"Error al procesar la solicitud: {str(e)}"}), 500
+        requests.post(url, json=payload, headers=headers)
+        return jsonify({"mensaje": "Código enviado."}), 200
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
@@ -158,32 +138,19 @@ def solicitar_recuperacion():
 @app.route('/api/auth/recuperar-cambiar', methods=['POST'])
 def cambiar_password():
     data = request.json
-    correo = data.get('correo')
-    token = data.get('token')
-    nueva_password = data.get('nueva_password')
-    
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id_usuario, token_recuperacion, token_expiracion FROM usuarios WHERE correo = %s", (correo,))
+        cursor.execute("SELECT id_usuario, token_recuperacion, token_expiracion FROM usuarios WHERE correo = %s", (data.get('correo'),))
         usuario = cursor.fetchone()
         
-        if not usuario:
-            return jsonify({"error": "Usuario no encontrado."}), 404
-        if usuario['token_recuperacion'] != token:
-            return jsonify({"error": "Código de recuperación incorrecto."}), 400
-        if usuario['token_expiracion'] and datetime.now() > usuario['token_expiracion']:
-            return jsonify({"error": "El código ha expirado. Solicita uno nuevo."}), 400
+        if not usuario or usuario['token_recuperacion'] != data.get('token'):
+            return jsonify({"error": "Código incorrecto."}), 400
             
-        hashed_password = generate_password_hash(nueva_password)
-        cursor.execute("""
-            UPDATE usuarios 
-            SET password = %s, token_recuperacion = NULL, token_expiracion = NULL 
-            WHERE id_usuario = %s
-        """, (hashed_password, usuario['id_usuario']))
+        hashed_password = generate_password_hash(data.get('nueva_password'))
+        cursor.execute("UPDATE usuarios SET password = %s, token_recuperacion = NULL, token_expiracion = NULL WHERE id_usuario = %s", (hashed_password, usuario['id_usuario']))
         conn.commit()
-        
-        return jsonify({"mensaje": "Contraseña actualizada exitosamente. Ya puedes iniciar sesión."}), 200
+        return jsonify({"mensaje": "Contraseña actualizada."}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
@@ -222,16 +189,7 @@ def gestionar_usuarios():
             data = request.json
             rol = data['rol']
             id_carrera = data.get('id_carrera') if data.get('id_carrera') else None
-            
-            # Reglas de negocio estrictas
-            semestre_actual = 0
-            if rol == 'alumno':
-                if not id_carrera: return jsonify({"error": "Un alumno requiere forzosamente una carrera asignada."}), 400
-                semestre_actual = 1
-            elif rol == 'coordinadora':
-                if not id_carrera: return jsonify({"error": "Un coordinador requiere forzosamente una carrera asignada."}), 400
-                cursor.execute("SELECT id_usuario FROM usuarios WHERE rol = 'coordinadora' AND id_carrera = %s", (id_carrera,))
-                if cursor.fetchone(): return jsonify({"error": "Ya existe un coordinador asignado a esta carrera."}), 400
+            semestre_actual = 1 if rol == 'alumno' else 0
             
             hashed_password = generate_password_hash(data['password'])
             cursor.execute("""
@@ -239,15 +197,12 @@ def gestionar_usuarios():
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (data['matricula'], data['nombre'], data['correo'], hashed_password, rol, id_carrera, semestre_actual))
             conn.commit()
-            return jsonify({"mensaje": f"Usuario {rol.capitalize()} creado exitosamente"}), 201
+            return jsonify({"mensaje": "Usuario creado"}), 201
             
         elif request.method == 'GET':
-            cursor.execute("""
-                SELECT u.id_usuario, u.matricula, u.nombre, u.correo, u.rol, u.bloqueado, u.semestre_actual, c.clave as carrera 
-                FROM usuarios u LEFT JOIN carreras c ON u.id_carrera = c.id_carrera ORDER BY u.id_usuario DESC
-            """)
+            cursor.execute("SELECT u.id_usuario, u.matricula, u.nombre, u.correo, u.rol, u.bloqueado, u.semestre_actual, c.clave as carrera FROM usuarios u LEFT JOIN carreras c ON u.id_carrera = c.id_carrera ORDER BY u.id_usuario DESC")
             return jsonify(cursor.fetchall()), 200
-    except mysql.connector.IntegrityError: return jsonify({"error": "Matrícula o correo duplicado"}), 400
+    except mysql.connector.IntegrityError: return jsonify({"error": "Dato duplicado"}), 400
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
@@ -259,7 +214,7 @@ def toggle_bloqueo(id_usuario):
         cursor = conn.cursor()
         cursor.execute("UPDATE usuarios SET bloqueado = NOT bloqueado WHERE id_usuario = %s", (id_usuario,))
         conn.commit()
-        return jsonify({"mensaje": "Estado de usuario actualizado"}), 200
+        return jsonify({"mensaje": "Actualizado"}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
@@ -271,18 +226,12 @@ def gestionar_carreras():
         cursor = conn.cursor(dictionary=True)
         if request.method == 'POST':
             data = request.json
-            cursor.execute("""
-                INSERT INTO carreras (clave, nombre, duracion_semestres, creditos_totales) 
-                VALUES (%s, %s, %s, %s)
-            """, (data['clave'].upper(), data['nombre'], data['duracion_semestres'], data['creditos_totales']))
+            cursor.execute("INSERT INTO carreras (clave, nombre, duracion_semestres, creditos_totales) VALUES (%s, %s, %s, %s)", (data['clave'].upper(), data['nombre'], data['duracion_semestres'], data['creditos_totales']))
             conn.commit()
-            return jsonify({"mensaje": "Carrera creada y enlazada al sistema exitosamente"}), 201
-            
+            return jsonify({"mensaje": "Carrera creada"}), 201
         elif request.method == 'GET':
             cursor.execute("SELECT id_carrera, clave, nombre, duracion_semestres, creditos_totales FROM carreras ORDER BY nombre ASC")
             return jsonify(cursor.fetchall()), 200
-    except mysql.connector.IntegrityError: 
-        return jsonify({"error": "Error: La clave de esta carrera ya existe en el sistema."}), 400
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
@@ -294,13 +243,181 @@ def gestionar_materias():
         cursor = conn.cursor(dictionary=True)
         if request.method == 'POST':
             data = request.json
-            cursor.execute("INSERT INTO materias (id_carrera, clave, nombre, semestre, creditos, tipo) VALUES (%s, %s, %s, %s, %s, %s)",
-                           (data['id_carrera'], data['clave'], data['nombre'], data['semestre'], data['creditos'], data['tipo']))
+            cursor.execute("INSERT INTO materias (id_carrera, clave, nombre, semestre, creditos, tipo) VALUES (%s, %s, %s, %s, %s, %s)", (data['id_carrera'], data['clave'], data['nombre'], data['semestre'], data['creditos'], data['tipo']))
             conn.commit()
-            return jsonify({"mensaje": "Materia agregada exitosamente"}), 201
+            return jsonify({"mensaje": "Materia agregada"}), 201
         elif request.method == 'GET':
             cursor.execute("SELECT m.clave, m.nombre, m.semestre, m.creditos, m.tipo, c.clave as carrera FROM materias m JOIN carreras c ON m.id_carrera = c.id_carrera ORDER BY m.semestre ASC")
             return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# RUTAS DEL ALUMNO
+# ==========================================
+@app.route('/api/alumno/perfil/<int:id_usuario>', methods=['PUT'])
+def actualizar_perfil(id_usuario):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if data.get('password_nueva'):
+            hashed_password = generate_password_hash(data['password_nueva'])
+            sql = "UPDATE usuarios SET curp = %s, telefono = %s, direccion = %s, password = %s, perfil_completo = 1 WHERE id_usuario = %s"
+            cursor.execute(sql, (data['curp'], data['telefono'], data['direccion'], hashed_password, id_usuario))
+        else:
+            sql = "UPDATE usuarios SET curp = %s, telefono = %s, direccion = %s, perfil_completo = 1 WHERE id_usuario = %s"
+            cursor.execute(sql, (data['curp'], data['telefono'], data['direccion'], id_usuario))
+            
+        conn.commit()
+        return jsonify({"mensaje": "Expediente actualizado"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/alumno/progreso/<int:id_alumno>', methods=['GET'])
+def progreso_alumno(id_alumno):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT c.* FROM usuarios u JOIN carreras c ON u.id_carrera = c.id_carrera WHERE u.id_usuario = %s", (id_alumno,))
+        carrera = cursor.fetchone()
+        if not carrera: return jsonify({"error": "Sin carrera"}), 400
+
+        cursor.execute("""
+            SELECT m.clave, m.nombre, m.semestre, m.creditos, m.tipo, k.estatus, k.calificacion, g.horario, p.nombre as profesor 
+            FROM kardex k JOIN materias m ON k.id_materia = m.id_materia LEFT JOIN grupos g ON k.id_grupo = g.id_grupo LEFT JOIN usuarios p ON g.id_profesor = p.id_usuario
+            WHERE k.id_alumno = %s ORDER BY m.semestre ASC
+        """, (id_alumno,))
+        historial = cursor.fetchall()
+        creditos_aprobados = sum(m['creditos'] for m in historial if m['estatus'] == 'Aprobada')
+        porcentaje = (creditos_aprobados / carrera['creditos_totales']) * 100 if carrera['creditos_totales'] > 0 else 0
+        
+        return jsonify({"carrera": carrera['nombre'], "creditos_totales": carrera['creditos_totales'], "creditos_aprobados": creditos_aprobados, "porcentaje_avance": round(porcentaje, 1), "servicio_liberado": any(m['tipo'] == 'Servicio_Social' and m['estatus'] == 'Aprobada' for m in historial), "residencia_liberada": any(m['tipo'] == 'Residencia' and m['estatus'] == 'Aprobada' for m in historial), "historial": historial}), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# RUTAS DEL COORDINADOR
+# ==========================================
+@app.route('/api/coordinador/profesores', methods=['GET'])
+def list_profesores():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_usuario, nombre FROM usuarios WHERE rol = 'profesor' AND bloqueado = 0")
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/coordinador/grupos/<int:id_carrera>', methods=['GET', 'POST'])
+def gestionar_grupos(id_carrera):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        if request.method == 'POST':
+            data = request.json
+            cursor.execute("INSERT INTO grupos (id_materia, id_profesor, nombre_grupo, horario, aula) VALUES (%s, %s, %s, %s, %s)", (data['id_materia'], data['id_profesor'], data['nombre_grupo'], data['horario'], data['aula']))
+            conn.commit()
+            return jsonify({"mensaje": "Grupo creado"}), 201
+        elif request.method == 'GET':
+            cursor.execute("SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, m.nombre as materia, m.semestre, p.nombre as profesor FROM grupos g JOIN materias m ON g.id_materia = m.id_materia LEFT JOIN usuarios p ON g.id_profesor = p.id_usuario WHERE m.id_carrera = %s ORDER BY m.semestre ASC", (id_carrera,))
+            return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/coordinador/materias_carrera/<int:id_carrera>', methods=['GET'])
+def materias_carrera(id_carrera):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_materia, nombre, semestre, clave FROM materias WHERE id_carrera = %s ORDER BY semestre ASC", (id_carrera,))
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/coordinador/alumnos/<int:id_carrera>', methods=['GET'])
+def list_alumnos(id_carrera):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_usuario, matricula, nombre, perfil_completo FROM usuarios WHERE rol = 'alumno' AND bloqueado = 0 AND id_carrera = %s ORDER BY nombre ASC", (id_carrera,))
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/coordinador/grupos_disponibles/<int:id_alumno>', methods=['GET'])
+def grupos_disponibles(id_alumno):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        sql = """SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, m.id_materia, m.nombre as materia, m.semestre, p.nombre as profesor 
+                 FROM grupos g JOIN materias m ON g.id_materia = m.id_materia LEFT JOIN usuarios p ON g.id_profesor = p.id_usuario JOIN usuarios u ON m.id_carrera = u.id_carrera
+                 WHERE u.id_usuario = %s AND m.id_materia NOT IN (SELECT id_materia FROM kardex WHERE id_alumno = %s AND estatus IN ('Aprobada', 'Cursando')) ORDER BY m.semestre ASC"""
+        cursor.execute(sql, (id_alumno, id_alumno))
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/coordinador/inscribir', methods=['POST'])
+def coord_inscribir():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO kardex (id_alumno, id_materia, id_grupo, estatus) VALUES (%s, %s, %s, 'Cursando')", (data['id_alumno'], data['id_materia'], data['id_grupo']))
+        conn.commit()
+        return jsonify({"mensaje": "Inscrito"}), 201
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+# ==========================================
+# RUTAS DEL PROFESOR
+# ==========================================
+@app.route('/api/profesor/grupos/<int:id_profesor>', methods=['GET'])
+def profesor_get_grupos(id_profesor):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        sql = "SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, m.id_materia, m.clave as clave_materia, m.nombre as nombre_materia, m.semestre, c.nombre as carrera FROM grupos g JOIN materias m ON g.id_materia = m.id_materia JOIN carreras c ON m.id_carrera = c.id_carrera WHERE g.id_profesor = %s ORDER BY m.semestre ASC"
+        cursor.execute(sql, (id_profesor,))
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/profesor/grupo/<int:id_grupo>/alumnos', methods=['GET'])
+def profesor_get_alumnos_grupo(id_grupo):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        sql = "SELECT k.id_kardex, u.id_usuario as id_alumno, u.matricula, u.nombre, u.correo, k.estatus, k.calificacion FROM kardex k JOIN usuarios u ON k.id_alumno = u.id_usuario WHERE k.id_grupo = %s ORDER BY u.nombre ASC"
+        cursor.execute(sql, (id_grupo,))
+        return jsonify(cursor.fetchall()), 200
+    finally:
+        if 'cursor' in locals(): cursor.close()
+        if 'conn' in locals(): conn.close()
+
+@app.route('/api/profesor/calificar', methods=['POST'])
+def profesor_calificar_alumno():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE kardex SET calificacion = %s, estatus = %s WHERE id_kardex = %s", (data['calificacion'], data['estatus'], data['id_kardex']))
+        conn.commit()
+        return jsonify({"mensaje": "Calificación asentada"}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
