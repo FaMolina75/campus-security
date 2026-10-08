@@ -151,7 +151,7 @@
 </div>
 
 <!-- ==========================================
-     MODAL 2: INGRESAR CÓDIGO Y NUEVA CONTRASEÑA (¡EL QUE FALTABA!)
+     MODAL 2: INGRESAR CÓDIGO Y NUEVA CONTRASEÑA
 =========================================== -->
 <div class="modal fade" id="modalCambiarPass" tabindex="-1" data-bs-backdrop="static">
   <div class="modal-dialog">
@@ -260,7 +260,7 @@
         }
     }
 
-    // 2. LÓGICA DE INICIO DE SESIÓN
+    // 2. LÓGICA DE INICIO DE SESIÓN Y ENRUTADOR SEGURO (CORREGIDO PARA /coordinadora/)
     async function realizarLogin(e) {
         e.preventDefault();
         const btn = document.getElementById('btnLogin');
@@ -287,13 +287,13 @@
                 // Guardar usuario en sesión local
                 sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
                 
-                // Redirección del Enrutador
+                // Redirección del Enrutador asegurada con barra inicial absoluta (/) y nombre de carpeta exacto
                 const rol = data.usuario.rol;
-                if(rol === 'admin') window.location.href = 'dashboards/admin/index.html';
-                else if(rol === 'alumno') window.location.href = 'dashboards/alumno/index.html';
-                else if(rol === 'coordinadora') window.location.href = 'dashboards/coordinador/index.html';
-                else if(rol === 'profesor') window.location.href = 'dashboards/profesor/index.html';
-                else Swal.fire('Error', 'Rol no reconocido en el sistema', 'error');
+                if(rol === 'admin') window.location.href = '/dashboards/admin/index.html';
+                else if(rol === 'alumno') window.location.href = '/dashboards/alumno/index.html';
+                else if(rol === 'coordinadora' || rol === 'coordinador') window.location.href = '/dashboards/coordinadora/index.html';
+                else if(rol === 'profesor') window.location.href = '/dashboards/profesor/index.html';
+                else Swal.fire('Error', 'Rol no reconocido en el sistema: ' + rol, 'error');
 
             } else {
                 Swal.fire('Acceso Denegado', data.error, 'error');
@@ -328,18 +328,14 @@
             const data = await res.json();
 
             if(res.ok) {
-                // Ocultar modal de correo
                 bootstrap.Modal.getInstance(document.getElementById('modalRecuperar')).hide();
                 
-                // Limpiar modal nuevo y arrastrar el correo oculto
                 document.getElementById('formCambiarPass').reset();
                 document.getElementById('cambioCorreo').value = correoIngresado;
                 
-                // Abrir el modal nuevo del código
                 const modalCambio = new bootstrap.Modal(document.getElementById('modalCambiarPass'));
                 modalCambio.show();
                 
-                // Avisarle sutilmente que revise su correo
                 Swal.fire({
                     icon: 'success',
                     title: 'Código Enviado',
