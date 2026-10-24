@@ -72,6 +72,12 @@ class SecuritySourceTests(unittest.TestCase):
         self.assertIn('required == "profesor"', source)
         self.assertNotIn('if key in (request.view_args or {}) and int(', source)
 
+    def test_recovery_code_uses_secure_randomness(self):
+        self.assertIn("secrets.choice(string.digits)", self.function_source("solicitar_recuperacion"))
+
+    def test_recovery_token_expiration_is_checked(self):
+        self.assertIn("token_expiracion", self.function_source("cambiar_password"))
+
     def test_csrf_required_on_mutations(self):
         source = self.function_source("require_identity")
         self.assertIn("X-CSRF-Token", source)
