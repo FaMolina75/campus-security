@@ -375,6 +375,10 @@ async function apiFetch(url, options = {}) {
         const pass1 = document.getElementById('cambioPass1').value;
         const pass2 = document.getElementById('cambioPass2').value;
         
+        if (pass1.length < 12 || pass1.length > 128) {
+            Swal.fire('Contraseña no válida', 'Usa entre 12 y 128 caracteres para tu nueva contraseña.', 'warning');
+            return;
+        }
         if (pass1 !== pass2) {
             Swal.fire('Atención', 'Las nuevas contraseñas no coinciden. Verifícalas.', 'warning');
             return;
