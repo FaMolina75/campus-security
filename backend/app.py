@@ -246,6 +246,7 @@ def solicitar_recuperacion():
         if 'conn' in locals(): conn.close()
 
 @app.route('/api/auth/recuperar-cambiar', methods=['POST'])
+@limiter.limit("5 per 15 minutes")
 def cambiar_password():
     data = request.json
     try:
