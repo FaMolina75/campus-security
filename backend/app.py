@@ -206,6 +206,9 @@ def login():
                 session["uid"] = usuario["id_usuario"]
                 session["last_activity"] = datetime.now(timezone.utc).timestamp()
                 session["csrf"] = secrets.token_urlsafe(32)
+                # Never expose password-recovery credentials or expiry in login responses.
+                usuario.pop('token_recuperacion', None)
+                usuario.pop('token_expiracion', None)
                 return jsonify({"mensaje": "Bienvenido", "usuario": usuario}), 200
             
         registrar_intento(correo, ip, False)
