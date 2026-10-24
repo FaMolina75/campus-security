@@ -529,6 +529,10 @@ def profesor_calificar_alumno():
         data = request.json
         conn = get_db_connection()
         cursor = conn.cursor()
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM kardex k JOIN grupos g ON k.id_grupo = g.id_grupo WHERE k.id_kardex = %s AND g.id_profesor = %s", (data['id_kardex'], session['uid']))
+            if not cursor.fetchone():
+                return jsonify({"error": "No autorizado para calificar este grupo"}), 403
         cursor.execute("UPDATE kardex SET calificacion = %s, estatus = %s WHERE id_kardex = %s", (data['calificacion'], data['estatus'], data['id_kardex']))
         conn.commit()
         return jsonify({"mensaje": "Calificación asentada"}), 200
