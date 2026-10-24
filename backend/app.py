@@ -149,6 +149,10 @@ def session_status():
 
 @app.route("/api/auth/logout", methods=["POST"])
 def logout():
+    if os.environ.get("SESSION_V2_ENFORCE") == "1" and session.get("uid"):
+        csrf = request.headers.get("X-CSRF-Token", "")
+        if not session.get("csrf") or not secrets.compare_digest(csrf, session["csrf"]):
+            return jsonify({"error": "CSRF inválido"}), 403
     session.clear()
     return jsonify({"mensaje": "Sesión cerrada"})
 
