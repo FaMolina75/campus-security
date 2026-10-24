@@ -99,6 +99,19 @@ class SecuritySourceTests(unittest.TestCase):
         self.assertIn("password_nueva = data.get('password')", source)
         self.assertIn('12 <= len(password_nueva) <= 128', source)
 
+    def test_brevo_configuration_checked_before_token_creation(self):
+        source = self.function_source("solicitar_recuperacion")
+        self.assertLess(source.index('if not llave_actual:'), source.index("token = "))
+        self.assertIn('timeout=10', source)
+        self.assertIn('if not response.ok:', source)
+
+    def test_password_policy_applies_to_reset_and_profile(self):
+        reset = self.function_source("cambiar_password")
+        profile = self.function_source("actualizar_perfil")
+        self.assertIn("len(nueva) < 12", reset)
+        self.assertIn("len(nueva) > 128", reset)
+        self.assertIn("12 <= len(password_nueva) <= 128", profile)
+
     def test_login_does_not_return_recovery_fields(self):
         source = self.function_source('login')
         self.assertIn("usuario.pop('token_recuperacion', None)", source)
