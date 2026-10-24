@@ -231,6 +231,19 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+// Cross-origin authenticated requests; obtain CSRF token for writes.
+async function apiFetch(url, options = {}) {
+    const opts = { ...options, credentials: 'include' };
+    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
+        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
+        if (status.ok) {
+            const identity = await status.json();
+            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
+        }
+    }
+    return window.fetch(url, opts);
+}
+
     
     // Validación Estricta de Sesión
     const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
@@ -280,7 +293,7 @@
 
     async function cargarGrupos() {
         try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos/${idCarrera}`);
+            const res = await apiFetch(`${API_BASE}/coordinador/grupos/${idCarrera}`);
             const grupos = await res.json();
             const tbody = document.getElementById('tablaGruposBody');
             tbody.innerHTML = '';
@@ -303,7 +316,7 @@
 
     async function cargarAlumnos() {
         try {
-            const res = await fetch(`${API_BASE}/coordinador/alumnos/${idCarrera}`);
+            const res = await apiFetch(`${API_BASE}/coordinador/alumnos/${idCarrera}`);
             const alumnos = await res.json();
             const tbody = document.getElementById('tablaAlumnosBody');
             tbody.innerHTML = '';
@@ -334,14 +347,14 @@
     async function cargarSelectsFormularioGrupos() {
         try {
             // Cargar Materias de SU carrera
-            const resMat = await fetch(`${API_BASE}/coordinador/materias_carrera/${idCarrera}`);
+            const resMat = await apiFetch(`${API_BASE}/coordinador/materias_carrera/${idCarrera}`);
             const materias = await resMat.json();
             const selMat = document.getElementById('grMateria');
             selMat.innerHTML = '<option value="" selected disabled>Seleccione materia...</option>';
             materias.forEach(m => selMat.innerHTML += `<option value="${m.id_materia}">Semestre ${m.semestre} - ${m.nombre} (${m.clave})</option>`);
 
             // Cargar Profesores globales
-            const resProf = await fetch(`${API_BASE}/coordinador/profesores`);
+            const resProf = await apiFetch(`${API_BASE}/coordinador/profesores`);
             const profes = await resProf.json();
             const selProf = document.getElementById('grProfesor');
             selProf.innerHTML = '<option value="" selected disabled>Seleccione catedrático...</option>';
@@ -366,7 +379,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos/${idCarrera}`, {
+            const res = await apiFetch(`${API_BASE}/coordinador/grupos/${idCarrera}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
@@ -394,7 +407,7 @@
         modal.show();
 
         try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos_disponibles/${id_alumno}`);
+            const res = await apiFetch(`${API_BASE}/coordinador/grupos_disponibles/${id_alumno}`);
             const grupos_disponibles = await res.json();
             
             if (grupos_disponibles.length === 0) {
@@ -432,7 +445,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/coordinador/inscribir`, {
+            const res = await apiFetch(`${API_BASE}/coordinador/inscribir`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
