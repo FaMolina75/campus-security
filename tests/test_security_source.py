@@ -72,6 +72,12 @@ class SecuritySourceTests(unittest.TestCase):
         self.assertIn('required == "profesor"', source)
         self.assertNotIn('if key in (request.view_args or {}) and int(', source)
 
+    def test_legacy_plaintext_login_disabled_in_enforced_mode(self):
+        source = self.function_source("login")
+        self.assertIn("secrets.compare_digest(db_password", source)
+        self.assertIn("SESSION_V2_ENFORCE", source)
+        self.assertIn("!= '1'", source)
+
     def test_password_reset_attempts_are_rate_limited(self):
         function = self.functions["cambiar_password"]
         decorators = [ast.get_source_segment(self.source, d) for d in function.decorator_list]
