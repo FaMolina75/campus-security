@@ -72,6 +72,11 @@ class SecuritySourceTests(unittest.TestCase):
         self.assertIn('required == "profesor"', source)
         self.assertNotIn('if key in (request.view_args or {}) and int(', source)
 
+    def test_password_reset_attempts_are_rate_limited(self):
+        function = self.functions["cambiar_password"]
+        decorators = [ast.get_source_segment(self.source, d) for d in function.decorator_list]
+        self.assertTrue(any("limiter.limit" in d and "5 per 15 minutes" in d for d in decorators))
+
     def test_recovery_code_uses_secure_randomness(self):
         self.assertIn("secrets.choice(string.digits)", self.function_source("solicitar_recuperacion"))
 
