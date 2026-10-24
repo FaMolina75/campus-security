@@ -265,7 +265,10 @@ def cambiar_password():
         
         if not usuario or not usuario['token_expiracion'] or usuario['token_expiracion'] < datetime.now() or not secrets.compare_digest(str(usuario['token_recuperacion'] or ''), str(data.get('token') or '')): return jsonify({"error": "Código inválido o expirado."}), 400
             
-        hashed_password = generate_password_hash(data.get('nueva_password'))
+        nueva = data.get('nueva_password')
+        if not isinstance(nueva, str) or len(nueva) < 12 or len(nueva) > 128:
+            return jsonify({"error": "La contraseña debe tener entre 12 y 128 caracteres."}), 400
+        hashed_password = generate_password_hash(nueva)
         cursor.execute("UPDATE usuarios SET password = %s, token_recuperacion = NULL, token_expiracion = NULL WHERE id_usuario = %s", (hashed_password, usuario['id_usuario']))
         conn.commit()
         registrar_operacion(data.get('correo'), "sistema", "RESETEO_PASSWORD", "El usuario restableció su credencial.", request.remote_addr)
