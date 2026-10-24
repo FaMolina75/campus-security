@@ -186,6 +186,19 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+// Cross-origin authenticated requests; obtain CSRF token for writes.
+async function apiFetch(url, options = {}) {
+    const opts = { ...options, credentials: 'include' };
+    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
+        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
+        if (status.ok) {
+            const identity = await status.json();
+            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
+        }
+    }
+    return window.fetch(url, opts);
+}
+
     
     // Validación de Sesión Segura
     const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
@@ -223,7 +236,7 @@
     // ==========================================
     async function cargarMisGrupos() {
         try {
-            const res = await fetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
+            const res = await apiFetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
             const grupos = await res.json();
             const tbody = document.getElementById('tablaMisGruposBody');
             tbody.innerHTML = '';
@@ -269,7 +282,7 @@
         cambiarSeccion('evaluacion'); // Ocultar dashboard, mostrar tabla de evaluación
 
         try {
-            const res = await fetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
+            const res = await apiFetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
             const alumnos = await res.json();
             const tbody = document.getElementById('tablaAlumnosEvalBody');
             tbody.innerHTML = '';
@@ -337,7 +350,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/profesor/calificar`, {
+            const res = await apiFetch(`${API_BASE}/profesor/calificar`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
