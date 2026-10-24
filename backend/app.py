@@ -484,6 +484,10 @@ def materias_carrera(id_carrera):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM usuarios WHERE id_usuario = %s AND rol = 'coordinadora' AND id_carrera = %s", (session['uid'], id_carrera))
+            if not cursor.fetchone():
+                return jsonify({"error": "Carrera no autorizada"}), 403
         cursor.execute("SELECT id_materia, nombre, semestre, clave FROM materias WHERE id_carrera = %s ORDER BY semestre ASC", (id_carrera,))
         return jsonify(cursor.fetchall()), 200
     finally:
@@ -495,6 +499,10 @@ def list_alumnos(id_carrera):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM usuarios WHERE id_usuario = %s AND rol = 'coordinadora' AND id_carrera = %s", (session['uid'], id_carrera))
+            if not cursor.fetchone():
+                return jsonify({"error": "Carrera no autorizada"}), 403
         cursor.execute("SELECT id_usuario, matricula, nombre, perfil_completo FROM usuarios WHERE rol = 'alumno' AND bloqueado = 0 AND id_carrera = %s ORDER BY nombre ASC", (id_carrera,))
         return jsonify(cursor.fetchall()), 200
     finally:
