@@ -118,7 +118,7 @@ def require_identity(fn):
             return jsonify({"error": "Permisos insuficientes"}), 403
         # Object-level access: a student/teacher cannot supply another user's id.
         for key in ("id_usuario", "id_alumno", "id_profesor"):
-            if required in ("alumno", "profesor") and key in (request.view_args or {}) and int(request.view_args[key]) != int(uid):
+            if ((required == "alumno" and key in ("id_usuario", "id_alumno")) or (required == "profesor" and key == "id_profesor")) and key in (request.view_args or {}) and int(request.view_args[key]) != int(uid):
                 return jsonify({"error": "Recurso no autorizado"}), 403
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             csrf = request.headers.get("X-CSRF-Token", "")
