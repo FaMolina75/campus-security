@@ -425,6 +425,17 @@ def coord_inscribir():
         data = request.json
         conn = get_db_connection()
         cursor = conn.cursor()
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("""SELECT 1 FROM usuarios coordinador
+                JOIN usuarios alumno ON alumno.id_usuario = %s
+                JOIN grupos grupo ON grupo.id_grupo = %s
+                JOIN materias materia ON materia.id_materia = grupo.id_materia
+                WHERE coordinador.id_usuario = %s AND coordinador.rol = 'coordinadora'
+                AND alumno.rol = 'alumno' AND alumno.id_carrera = coordinador.id_carrera
+                AND materia.id_carrera = coordinador.id_carrera AND materia.id_materia = %s""",
+                (data['id_alumno'], data['id_grupo'], session['uid'], data['id_materia']))
+            if not cursor.fetchone():
+                return jsonify({"error": "Inscripción fuera de la carrera autorizada"}), 403
         cursor.execute("INSERT INTO kardex (id_alumno, id_materia, id_grupo, estatus) VALUES (%s, %s, %s, 'Cursando')", (data['id_alumno'], data['id_materia'], data['id_grupo']))
         conn.commit()
         return jsonify({"mensaje": "Inscrito"}), 201
