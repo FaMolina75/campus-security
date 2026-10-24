@@ -247,7 +247,10 @@ def solicitar_recuperacion():
             "subject": "Recuperación de Contraseña",
             "htmlContent": f"<p>Hola <b>{usuario['nombre']}</b>,</p><p>Tu código de recuperación es: <h2>{token}</h2></p><p>Expira en 15 minutos.</p>"
         }
-        requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        if not response.ok:
+            app.logger.error("Brevo password recovery delivery failed: HTTP %s", response.status_code)
+            return jsonify({"error": "No se pudo enviar el código. Inténtalo más tarde."}), 502
         return jsonify({"mensaje": "Código enviado."}), 200
     finally:
         if 'cursor' in locals(): cursor.close()
