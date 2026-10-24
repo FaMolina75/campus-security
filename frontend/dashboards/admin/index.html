@@ -385,6 +385,19 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+// Authenticated cross-origin requests; CSRF is obtained from the signed session.
+async function apiFetch(url, options = {}) {
+    const opts = { ...options, credentials: 'include' };
+    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
+        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
+        if (status.ok) {
+            const identity = await status.json();
+            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
+        }
+    }
+    return window.fetch(url, opts);
+}
+
     
     // Validación de Sesión Segura
     const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
@@ -422,7 +435,7 @@
     // =====================================
     async function cargarCarrerasSelects() {
         try {
-            const res = await fetch(`${API_BASE}/admin/carreras`);
+            const res = await apiFetch(`${API_BASE}/admin/carreras`);
             const carreras = await res.json();
             const selects = ['alCarrera', 'coordCarrera', 'matSelectCarrera'];
             
@@ -438,7 +451,7 @@
 
     async function cargarStats() {
         try {
-            const res = await fetch(`${API_BASE}/admin/stats`);
+            const res = await apiFetch(`${API_BASE}/admin/stats`);
             const stats = await res.json();
             document.getElementById('statUsuarios').textContent = stats.usuarios || 0;
             document.getElementById('statMaterias').textContent = stats.materias || 0;
@@ -448,7 +461,7 @@
 
     async function cargarUsuarios() {
         try {
-            const res = await fetch(`${API_BASE}/admin/usuarios`);
+            const res = await apiFetch(`${API_BASE}/admin/usuarios`);
             const usuarios = await res.json();
             const tbody = document.getElementById('tablaUsuariosBody');
             tbody.innerHTML = '';
@@ -488,7 +501,7 @@
 
     async function cargarMaterias() {
         try {
-            const res = await fetch(`${API_BASE}/admin/materias`);
+            const res = await apiFetch(`${API_BASE}/admin/materias`);
             const materias = await res.json();
             const tbody = document.getElementById('tablaMateriasBody');
             tbody.innerHTML = '';
@@ -511,7 +524,7 @@
     // =====================================
     async function cargarAuditoriaIAM() {
         try {
-            const res = await fetch(`${API_BASE}/admin/auditoria/accesos`);
+            const res = await apiFetch(`${API_BASE}/admin/auditoria/accesos`);
             const logs = await res.json();
             const tbody = document.getElementById('tablaAuditoriaRed');
             tbody.innerHTML = '';
@@ -540,7 +553,7 @@
 
     async function cargarAuditoriaOperaciones() {
         try {
-            const res = await fetch(`${API_BASE}/admin/auditoria/operaciones`);
+            const res = await apiFetch(`${API_BASE}/admin/auditoria/operaciones`);
             const logs = await res.json();
             const tbody = document.getElementById('tablaAuditoriaOps');
             tbody.innerHTML = '';
@@ -570,7 +583,7 @@
             confirmButtonText: 'Sí, aplicar baneo'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`${API_BASE}/admin/ban_ip`, {
+                apiFetch(`${API_BASE}/admin/ban_ip`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ip: ip_atacante})
                 }).then(async (res) => {
                     const data = await res.json();
@@ -632,7 +645,7 @@
         }
 
         try {
-            const res = await fetch(`${API_BASE}/admin/usuarios`, {
+            const res = await apiFetch(`${API_BASE}/admin/usuarios`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
@@ -668,7 +681,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/admin/carreras`, {
+            const res = await apiFetch(`${API_BASE}/admin/carreras`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
@@ -699,7 +712,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/admin/materias`, {
+            const res = await apiFetch(`${API_BASE}/admin/materias`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
@@ -714,7 +727,7 @@
     }
 
     async function toggleBloqueo(idUsuario) {
-        const res = await fetch(`${API_BASE}/admin/usuarios/${idUsuario}/bloquear`, { method: 'PUT' });
+        const res = await apiFetch(`${API_BASE}/admin/usuarios/${idUsuario}/bloquear`, { method: 'PUT' });
         if (res.ok) { Swal.fire({ icon: 'success', title: 'Permisos actualizados', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 }); cargarUsuarios(); }
     }
 
@@ -725,7 +738,7 @@
             icon: 'warning', showCancelButton: true, confirmButtonColor: '#2563eb', cancelButtonColor: '#d33', confirmButtonText: 'Sí, enviar enlace'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`${API_BASE}/auth/recuperar-solicitar`, {
+                apiFetch(`${API_BASE}/auth/recuperar-solicitar`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({correo: correo})
                 }).then(() => { Swal.fire('¡Enviado!', 'Instrucciones enviadas al usuario.', 'success'); });
             }
