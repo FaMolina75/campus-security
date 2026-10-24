@@ -346,7 +346,10 @@ def gestionar_usuarios():
             data = request.json
             rol, id_carrera = data['rol'], data.get('id_carrera')
             semestre_actual = 1 if rol == 'alumno' else 0
-            hashed_password = generate_password_hash(data['password'])
+            password_nueva = data.get('password')
+            if not isinstance(password_nueva, str) or not 12 <= len(password_nueva) <= 128:
+                return jsonify({'error': 'La contraseña debe tener entre 12 y 128 caracteres.'}), 400
+            hashed_password = generate_password_hash(password_nueva)
             cursor.execute("INSERT INTO usuarios (matricula, nombre, correo, password, rol, id_carrera, semestre_actual) VALUES (%s, %s, %s, %s, %s, %s, %s)", 
                            (data['matricula'], data['nombre'], data['correo'], hashed_password, rol, id_carrera, semestre_actual))
             conn.commit()
@@ -416,7 +419,10 @@ def actualizar_perfil(id_usuario):
         conn = get_db_connection()
         cursor = conn.cursor()
         if data.get('password_nueva'):
-            hashed_password = generate_password_hash(data['password_nueva'])
+            password_nueva = data['password_nueva']
+            if not isinstance(password_nueva, str) or not 12 <= len(password_nueva) <= 128:
+                return jsonify({'error': 'La contraseña debe tener entre 12 y 128 caracteres.'}), 400
+            hashed_password = generate_password_hash(password_nueva)
             sql = "UPDATE usuarios SET curp = %s, telefono = %s, direccion = %s, password = %s, perfil_completo = 1 WHERE id_usuario = %s"
             cursor.execute(sql, (data['curp'], data['telefono'], data['direccion'], hashed_password, id_usuario))
         else:
