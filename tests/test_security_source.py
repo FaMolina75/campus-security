@@ -94,6 +94,11 @@ class SecuritySourceTests(unittest.TestCase):
     def test_recovery_token_expiration_is_checked(self):
         self.assertIn("token_expiracion", self.function_source("cambiar_password"))
 
+    def test_new_accounts_require_secure_password_length(self):
+        source = self.source
+        self.assertIn("password_nueva = data.get('password')", source)
+        self.assertIn('12 <= len(password_nueva) <= 128', source)
+
     def test_login_does_not_return_recovery_fields(self):
         source = self.function_source('login')
         self.assertIn("usuario.pop('token_recuperacion', None)", source)
