@@ -514,6 +514,10 @@ def grupos_disponibles(id_alumno):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM usuarios coordinador JOIN usuarios alumno ON alumno.id_carrera = coordinador.id_carrera WHERE coordinador.id_usuario = %s AND coordinador.rol = 'coordinadora' AND alumno.id_usuario = %s", (session['uid'], id_alumno))
+            if not cursor.fetchone():
+                return jsonify({"error": "Alumno fuera de su carrera"}), 403
         sql = """SELECT g.id_grupo, g.nombre_grupo, g.horario, g.aula, m.id_materia, m.nombre as materia, m.semestre, p.nombre as profesor 
                  FROM grupos g JOIN materias m ON g.id_materia = m.id_materia LEFT JOIN usuarios p ON g.id_profesor = p.id_usuario JOIN usuarios u ON m.id_carrera = u.id_carrera
                  WHERE u.id_usuario = %s AND m.id_materia NOT IN (SELECT id_materia FROM kardex WHERE id_alumno = %s AND estatus IN ('Aprobada', 'Cursando')) ORDER BY m.semestre ASC"""
@@ -543,6 +547,10 @@ def profesor_get_alumnos_grupo(id_grupo):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM grupos WHERE id_grupo = %s AND id_profesor = %s", (id_grupo, session['uid']))
+            if not cursor.fetchone():
+                return jsonify({"error": "Grupo no autorizado"}), 403
         sql = "SELECT k.id_kardex, u.id_usuario as id_alumno, u.matricula, u.nombre, u.correo, k.estatus, k.calificacion FROM kardex k JOIN usuarios u ON k.id_alumno = u.id_usuario WHERE k.id_grupo = %s ORDER BY u.nombre ASC"
         cursor.execute(sql, (id_grupo,))
         return jsonify(cursor.fetchall()), 200
