@@ -233,15 +233,16 @@ def solicitar_recuperacion():
         usuario = cursor.fetchone()
         if not usuario: return jsonify({"error": "Correo no registrado."}), 404
             
+        llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
+        if not llave_actual:
+            app.logger.error("Brevo recovery unavailable: BREVO_API_KEY is missing")
+            return jsonify({"error": "Recuperación temporalmente no disponible."}), 503
+
         token = ''.join(secrets.choice(string.digits) for _ in range(6))
         expiracion = datetime.now() + timedelta(minutes=15)
         cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", (token, expiracion, usuario['id_usuario']))
         conn.commit()
         
-        llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
-        if not llave_actual:
-            app.logger.error("Brevo recovery unavailable: BREVO_API_KEY is missing")
-            return jsonify({"error": "Recuperación temporalmente no disponible."}), 503
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {"accept": "application/json", "api-key": llave_actual, "content-type": "application/json"}
         payload = {
