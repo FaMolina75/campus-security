@@ -19,6 +19,8 @@ import secrets
 app = Flask(__name__)
 # No production secret or database credential may have a source-code fallback.
 app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+if os.environ.get("SESSION_V2_ENFORCE") == "1" and not os.environ.get("SECRET_KEY"):
+    raise RuntimeError("SECRET_KEY is required when session enforcement is enabled")
 app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True,
                   SESSION_COOKIE_SAMESITE="None", PERMANENT_SESSION_LIFETIME=timedelta(minutes=2))
 CORS(app, origins=[origin.strip() for origin in os.environ.get("FRONTEND_ORIGINS", "").split(",") if origin.strip()], supports_credentials=True)
