@@ -1,7 +1,7 @@
 # Archivo: backend/app.py
 
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, g
 from flask_cors import CORS
 import mysql.connector
 from mysql.connector import pooling
@@ -12,10 +12,16 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from functools import wraps
+from datetime import timezone
+import secrets
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'super_clave_secreta_campus_v1') 
-CORS(app, supports_credentials=True)
+# No production secret or database credential may have a source-code fallback.
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SECURE=True,
+                  SESSION_COOKIE_SAMESITE="None", PERMANENT_SESSION_LIFETIME=timedelta(minutes=2))
+CORS(app, origins=[origin.strip() for origin in os.environ.get("FRONTEND_ORIGINS", "").split(",") if origin.strip()], supports_credentials=True)
 
 limiter = Limiter(
     get_remote_address,
@@ -25,9 +31,9 @@ limiter = Limiter(
 )
 
 dbconfig = {
-    "host": os.environ.get("DB_HOST", "gateway01.us-east-1.prod.aws.tidbcloud.com"),
-    "user": os.environ.get("DB_USER", "t6BEupECtGTsvUW.root"),
-    "password": os.environ.get("DB_PASSWORD", "GlrkiYV1MsMMGoIf"),
+    "host": os.environ.get("DB_HOST"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"),
     "database": os.environ.get("DB_NAME", "campus_security_v1"),
     "port": int(os.environ.get("DB_PORT", 4000)),
     "ssl_disabled": False
@@ -76,6 +82,72 @@ def verificar_ip_bloqueada(ip):
         if 'cursor' in locals(): cursor.close()
         if 'conn' in locals(): conn.close()
 
+# Authentication is enforced at the API, not by browser sessionStorage.
+# Flask's signed cookie is server-verified, but not a server-stored/revocable session.
+# SESSION_V2_ENFORCE defaults off until the frontend and cookie deployment are validated.
+def require_identity(fn):
+    @wraps(fn)
+    def guarded(*args, **kwargs):
+        if os.environ.get("SESSION_V2_ENFORCE") != "1":
+            return fn(*args, **kwargs)
+        uid = session.get("uid")
+        last = session.get("last_activity")
+        now = datetime.now(timezone.utc).timestamp()
+        if not uid or not last or now - float(last) >= 120:
+            session.clear()
+            return jsonify({"error": "Sesión expirada o inexistente"}), 401
+        conn = cursor = None
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT id_usuario, rol, bloqueado FROM usuarios WHERE id_usuario = %s", (uid,))
+            identity = cursor.fetchone()
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()
+        if not identity or identity["bloqueado"]:
+            session.clear()
+            return jsonify({"error": "Cuenta no autorizada"}), 403
+        role = str(identity["rol"]).lower()
+        path = request.path
+        required = ("admin" if path.startswith("/api/admin/") else
+                    "alumno" if path.startswith("/api/alumno/") else
+                    "profesor" if path.startswith("/api/profesor/") else
+                    "coordinadora" if path.startswith("/api/coordinador/") else None)
+        if required and role not in ({required, "coordinador"} if required == "coordinadora" else {required}):
+            return jsonify({"error": "Permisos insuficientes"}), 403
+        # Object-level access: a student/teacher cannot supply another user's id.
+        for key in ("id_usuario", "id_alumno", "id_profesor"):
+            if key in kwargs and int(kwargs[key]) != int(uid):
+                return jsonify({"error": "Recurso no autorizado"}), 403
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            csrf = request.headers.get("X-CSRF-Token", "")
+            if not csrf or not secrets.compare_digest(csrf, session.get("csrf", "")):
+                return jsonify({"error": "CSRF inválido"}), 403
+        session["last_activity"] = now
+        g.identity = identity
+        return fn(*args, **kwargs)
+    return guarded
+
+@app.before_request
+def protect_role_apis():
+    if request.path.startswith(("/api/admin/", "/api/alumno/", "/api/profesor/", "/api/coordinador/")):
+        return require_identity(lambda: None)()
+
+@app.route("/api/auth/session", methods=["GET"])
+def session_status():
+    if not session.get("uid"):
+        return jsonify({"error": "Sin sesión"}), 401
+    if datetime.now(timezone.utc).timestamp() - float(session.get("last_activity", 0)) >= 120:
+        session.clear()
+        return jsonify({"error": "Sesión expirada"}), 401
+    return jsonify({"id_usuario": session["uid"], "csrf": session.get("csrf")})
+
+@app.route("/api/auth/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"mensaje": "Sesión cerrada"})
+
 # ==========================================
 # RUTAS DE SEGURIDAD E IDENTIDAD (IAM)
 # ==========================================
@@ -114,6 +186,11 @@ def login():
                     return jsonify({"error": "Cuenta bloqueada. Contacte a soporte."}), 403
                 
                 registrar_intento(correo, ip, True)
+                session.clear()
+                session.permanent = True
+                session["uid"] = usuario["id_usuario"]
+                session["last_activity"] = datetime.now(timezone.utc).timestamp()
+                session["csrf"] = secrets.token_urlsafe(32)
                 return jsonify({"mensaje": "Bienvenido", "usuario": usuario}), 200
             
         registrar_intento(correo, ip, False)
@@ -163,7 +240,7 @@ def cambiar_password():
         cursor.execute("SELECT id_usuario, token_recuperacion, token_expiracion FROM usuarios WHERE correo = %s", (data.get('correo'),))
         usuario = cursor.fetchone()
         
-        if not usuario or usuario['token_recuperacion'] != data.get('token'): return jsonify({"error": "Código incorrecto."}), 400
+        if not usuario or not usuario['token_expiracion'] or usuario['token_expiracion'] < datetime.now() or not secrets.compare_digest(str(usuario['token_recuperacion'] or ''), str(data.get('token') or '')): return jsonify({"error": "Código inválido o expirado."}), 400
             
         hashed_password = generate_password_hash(data.get('nueva_password'))
         cursor.execute("UPDATE usuarios SET password = %s, token_recuperacion = NULL, token_expiracion = NULL WHERE id_usuario = %s", (hashed_password, usuario['id_usuario']))
