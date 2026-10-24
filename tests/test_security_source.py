@@ -94,6 +94,11 @@ class SecuritySourceTests(unittest.TestCase):
     def test_recovery_token_expiration_is_checked(self):
         self.assertIn("token_expiracion", self.function_source("cambiar_password"))
 
+    def test_login_does_not_return_recovery_fields(self):
+        source = self.function_source('login')
+        self.assertIn("usuario.pop('token_recuperacion', None)", source)
+        self.assertIn("usuario.pop('token_expiracion', None)", source)
+
     def test_logout_checks_csrf_in_enforced_mode(self):
         source = self.function_source('logout')
         self.assertIn('SESSION_V2_ENFORCE', source)
