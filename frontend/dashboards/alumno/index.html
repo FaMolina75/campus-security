@@ -232,6 +232,19 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+// Cross-origin authenticated requests; obtain CSRF token for writes.
+async function apiFetch(url, options = {}) {
+    const opts = { ...options, credentials: 'include' };
+    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
+        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
+        if (status.ok) {
+            const identity = await status.json();
+            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
+        }
+    }
+    return window.fetch(url, opts);
+}
+
     const usuarioSesion = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
 
     if (!usuarioSesion || usuarioSesion.rol !== 'alumno') {
@@ -302,7 +315,7 @@
         };
         
         try {
-            const res = await fetch(`${API_BASE}/alumno/perfil/${usuarioSesion.id_usuario}`, {
+            const res = await apiFetch(`${API_BASE}/alumno/perfil/${usuarioSesion.id_usuario}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             if(res.ok) {
@@ -322,7 +335,7 @@
     // Cargar toda la data Académica (Kárdex y Horario)
     async function cargarDatosAcademicos() {
         try {
-            const res = await fetch(`${API_BASE}/alumno/progreso/${usuarioSesion.id_usuario}`);
+            const res = await apiFetch(`${API_BASE}/alumno/progreso/${usuarioSesion.id_usuario}`);
             const data = await res.json();
             
             if(!res.ok) {
