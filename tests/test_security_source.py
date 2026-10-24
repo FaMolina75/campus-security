@@ -94,6 +94,12 @@ class SecuritySourceTests(unittest.TestCase):
     def test_recovery_token_expiration_is_checked(self):
         self.assertIn("token_expiracion", self.function_source("cambiar_password"))
 
+    def test_logout_checks_csrf_in_enforced_mode(self):
+        source = self.function_source('logout')
+        self.assertIn('SESSION_V2_ENFORCE', source)
+        self.assertIn('X-CSRF-Token', source)
+        self.assertIn('compare_digest', source)
+
     def test_csrf_required_on_mutations(self):
         source = self.function_source("require_identity")
         self.assertIn("X-CSRF-Token", source)
