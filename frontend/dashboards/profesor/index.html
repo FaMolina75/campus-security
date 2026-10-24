@@ -221,7 +221,11 @@ async function apiFetch(url, options = {}) {
     }
 
     function volverAGrupos() { cambiarSeccion('dashboard'); }
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
+    async function cerrarSesion() {
+        try { await apiFetch(`${API_BASE}/auth/logout`, { method: 'POST' }); }
+        catch (error) { console.warn('No se pudo confirmar el cierre de sesión remoto'); }
+        finally { sessionStorage.clear(); window.location.href = '/index.html'; }
+    }
 
     function filtrarTabla(idTabla, texto) {
         const filas = document.getElementById(idTabla).getElementsByTagName('tr');
