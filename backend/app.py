@@ -137,6 +137,7 @@ def protect_role_apis():
         return require_identity(lambda: None)()
 
 @app.route("/api/auth/session", methods=["GET"])
+@require_identity
 def session_status():
     if not session.get("uid"):
         return jsonify({"error": "Sin sesión"}), 401
