@@ -448,8 +448,16 @@ def gestionar_grupos(id_carrera):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
+        if os.environ.get("SESSION_V2_ENFORCE") == "1":
+            cursor.execute("SELECT 1 FROM usuarios WHERE id_usuario = %s AND id_carrera = %s AND rol = 'coordinadora'", (session['uid'], id_carrera))
+            if not cursor.fetchone():
+                return jsonify({"error": "Carrera no autorizada"}), 403
         if request.method == 'POST':
             data = request.json
+            if os.environ.get("SESSION_V2_ENFORCE") == "1":
+                cursor.execute("SELECT 1 FROM materias WHERE id_materia = %s AND id_carrera = %s", (data['id_materia'], id_carrera))
+                if not cursor.fetchone():
+                    return jsonify({"error": "Materia fuera de su carrera"}), 403
             cursor.execute("INSERT INTO grupos (id_materia, id_profesor, nombre_grupo, horario, aula) VALUES (%s, %s, %s, %s, %s)", (data['id_materia'], data['id_profesor'], data['nombre_grupo'], data['horario'], data['aula']))
             conn.commit()
             return jsonify({"mensaje": "Grupo creado"}), 201
