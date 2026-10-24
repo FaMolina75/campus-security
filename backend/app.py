@@ -225,7 +225,7 @@ def solicitar_recuperacion():
         usuario = cursor.fetchone()
         if not usuario: return jsonify({"error": "Correo no registrado."}), 404
             
-        token = ''.join(random.choice(string.digits) for _ in range(6))
+        token = ''.join(secrets.choice(string.digits) for _ in range(6))
         expiracion = datetime.now() + timedelta(minutes=15)
         cursor.execute("UPDATE usuarios SET token_recuperacion = %s, token_expiracion = %s WHERE id_usuario = %s", (token, expiracion, usuario['id_usuario']))
         conn.commit()
