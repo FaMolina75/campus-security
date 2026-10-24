@@ -250,6 +250,8 @@ def solicitar_recuperacion():
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         if not response.ok:
             app.logger.error("Brevo password recovery delivery failed: HTTP %s", response.status_code)
+            cursor.execute("UPDATE usuarios SET token_recuperacion = NULL, token_expiracion = NULL WHERE id_usuario = %s AND token_recuperacion = %s", (usuario["id_usuario"], token))
+            conn.commit()
             return jsonify({"error": "No se pudo enviar el código. Inténtalo más tarde."}), 502
         return jsonify({"mensaje": "Código enviado."}), 200
     finally:
