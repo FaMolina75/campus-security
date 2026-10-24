@@ -192,7 +192,7 @@ def login():
         
         if usuario:
             db_password = usuario.pop('password')
-            is_valid = check_password_hash(db_password, password) if (db_password.startswith('scrypt:') or db_password.startswith('pbkdf2:')) else (db_password == password)
+            is_valid = (check_password_hash(db_password, password) if (db_password.startswith('scrypt:') or db_password.startswith('pbkdf2:')) else (os.environ.get('SESSION_V2_ENFORCE') != '1' and secrets.compare_digest(db_password, password or '')))
 
             if is_valid:
                 if usuario['bloqueado']:
