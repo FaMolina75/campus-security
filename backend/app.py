@@ -239,6 +239,9 @@ def solicitar_recuperacion():
         conn.commit()
         
         llave_actual = os.environ.get("BREVO_API_KEY", "").strip()
+        if not llave_actual:
+            app.logger.error("Brevo recovery unavailable: BREVO_API_KEY is missing")
+            return jsonify({"error": "Recuperación temporalmente no disponible."}), 503
         url = "https://api.brevo.com/v3/smtp/email"
         headers = {"accept": "application/json", "api-key": llave_actual, "content-type": "application/json"}
         payload = {
