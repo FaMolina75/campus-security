@@ -63,6 +63,15 @@ class SecuritySourceTests(unittest.TestCase):
         source = self.function_source("grupos_disponibles")
         self.assertIn("alumno.id_carrera = coordinador.id_carrera", source)
 
+    def test_stable_secret_required_for_enforcement(self):
+        self.assertIn('SECRET_KEY is required', self.source)
+
+    def test_coordinator_student_lookup_not_blocked_by_self_identity(self):
+        source = self.function_source("require_identity")
+        self.assertIn('required == "alumno"', source)
+        self.assertIn('required == "profesor"', source)
+        self.assertNotIn('if key in (request.view_args or {}) and int(', source)
+
     def test_csrf_required_on_mutations(self):
         source = self.function_source("require_identity")
         self.assertIn("X-CSRF-Token", source)
