@@ -406,7 +406,11 @@ async function apiFetch(url, options = {}) {
         } catch (error) { console.error(error); }
     }
 
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
+    async function cerrarSesion() {
+        try { await apiFetch(`${API_BASE}/auth/logout`, { method: 'POST' }); }
+        catch (error) { console.warn('No se pudo confirmar el cierre de sesión remoto'); }
+        finally { sessionStorage.clear(); window.location.href = '/index.html'; }
+    }
     window.addEventListener('DOMContentLoaded', verificarCandado);
 </script>
 </body>
