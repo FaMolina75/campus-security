@@ -156,7 +156,10 @@ def logout():
 # ==========================================
 @app.route('/api/auth/captcha', methods=['GET'])
 def generar_captcha():
-    return jsonify({"captcha_code": ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))})
+    code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(5))
+    session["captcha_expected"] = code
+    session["captcha_issued_at"] = datetime.now(timezone.utc).timestamp()
+    return jsonify({"captcha_code": code})
 
 @app.route('/api/auth/login', methods=['POST'])
 @limiter.limit("10 per minute")
@@ -169,7 +172,15 @@ def login():
     correo, password = data.get('correo'), data.get('password')
     captcha_user, captcha_real = data.get('captcha_input'), data.get('captcha_real')
 
-    if not captcha_user or captcha_user.upper() != captcha_real.upper():
+    if os.environ.get("SESSION_V2_ENFORCE") == "1":
+        expected = session.pop("captcha_expected", None)
+        issued_at = session.pop("captcha_issued_at", 0)
+        captcha_ok = bool(expected and captcha_user and
+                          datetime.now(timezone.utc).timestamp() - float(issued_at) <= 120 and
+                          secrets.compare_digest(captcha_user.upper(), expected))
+    else:
+        captcha_ok = bool(captcha_user and captcha_real and captcha_user.upper() == captcha_real.upper())
+    if not captcha_ok:
         registrar_intento(correo, ip, False)
         return jsonify({"error": "Código CAPTCHA incorrecto"}), 403
 
