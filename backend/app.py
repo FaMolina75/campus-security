@@ -114,11 +114,11 @@ def require_identity(fn):
                     "alumno" if path.startswith("/api/alumno/") else
                     "profesor" if path.startswith("/api/profesor/") else
                     "coordinadora" if path.startswith("/api/coordinador/") else None)
-        if required and role not in ({required, "coordinador"} if required == "coordinadora" else {required}):
+        if required and role not in ({required, "coordinador"} if required == "coordinadora" else {required, "administrador"} if required == "admin" else {required}):
             return jsonify({"error": "Permisos insuficientes"}), 403
         # Object-level access: a student/teacher cannot supply another user's id.
         for key in ("id_usuario", "id_alumno", "id_profesor"):
-            if key in kwargs and int(kwargs[key]) != int(uid):
+            if key in (request.view_args or {}) and int(request.view_args[key]) != int(uid):
                 return jsonify({"error": "Recurso no autorizado"}), 403
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             csrf = request.headers.get("X-CSRF-Token", "")
@@ -141,6 +141,7 @@ def session_status():
     if datetime.now(timezone.utc).timestamp() - float(session.get("last_activity", 0)) >= 120:
         session.clear()
         return jsonify({"error": "Sesión expirada"}), 401
+    session["last_activity"] = datetime.now(timezone.utc).timestamp()
     return jsonify({"id_usuario": session["uid"], "csrf": session.get("csrf")})
 
 @app.route("/api/auth/logout", methods=["POST"])
