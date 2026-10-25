@@ -243,6 +243,19 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+// Authenticated cross-origin requests; CSRF is obtained from the signed session.
+async function apiFetch(url, options = {}) {
+    const opts = { ...options, credentials: 'include' };
+    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
+        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
+        if (status.ok) {
+            const identity = await status.json();
+            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
+        }
+    }
+    return window.fetch(url, opts);
+}
+
 
     // Limpiar sesión siempre que entren al login
     sessionStorage.clear();
@@ -250,7 +263,7 @@
     // 1. CARGAR CAPTCHA INICIAL
     async function cargarCaptcha() {
         try {
-            const res = await fetch(`${API_BASE}/auth/captcha`);
+            const res = await apiFetch(`${API_BASE}/auth/captcha`);
             const data = await res.json();
             document.getElementById('boxCaptcha').innerText = data.captcha_code;
             document.getElementById('captchaOculto').value = data.captcha_code;
@@ -276,7 +289,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
+            const res = await apiFetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -320,7 +333,7 @@
         const correoIngresado = document.getElementById('recCorreo').value;
 
         try {
-            const res = await fetch(`${API_BASE}/auth/recuperar-solicitar`, {
+            const res = await apiFetch(`${API_BASE}/auth/recuperar-solicitar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ correo: correoIngresado })
@@ -362,6 +375,10 @@
         const pass1 = document.getElementById('cambioPass1').value;
         const pass2 = document.getElementById('cambioPass2').value;
         
+        if (pass1.length < 12 || pass1.length > 128) {
+            Swal.fire('Contraseña no válida', 'Usa entre 12 y 128 caracteres para tu nueva contraseña.', 'warning');
+            return;
+        }
         if (pass1 !== pass2) {
             Swal.fire('Atención', 'Las nuevas contraseñas no coinciden. Verifícalas.', 'warning');
             return;
@@ -379,7 +396,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/auth/recuperar-cambiar`, {
+            const res = await apiFetch(`${API_BASE}/auth/recuperar-cambiar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -417,7 +434,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/soporte/enviar`, {
+            const res = await apiFetch(`${API_BASE}/soporte/enviar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
