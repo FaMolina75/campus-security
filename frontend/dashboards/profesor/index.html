@@ -186,19 +186,6 @@
 
 <script>
     const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
-// Cross-origin authenticated requests; obtain CSRF token for writes.
-async function apiFetch(url, options = {}) {
-    const opts = { ...options, credentials: 'include' };
-    if (opts.method && !['GET', 'HEAD', 'OPTIONS'].includes(opts.method.toUpperCase()) && !url.includes('/auth/login')) {
-        const status = await window.fetch(`${API_BASE}/auth/session`, { credentials: 'include' });
-        if (status.ok) {
-            const identity = await status.json();
-            opts.headers = { ...(opts.headers || {}), 'X-CSRF-Token': identity.csrf };
-        }
-    }
-    return window.fetch(url, opts);
-}
-
     
     // Validación de Sesión Segura
     const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
@@ -221,11 +208,7 @@ async function apiFetch(url, options = {}) {
     }
 
     function volverAGrupos() { cambiarSeccion('dashboard'); }
-    async function cerrarSesion() {
-        try { await apiFetch(`${API_BASE}/auth/logout`, { method: 'POST' }); }
-        catch (error) { console.warn('No se pudo confirmar el cierre de sesión remoto'); }
-        finally { sessionStorage.clear(); window.location.href = '/index.html'; }
-    }
+    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
 
     function filtrarTabla(idTabla, texto) {
         const filas = document.getElementById(idTabla).getElementsByTagName('tr');
@@ -240,7 +223,7 @@ async function apiFetch(url, options = {}) {
     // ==========================================
     async function cargarMisGrupos() {
         try {
-            const res = await apiFetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
+            const res = await fetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
             const grupos = await res.json();
             const tbody = document.getElementById('tablaMisGruposBody');
             tbody.innerHTML = '';
@@ -286,7 +269,7 @@ async function apiFetch(url, options = {}) {
         cambiarSeccion('evaluacion'); // Ocultar dashboard, mostrar tabla de evaluación
 
         try {
-            const res = await apiFetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
+            const res = await fetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
             const alumnos = await res.json();
             const tbody = document.getElementById('tablaAlumnosEvalBody');
             tbody.innerHTML = '';
@@ -354,7 +337,7 @@ async function apiFetch(url, options = {}) {
         };
 
         try {
-            const res = await apiFetch(`${API_BASE}/profesor/calificar`, {
+            const res = await fetch(`${API_BASE}/profesor/calificar`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
             const data = await res.json();
