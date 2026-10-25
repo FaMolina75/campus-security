@@ -1,148 +1,231 @@
-# Archivo: backend/seeder.py
+"""SecurityCampus V2: datos sintéticos para campus_security_v1 (esquema V2).
+
+Ejecución explícita: APP_ENV=development ALLOW_V2_SEED=YES python backend/seeder.py
+No crea administradores, no borra datos, no envía correos ni muestra contraseñas.
+"""
+import logging
+import os
+import random
+import secrets
+import string
+import time
+from collections import Counter, defaultdict
+from datetime import datetime, timezone
 
 import mysql.connector
-import random
-import time
+from werkzeug.security import generate_password_hash
 
-# ==========================================
-# CONFIGURACIÓN DE BASE DE DATOS (NUBE - TiDB)
-# ==========================================
-DB_HOST = 'gateway01.us-east-1.prod.aws.tidbcloud.com'
-DB_USER = 't6BEupECtGTsvUW.root'
-DB_PASSWORD = 'GlrkiYV1MsMMGoIf'
-DB_NAME = 'campus_security_v1'
-DB_PORT = 4000
+LOG = logging.getLogger("securitycampus.seeder")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
-def get_connection():
-    return mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        port=DB_PORT,
-        ssl_disabled=False
-    )
+DB_NAME = "campus_security_v1"  # Nombre existente; contiene el esquema V2.
+PREFIX = "V2TEST"
+TOTAL_PROFESORES = 50
+TOTAL_ALUMNOS = 450
+CUPO = 30
+RNG = random.Random(2026)  # Únicamente datos académicos ficticios.
+NOMBRES = ("Ana", "Carlos", "María", "Jorge", "Lucía", "Pedro", "Sofía", "Diego", "Elena", "Luis", "Daniela", "Raúl", "Valeria", "Miguel")
+APELLIDOS = ("García", "López", "Martínez", "Sánchez", "Pérez", "Flores", "Morales", "Cruz", "Ruiz", "Torres", "Mendoza")
+HORARIOS = ("Lun/Mié 07:00-09:00", "Mar/Jue 09:00-11:00", "Lun/Mié 11:00-13:00", "Mar/Jue 14:00-16:00")
+AULAS = ("A-101", "A-102", "B-201", "Lab-C1")
 
-NOMBRES = ["Juan", "María", "Carlos", "Ana", "Luis", "Elena", "Pedro", "Lucía", "Jorge", "Sofía", "Miguel", "Laura", "Fernando", "Carmen", "Diego", "Valeria", "Roberto", "Daniela", "Ricardo", "Camila", "Javier", "Alejandro", "Isabel", "Raúl", "Diana"]
-APELLIDOS = ["García", "Martínez", "López", "González", "Pérez", "Rodríguez", "Sánchez", "Ramírez", "Cruz", "Flores", "Gómez", "Morales", "Vázquez", "Jiménez", "Reyes", "Díaz", "Torres", "Gutiérrez", "Ruiz", "Mendoza", "Aguilar", "Ortiz", "Moreno", "Castillo", "Romero"]
-AULAS = ["Edificio A, Aula 1", "Edificio A, Aula 2", "Edificio B, Aula 10", "Edificio C, Lab 1", "Edificio C, Lab 2", "Auditorio Principal"]
-DIAS = ["Lunes y Miércoles", "Martes y Jueves", "Lunes a Viernes", "Sábados"]
-HORAS = ["07:00 - 09:00", "09:00 - 11:00", "11:00 - 13:00", "14:00 - 16:00", "16:00 - 18:00"]
 
-def generar_nombre():
-    return f"{random.choice(NOMBRES)} {random.choice(APELLIDOS)} {random.choice(APELLIDOS)}"
+def validar_entorno():
+    if os.getenv("ALLOW_V2_SEED") != "YES":
+        raise RuntimeError("Para sembrar, establece ALLOW_V2_SEED=YES")
+    if os.getenv("APP_ENV", "").lower() not in ("development", "test", "testing"):
+        raise RuntimeError("Solo se permite APP_ENV=development/test/testing")
+    if os.getenv("DB_NAME") != DB_NAME:
+        raise RuntimeError("DB_NAME debe ser exactamente campus_security_v1 (con esquema V2)")
+    for clave in ("DB_HOST", "DB_USER", "DB_PASSWORD"):
+        if not os.getenv(clave):
+            raise RuntimeError(f"Falta la variable {clave}")
 
-def sembrar_datos():
-    print("Iniciando sembrado de datos (Data Seeding) hacia AWS TiDB Cloud...")
-    inicio = time.time()
-    
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    
+
+def conectar():
+    opciones = dict(host=os.environ["DB_HOST"], user=os.environ["DB_USER"],
+                    password=os.environ["DB_PASSWORD"], database=DB_NAME,
+                    port=int(os.getenv("DB_PORT", "4000")),
+                    ssl_disabled=False, connection_timeout=15, autocommit=False)
+    if os.getenv("DB_SSL_CA"):
+        opciones["ssl_ca"] = os.environ["DB_SSL_CA"]
+    return mysql.connector.connect(**opciones)
+
+
+def nombre():
+    return f"{RNG.choice(NOMBRES)} {RNG.choice(APELLIDOS)} {RNG.choice(APELLIDOS)}"
+
+
+def hash_password():
+    alfabeto = string.ascii_letters + string.digits + "!@#$%*-_"
+    while True:
+        valor = "".join(secrets.choice(alfabeto) for _ in range(20))
+        if (any(c.islower() for c in valor) and any(c.isupper() for c in valor)
+                and any(c.isdigit() for c in valor) and any(c in "!@#$%*-_" for c in valor)):
+            return generate_password_hash(valor, method="scrypt")
+
+
+def usuario_prueba(cursor, matricula, rol, carrera, correo, semestre=0, perfil=1):
+    cursor.execute("""SELECT id_usuario,rol,id_carrera,correo FROM usuarios
+                      WHERE matricula=%s LIMIT 1""", (matricula,))
+    fila = cursor.fetchone()
+    if fila:
+        if (fila["rol"] != rol or fila["id_carrera"] != carrera
+                or fila["correo"].lower() != correo.lower()):
+            raise RuntimeError(f"Colisión de identidad: {matricula}; no se modificó")
+        return fila["id_usuario"], False
+    cursor.execute("""INSERT INTO usuarios
+                      (matricula,nombre,correo,password,rol,id_carrera,semestre_actual,
+                       perfil_completo,correo_verificado,bloqueado)
+                      VALUES (%s,%s,%s,%s,%s,%s,%s,%s,0,0)""",
+                   (matricula, nombre(), correo, hash_password(), rol, carrera, semestre, perfil))
+    return cursor.lastrowid, True
+
+
+def verificar_tablas(cursor):
+    cursor.execute("SELECT DATABASE() AS db")
+    if cursor.fetchone()["db"] != DB_NAME:
+        raise RuntimeError("Base de datos inesperada")
+    requeridas = {"carreras", "materias", "usuarios", "grupos", "kardex",
+                  "sesiones_usuario", "verificaciones_correo", "desafios_captcha"}
+    cursor.execute("""SELECT table_name FROM information_schema.tables
+                      WHERE table_schema=%s""", (DB_NAME,))
+    existentes = {r["table_name"] for r in cursor.fetchall()}
+    if requeridas - existentes:
+        raise RuntimeError(f"Faltan tablas V2: {sorted(requeridas - existentes)}")
+
+
+def sembrar():
+    validar_entorno()
+    inicio = time.monotonic()
+    conexion = conectar()
+    cursor = None
+    creados = Counter()
     try:
-        cursor.execute("SELECT id_carrera, clave FROM carreras")
+        cursor = conexion.cursor(dictionary=True)
+        verificar_tablas(cursor)
+        cursor.execute("""SELECT id_carrera,clave,duracion_semestres FROM carreras
+                          WHERE activo=1 ORDER BY id_carrera""")
         carreras = cursor.fetchall()
-        if not carreras:
-            print("❌ Error: No hay carreras en la base de datos. Ejecuta primero los scripts de SQL en TiDB.")
-            return
-
-        carreras_ids = [c['id_carrera'] for c in carreras]
-
-        print("🧑‍🏫 Generando 50 Profesores...")
-        profesores_ids = []
-        for i in range(1, 51):
-            nombre = generar_nombre()
-            correo = f"profesor{i}@campus.edu.mx"
-            cursor.execute("INSERT IGNORE INTO usuarios (matricula, nombre, correo, password, rol, perfil_completo) VALUES (%s, %s, %s, %s, %s, 1)",
-                           (f"PROF-2026-{i:03}", nombre, correo, "123456", "profesor"))
-        
-        cursor.execute("SELECT id_usuario FROM usuarios WHERE rol = 'profesor'")
-        profesores_ids = [p['id_usuario'] for p in cursor.fetchall()]
-
-        print("👩‍💼 Generando Coordinadoras (1 por carrera)...")
-        for carrera in carreras:
-            nombre = generar_nombre()
-            correo = f"coord_{carrera['clave'].lower()}@campus.edu.mx"
-            cursor.execute("INSERT IGNORE INTO usuarios (matricula, nombre, correo, password, rol, id_carrera, perfil_completo) VALUES (%s, %s, %s, %s, %s, %s, 1)",
-                           (f"COORD-{carrera['id_carrera']}", nombre, correo, "123456", "coordinadora", carrera['id_carrera']))
-
-        print("🎓 Generando 450 Alumnos con perfil completo...")
-        for i in range(1, 451):
-            nombre = generar_nombre()
-            correo = f"alumno{i}@campus.edu.mx"
-            id_carrera = random.choice(carreras_ids)
-            cursor.execute("""
-                INSERT IGNORE INTO usuarios (matricula, nombre, correo, password, rol, id_carrera, curp, telefono, direccion, perfil_completo) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
-            """, (f"AL-{2026000 + i}", nombre, correo, "123456", "alumno", id_carrera, f"CURP{i}TEST00000000", "7220000000", "Toluca, Estado de México"))
-        
-        conn.commit()
-
-        print("🏫 Abriendo Grupos Académicos para el semestre actual...")
-        cursor.execute("SELECT id_materia, id_carrera, semestre, nombre FROM materias")
+        cursor.execute("""SELECT m.id_materia,m.id_carrera,m.semestre,m.tipo
+                          FROM materias m JOIN carreras c ON c.id_carrera=m.id_carrera
+                          WHERE m.activo=1 AND c.activo=1
+                          ORDER BY m.id_carrera,m.semestre,m.id_materia""")
         materias = cursor.fetchall()
-        
-        for materia in materias:
-            for g in ["A", "B"]:
-                id_profesor = random.choice(profesores_ids)
-                horario = f"{random.choice(DIAS)} {random.choice(HORAS)}"
-                aula = random.choice(AULAS)
-                nombre_grupo = f"{materia['semestre']}{g}"
-                
-                cursor.execute("""
-                    INSERT INTO grupos (id_materia, id_profesor, nombre_grupo, horario, aula) 
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (materia['id_materia'], id_profesor, nombre_grupo, horario, aula))
-        
-        conn.commit()
+        por_carrera = defaultdict(list)
+        for m in materias:
+            por_carrera[m["id_carrera"]].append(m)
+        carreras = [c for c in carreras if por_carrera[c["id_carrera"]]]
+        if not carreras or len(carreras) > TOTAL_PROFESORES:
+            raise RuntimeError("Se requieren entre 1 y 50 carreras activas con materias")
+        LOG.info("Carreras activas con materias: %d", len(carreras))
 
-        print("📚 Inscribiendo alumnos en grupos y generando historial académico...")
-        cursor.execute("SELECT id_usuario, id_carrera FROM usuarios WHERE rol = 'alumno'")
-        alumnos = cursor.fetchall()
-        
-        for alumno in alumnos:
-            cursor.execute("""
-                SELECT g.id_grupo, m.id_materia, m.semestre, m.tipo 
-                FROM grupos g JOIN materias m ON g.id_materia = m.id_materia 
-                WHERE m.id_carrera = %s
-            """, (alumno['id_carrera'],))
-            grupos_carrera = cursor.fetchall()
-            
-            semestre_actual = random.randint(1, 9)
-            
-            for grupo in grupos_carrera:
-                if grupo['semestre'] < semestre_actual:
-                    calificacion = random.randint(70, 100)
-                    cursor.execute("""
-                        INSERT INTO kardex (id_alumno, id_materia, id_grupo, calificacion, estatus) 
-                        VALUES (%s, %s, %s, %s, 'Aprobada')
-                    """, (alumno['id_usuario'], grupo['id_materia'], grupo['id_grupo'], calificacion))
-                
-                elif grupo['semestre'] == semestre_actual:
-                    cursor.execute("SELECT id_kardex FROM kardex WHERE id_alumno = %s AND id_materia = %s", (alumno['id_usuario'], grupo['id_materia']))
-                    if not cursor.fetchone():
-                        cursor.execute("""
-                            INSERT INTO kardex (id_alumno, id_materia, id_grupo, estatus) 
-                            VALUES (%s, %s, %s, 'Cursando')
-                        """, (alumno['id_usuario'], grupo['id_materia'], grupo['id_grupo']))
+        profesores = defaultdict(list)
+        for i in range(1, TOTAL_PROFESORES + 1):
+            carrera = carreras[(i - 1) % len(carreras)]["id_carrera"]
+            uid, nuevo = usuario_prueba(cursor, f"{PREFIX}-PROF-{i:03d}", "profesor",
+                                        carrera, f"v2test.profesor{i}@example.com")
+            profesores[carrera].append(uid)
+            creados["profesores"] += int(nuevo)
 
-        conn.commit()
-        
-        fin = time.time()
-        print(f"\n✅ ¡Sembrado de datos finalizado con éxito en la nube TiDB en {round(fin - inicio, 2)} segundos!")
-        print("\n--- CREDENCIALES DE PRUEBA EN LA NUBE ---")
-        print("🔑 Todas las contraseñas son: 123456")
-        print("🎓 Alumnos: alumno1@campus.edu.mx hasta alumno450@campus.edu.mx")
-        print("👩‍💼 Coordinadoras: coord_ing-tic@campus.edu.mx (varía por carrera)")
-        print("🧑‍🏫 Profesores: profesor1@campus.edu.mx hasta profesor50@campus.edu.mx")
-        print("-----------------------------------------")
+        for c in carreras:
+            cid = c["id_carrera"]
+            _, nuevo = usuario_prueba(cursor, f"{PREFIX}-COORD-{cid}", "coordinadora",
+                                      cid, f"v2test.coord{cid}@example.com")
+            creados["coordinadoras"] += int(nuevo)
 
-    except Exception as e:
-        print(f"❌ Error durante el sembrado en TiDB: {e}")
-        conn.rollback()
+        alumnos = []
+        for i in range(1, TOTAL_ALUMNOS + 1):
+            c = carreras[(i - 1) % len(carreras)]
+            semestre = RNG.randint(1, min(9, c["duracion_semestres"]))
+            uid, nuevo = usuario_prueba(cursor, f"{PREFIX}-AL-{i:04d}", "alumno",
+                                        c["id_carrera"], f"v2test.alumno{i}@example.com",
+                                        semestre=semestre, perfil=0)
+            alumnos.append((uid, c["id_carrera"]))
+            creados["alumnos"] += int(nuevo)
+
+        grupos = defaultdict(list)
+        for m in materias:
+            cid = m["id_carrera"]
+            if cid not in profesores:
+                continue
+            for letra in ("A", "B"):
+                etiqueta = f"{PREFIX}-{m['id_materia']}-{letra}"
+                cursor.execute("""SELECT g.id_grupo,g.id_profesor,g.cupo,g.activo,
+                                         u.id_carrera AS carrera_profesor,u.rol AS rol_profesor
+                                  FROM grupos g JOIN usuarios u ON u.id_usuario=g.id_profesor
+                                  WHERE g.id_materia=%s AND g.nombre_grupo=%s LIMIT 1""",
+                               (m["id_materia"], etiqueta))
+                existente = cursor.fetchone()
+                if existente:
+                    if (existente["id_profesor"] not in profesores[cid]
+                            or existente["carrera_profesor"] != cid
+                            or existente["rol_profesor"] != "profesor"):
+                        raise RuntimeError(f"Grupo de prueba inconsistente: {etiqueta}")
+                    gid, cupo, activo = existente["id_grupo"], existente["cupo"], existente["activo"]
+                else:
+                    profesor = RNG.choice(profesores[cid])
+                    cursor.execute("""INSERT INTO grupos
+                                      (id_materia,id_profesor,id_ciclo,nombre_grupo,horario,aula,cupo,activo)
+                                      VALUES (%s,%s,NULL,%s,%s,%s,%s,1)""",
+                                   (m["id_materia"], profesor, etiqueta, RNG.choice(HORARIOS),
+                                    RNG.choice(AULAS), CUPO))
+                    gid, cupo, activo = cursor.lastrowid, CUPO, 1
+                    creados["grupos"] += 1
+                if activo:
+                    grupos[m["id_materia"]].append((gid, cupo))
+
+        cursor.execute("""SELECT id_grupo,COUNT(*) AS inscritos FROM kardex
+                          WHERE id_grupo IS NOT NULL AND estatus='Cursando'
+                          GROUP BY id_grupo""")
+        ocupacion = {r["id_grupo"]: r["inscritos"] for r in cursor.fetchall()}
+        # Reutilizar el semestre almacenado, sin modificar alumnos preexistentes.
+        for uid, cid in alumnos:
+            cursor.execute("SELECT semestre_actual FROM usuarios WHERE id_usuario=%s", (uid,))
+            semestre_actual = cursor.fetchone()["semestre_actual"]
+            for m in por_carrera[cid]:
+                if m["semestre"] > semestre_actual:
+                    continue
+                mid = m["id_materia"]
+                cursor.execute("""SELECT id_kardex FROM kardex
+                                  WHERE id_alumno=%s AND id_materia=%s LIMIT 1""", (uid, mid))
+                if cursor.fetchone():
+                    continue
+                if m["semestre"] < semestre_actual:
+                    # El historial aprobado no ocupa cupo activo ni referencia grupos actuales.
+                    estado, nota, gid = "Aprobada", RNG.randint(70, 100), None
+                    fecha_nota = datetime.now(timezone.utc).replace(tzinfo=None)
+                else:
+                    # Solo las inscripciones actuales consumen cupo.
+                    opciones = [(g, cupo) for g, cupo in grupos.get(mid, [])
+                                if ocupacion.get(g, 0) < cupo]
+                    if not opciones:
+                        creados["omitidos_por_cupo"] += 1
+                        continue
+                    gid, _ = min(opciones, key=lambda x: (ocupacion.get(x[0], 0), x[0]))
+                    estado, nota, fecha_nota = "Cursando", None, None
+                cursor.execute("""INSERT INTO kardex
+                                  (id_alumno,id_materia,id_grupo,estatus,calificacion,fecha_calificacion)
+                                  VALUES (%s,%s,%s,%s,%s,%s)""", (uid, mid, gid, estado, nota, fecha_nota))
+                creados["kardex"] += 1
+                if gid is not None:
+                    ocupacion[gid] = ocupacion.get(gid, 0) + 1
+
+        conexion.commit()
+        LOG.info("Siembra completada en %.1f segundos", time.monotonic() - inicio)
+        for tipo in ("profesores", "coordinadoras", "alumnos", "grupos", "kardex", "omitidos_por_cupo"):
+            LOG.info("%s nuevos: %d", tipo, creados[tipo])
+        LOG.info("No se crearon administradores ni credenciales utilizables.")
+        LOG.info("Las cuentas sintéticas permanecen sin verificar.")
+    except Exception:
+        conexion.rollback()
+        LOG.exception("Siembra cancelada; se intentó revertir la transacción")
+        raise
     finally:
-        cursor.close()
-        conn.close()
+        if cursor is not None:
+            cursor.close()
+        conexion.close()
+
 
 if __name__ == "__main__":
-    sembrar_datos()
+    sembrar()
