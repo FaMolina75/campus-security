@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://campus-security-v4zh.onrender.com/api/:path*"
+    }
+  ]
+}
