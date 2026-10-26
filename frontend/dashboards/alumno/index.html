@@ -1,400 +1,2099 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Estudiantil | ERP Académico</title>
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+            name="referrer"
+            content="strict-origin-when-cross-origin"
+    >
+
+    <title>SecurityCampus V2 | Portal Estudiantil</title>
+
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+    >
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
-        :root { --primary-color: #0f172a; --accent-color: #2563eb; --bg-color: #f1f5f9; }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-        
-        /* Sidebar */
-        .sidebar { background-color: var(--primary-color); min-height: 100vh; color: white; padding-top: 20px; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .brand { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .brand span { color: #60a5fa; }
-        .nav-link { color: #94a3b8; padding: 12px 20px; margin: 5px 15px; border-radius: 8px; transition: all 0.3s; font-weight: 500; cursor: pointer;}
-        .nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; border-left: 4px solid var(--accent-color); }
-        .nav-link i { width: 25px; text-align: center; margin-right: 10px; }
-        .nav-link.disabled { opacity: 0.5; pointer-events: none; }
-        
-        /* Contenido Principal */
-        .main-content { padding: 30px; height: 100vh; overflow-y: auto; }
-        .header-top { background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .card-custom { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; padding: 25px; }
-        
-        /* Vistas y Tablas */
-        .section-view { display: none; animation: fadeIn 0.4s; }
-        .section-view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .progress { height: 20px; border-radius: 10px; background-color: #e2e8f0; }
-        .progress-bar { background-color: var(--accent-color); font-weight: bold; }
-        
-        .table > :not(caption) > * > * { padding: 12px 15px; border-bottom-color: #e2e8f0; vertical-align: middle; }
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #2563eb;
+            --background: #f1f5f9;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --danger: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: #334155;
+            font-family: "Segoe UI", system-ui, sans-serif;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+
+        .sidebar {
+            width: 265px;
+            min-width: 265px;
+            background: var(--primary);
+            color: white;
+            padding: 25px 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 23px;
+            font-weight: 800;
+            margin-bottom: 35px;
+        }
+
+        .brand span {
+            color: #60a5fa;
+        }
+
+        .brand small {
+            display: block;
+            color: #94a3b8;
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin-top: 7px;
+        }
+
+        .sidebar .nav-link {
+            display: block;
+            width: 100%;
+            background: transparent;
+            color: #94a3b8;
+            padding: 14px 16px;
+            margin-bottom: 7px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            text-align: left;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .sidebar .nav-link i {
+            width: 27px;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .sidebar .nav-link.active {
+            border-left: 4px solid var(--accent);
+        }
+
+        .sidebar .nav-link:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+        }
+
+        .security-box {
+            background: #172554;
+            border: 1px solid #1d4ed8;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .security-box i {
+            color: #4ade80;
+        }
+
+        /* MAIN */
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            padding: 28px;
+        }
+
+        .header-top {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-top h4 {
+            font-weight: 800;
+            margin: 0;
+            color: #0f172a;
+        }
+
+        .student-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 8px 16px;
+        }
+
+        .student-avatar {
+            background: #dbeafe;
+            color: #1d4ed8;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+        }
+
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            padding: 11px 13px;
+            border-radius: 9px;
+        }
+
+        .progress {
+            height: 22px;
+            border-radius: 12px;
+            background: #e2e8f0;
+        }
+
+        .progress-bar {
+            background: var(--accent);
+            font-weight: 700;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            height: 100%;
+        }
+
+        .metric-card h6 {
+            font-size: 12px;
+            font-weight: 800;
+            color: #64748b;
+        }
+
+        .metric-card h2 {
+            font-size: 30px;
+            font-weight: 800;
+        }
+
+        .table {
+            vertical-align: middle;
+        }
+
+        .table th {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .table > :not(caption) > * > * {
+            padding: 14px;
+            border-bottom-color: #edf2f7;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px !important;
+            color: #94a3b8;
+        }
+
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .session-timer {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .session-timer strong {
+            color: var(--accent);
+        }
+
+        @media (max-width: 992px) {
+            .app-layout {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .sidebar .nav {
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .sidebar .nav-link {
+                width: auto;
+                font-size: 13px;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .header-top {
+                flex-wrap: wrap;
+            }
+
+            .card-custom {
+                padding: 18px;
+            }
+        }
+
+        @media print {
+            .sidebar,
+            .header-top,
+            .no-print {
+                display: none !important;
+            }
+
+            .main-content {
+                padding: 0;
+            }
+
+            .section-view {
+                display: none !important;
+            }
+
+            #seccion-kardex {
+                display: block !important;
+            }
+
+            .card-custom {
+                box-shadow: none;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0">
-        <!-- SIDEBAR -->
-        <div class="col-md-2 sidebar d-flex flex-column justify-content-between">
-            <div>
-                <div class="brand">Campus<span>Security</span><br><small class="text-muted fw-normal fs-6">Portal Alumno</small></div>
-                <ul class="nav flex-column mt-4">
-                    <li class="nav-item"><a class="nav-link active" id="nav-perfil" onclick="cambiarSeccion('perfil', this)"><i class="fa-solid fa-id-card"></i> Mi Expediente</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-avance" onclick="cambiarSeccion('avance', this)"><i class="fa-solid fa-chart-line"></i> Avance Reticular</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-horario" onclick="cambiarSeccion('horario', this)"><i class="fa-solid fa-calendar-days"></i> Horario de Clases</a></li>
-                    <li class="nav-item"><a class="nav-link" id="nav-kardex" onclick="cambiarSeccion('kardex', this)"><i class="fa-solid fa-file-contract"></i> Kárdex Histórico</a></li>
-                </ul>
-            </div>
-            <div class="p-4">
-                <button class="btn btn-danger w-100 shadow-sm rounded-3 fw-bold" onclick="cerrarSesion()"><i class="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button>
-            </div>
-        </div>
+<!-- =====================================================
+     VERIFICACIÓN DE SESIÓN
+===================================================== -->
 
-        <!-- MAIN CONTENT -->
-        <div class="col-md-10 main-content">
-            <div class="header-top">
-                <h5 id="tituloCarrera" class="m-0 text-secondary fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i> Cargando carrera...</h5>
-                <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
-                    <i class="fa-solid fa-user-graduate text-primary me-2"></i>
-                    <span id="nombreUsuario" class="fw-bold text-dark fs-6">Cargando...</span>
-                </div>
-            </div>
+<div id="loadingScreen" class="loading-screen">
 
-            <!-- SECCIÓN 1: MI EXPEDIENTE (PERFIL) -->
-            <div id="seccion-perfil" class="section-view active">
-                <div class="alert alert-warning border-0 shadow-sm mb-4" id="alerta-perfil" style="display:none;">
-                    <h5 class="fw-bold text-dark"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Actualización Obligatoria de Seguridad</h5>
-                    <p class="mb-0 text-dark">Por normatividad, debes completar tus datos de contacto y <strong>cambiar tu contraseña temporal</strong> para desbloquear tus módulos académicos y horarios.</p>
-                </div>
+    <div
+            class="spinner-border text-primary mb-4"
+            role="status"
+    ></div>
 
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="card-custom h-100 border-top border-primary border-4">
-                            <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-building-columns me-2"></i> Datos Institucionales</h5>
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">Nombre Registrado</label>
-                                <input type="text" class="form-control bg-light" id="inst-nombre" disabled>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">Matrícula Oficial</label>
-                                <input type="text" class="form-control bg-light fw-bold text-primary font-monospace" id="inst-matricula" disabled>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label text-muted small fw-bold">Correo Universitario</label>
-                                <input type="text" class="form-control bg-light" id="inst-correo" disabled>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-8">
-                        <div class="card-custom h-100">
-                            <h5 class="fw-bold mb-4"><i class="fa-solid fa-user-pen text-success me-2"></i> Actualización de Expediente</h5>
-                            <form id="formPerfil">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">CURP Oficial</label>
-                                        <input type="text" id="perfil-curp" class="form-control text-uppercase" maxlength="18" placeholder="18 caracteres" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fw-bold">Teléfono / WhatsApp</label>
-                                        <input type="tel" id="perfil-tel" class="form-control" placeholder="Ej. 722 123 4567" required>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold">Dirección Completa de Residencia</label>
-                                        <input type="text" id="perfil-dir" class="form-control" placeholder="Calle, Número, Colonia, Municipio..." required>
-                                    </div>
-                                </div>
-                                
-                                <hr class="my-4">
-                                <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-shield-halved me-2"></i> Credenciales de Acceso</h6>
-                                
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Nueva Contraseña Segura</label>
-                                        <input type="password" id="perfil-pass" class="form-control border-danger" minlength="6" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Confirmar Contraseña</label>
-                                        <input type="password" id="perfil-pass-conf" class="form-control border-danger" minlength="6" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 text-end">
-                                    <button type="submit" class="btn btn-primary px-4 fw-bold" id="btn-guardar-perfil"><i class="fa-solid fa-floppy-disk me-2"></i> Guardar y Firmar Expediente</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <h4 class="fw-bold">SecurityCampus V2</h4>
 
-            <!-- SECCIÓN 2: AVANCE RETICULAR -->
-            <div id="seccion-avance" class="section-view">
-                <div class="card-custom">
-                    <h5 class="fw-bold mb-4"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Progreso de Titulación</h5>
-                    
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="fw-bold text-muted">Créditos Universitarios Completados</span>
-                            <span class="fw-bold text-primary" id="txt-porcentaje">0%</span>
-                        </div>
-                        <div class="progress shadow-sm">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="barra-progreso" style="width: 0%"></div>
-                        </div>
-                    </div>
+    <p class="text-secondary">
+        Verificando acceso estudiantil...
+    </p>
 
-                    <div class="row g-4 mt-2">
-                        <div class="col-md-4">
-                            <div class="p-4 bg-light rounded-3 border text-center">
-                                <h6 class="text-muted text-uppercase fw-bold mb-3">Créditos Aprobados</h6>
-                                <h2 class="fw-bold text-dark m-0" id="txt-creditos">0 / 0</h2>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-4 bg-light rounded-3 border text-center">
-                                <h6 class="text-muted text-uppercase fw-bold mb-3">Servicio Social</h6>
-                                <span class="badge bg-warning text-dark fs-5 px-3 py-2" id="badge-servicio">PENDIENTE</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-4 bg-light rounded-3 border text-center">
-                                <h6 class="text-muted text-uppercase fw-bold mb-3">Residencia Profesional</h6>
-                                <span class="badge bg-warning text-dark fs-5 px-3 py-2" id="badge-residencia">PENDIENTE</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN 3: HORARIO (CARGA ACTUAL) -->
-            <div id="seccion-horario" class="section-view">
-                <div class="card-custom border-top border-success border-4">
-                    <h5 class="fw-bold mb-4"><i class="fa-solid fa-calendar-check text-success me-2"></i> Carga Académica Actual</h5>
-                    <div class="alert alert-light border text-muted small mb-4">
-                        <i class="fa-solid fa-circle-info me-2 text-primary"></i> Estas son las materias en las que has sido inscrito por tu Coordinación de Carrera para el ciclo vigente.
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Asignatura</th>
-                                    <th>Catedrático / Profesor</th>
-                                    <th>Horario</th>
-                                    <th>Créditos</th>
-                                    <th class="text-center">Estatus</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaHorario"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN 4: KÁRDEX HISTÓRICO -->
-            <div id="seccion-kardex" class="section-view">
-                <div class="card-custom">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-bold m-0"><i class="fa-solid fa-folder-open text-primary me-2"></i> Historial de Calificaciones</h5>
-                        <button class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-print me-1"></i> Imprimir Constancia</button>
-                    </div>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle border">
-                            <thead class="table-light text-muted">
-                                <tr>
-                                    <th>Sem.</th>
-                                    <th>Clave</th>
-                                    <th>Asignatura</th>
-                                    <th class="text-center">Créditos</th>
-                                    <th class="text-center">Calificación Final</th>
-                                    <th class="text-center">Resolución</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaKardex"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
 </div>
 
+
+<div class="app-layout">
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================= -->
+
+    <aside class="sidebar">
+
+        <div>
+
+            <div class="brand">
+                Security<span>Campus</span>
+                <small>PORTAL ESTUDIANTIL V2</small>
+            </div>
+
+            <nav class="nav flex-column">
+
+                <button
+                        type="button"
+                        class="nav-link active"
+                        id="nav-perfil"
+                        data-section="perfil"
+                >
+                    <i class="fa-solid fa-id-card"></i>
+                    Mi Expediente
+                </button>
+
+                <button
+                        type="button"
+                        class="nav-link"
+                        id="nav-avance"
+                        data-section="avance"
+                >
+                    <i class="fa-solid fa-chart-line"></i>
+                    Avance Reticular
+                </button>
+
+                <button
+                        type="button"
+                        class="nav-link"
+                        id="nav-horario"
+                        data-section="horario"
+                >
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Horario de Clases
+                </button>
+
+                <button
+                        type="button"
+                        class="nav-link"
+                        id="nav-kardex"
+                        data-section="kardex"
+                >
+                    <i class="fa-solid fa-file-contract"></i>
+                    Kárdex Histórico
+                </button>
+
+            </nav>
+
+        </div>
+
+        <div class="sidebar-footer">
+
+            <div class="security-box">
+
+                <div class="fw-bold mb-2">
+                    <i class="fa-solid fa-shield-halved me-2"></i>
+                    Protección V2
+                </div>
+
+                <div>
+                    <i class="fa-solid fa-circle-check me-1"></i>
+                    Sesión verificada
+                </div>
+
+                <div class="mt-2">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Inactividad: 2 minutos
+                </div>
+
+            </div>
+
+            <button
+                    type="button"
+                    class="btn btn-danger w-100 fw-bold"
+                    id="btnCerrarSesion"
+            >
+                <i class="fa-solid fa-power-off me-2"></i>
+                Cerrar sesión
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =================================================
+         CONTENIDO
+    ================================================= -->
+
+    <main class="main-content">
+
+        <header class="header-top">
+
+            <div>
+
+                <h4 id="tituloCarrera">
+                    <i class="fa-solid fa-graduation-cap text-primary me-2"></i>
+                    Portal Estudiantil
+                </h4>
+
+                <div class="text-muted small mt-2">
+                    Expediente y seguimiento académico
+                </div>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                <div class="session-timer">
+                    <i class="fa-regular fa-clock me-1"></i>
+                    Inactividad:
+                    <strong id="contadorSesion">02:00</strong>
+                </div>
+
+                <div class="student-profile">
+
+                    <div class="student-avatar">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+
+                    <div>
+
+                        <div
+                                class="fw-bold small"
+                                id="nombreUsuario"
+                        >
+                            Alumno
+                        </div>
+
+                        <div
+                                class="text-muted"
+                                id="matriculaHeader"
+                                style="font-size: 11px;"
+                        >
+                            Matrícula
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =============================================
+             EXPEDIENTE
+        ============================================= -->
+
+        <section
+                id="seccion-perfil"
+                class="section-view active"
+        >
+
+            <div
+                    class="alert alert-warning border-0 shadow-sm mb-4"
+                    id="alertaPerfil"
+                    hidden
+            >
+
+                <h5 class="fw-bold">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Expediente incompleto
+                </h5>
+
+                <p class="mb-0">
+                    Completa tus datos personales para habilitar
+                    los módulos académicos.
+                </p>
+
+            </div>
+
+
+            <div class="row g-4">
+
+                <!-- DATOS INSTITUCIONALES -->
+
+                <div class="col-lg-4">
+
+                    <div class="card-custom h-100 border-top border-primary border-4">
+
+                        <h5 class="section-title text-primary">
+                            <i class="fa-solid fa-building-columns me-2"></i>
+                            Datos Institucionales
+                        </h5>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Nombre completo
+                            </label>
+
+                            <input
+                                    type="text"
+                                    id="instNombre"
+                                    class="form-control bg-light"
+                                    disabled
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Matrícula
+                            </label>
+
+                            <input
+                                    type="text"
+                                    id="instMatricula"
+                                    class="form-control bg-light fw-bold"
+                                    disabled
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Correo institucional
+                            </label>
+
+                            <input
+                                    type="text"
+                                    id="instCorreo"
+                                    class="form-control bg-light"
+                                    disabled
+                            >
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Estado del correo
+                            </label>
+
+                            <div>
+                                <span
+                                        class="badge bg-secondary"
+                                        id="badgeCorreo"
+                                >
+                                    Verificando...
+                                </span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTUALIZACIÓN DE PERFIL -->
+
+                <div class="col-lg-8">
+
+                    <div class="card-custom h-100">
+
+                        <h5 class="section-title">
+                            <i class="fa-solid fa-user-pen text-success me-2"></i>
+                            Actualizar Expediente
+                        </h5>
+
+                        <form id="formPerfil">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        CURP
+                                    </label>
+
+                                    <input
+                                            type="text"
+                                            id="perfilCurp"
+                                            class="form-control text-uppercase"
+                                            minlength="18"
+                                            maxlength="18"
+                                            pattern="[A-Za-z0-9]{18}"
+                                            autocomplete="off"
+                                            required
+                                    >
+
+                                </div>
+
+                                <div class="col-md-6">
+
+                                    <label class="form-label">
+                                        Teléfono
+                                    </label>
+
+                                    <input
+                                            type="tel"
+                                            id="perfilTelefono"
+                                            class="form-control"
+                                            maxlength="20"
+                                            autocomplete="tel"
+                                            required
+                                    >
+
+                                </div>
+
+                                <div class="col-12">
+
+                                    <label class="form-label">
+                                        Dirección completa
+                                    </label>
+
+                                    <input
+                                            type="text"
+                                            id="perfilDireccion"
+                                            class="form-control"
+                                            maxlength="255"
+                                            autocomplete="street-address"
+                                            required
+                                    >
+
+                                </div>
+
+                            </div>
+
+                            <div class="text-end mt-4">
+
+                                <button
+                                        type="submit"
+                                        class="btn btn-primary fw-bold"
+                                        id="btnGuardarPerfil"
+                                >
+                                    <i class="fa-solid fa-floppy-disk me-2"></i>
+                                    Guardar expediente
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CAMBIO DE CONTRASEÑA -->
+
+            <div class="card-custom mt-4">
+
+                <h5 class="section-title">
+                    <i class="fa-solid fa-shield-halved text-danger me-2"></i>
+                    Seguridad de mi Cuenta
+                </h5>
+
+                <p class="text-muted small">
+                    Para cambiar tu contraseña debes proporcionar
+                    tu contraseña actual. La nueva debe tener
+                    al menos 12 caracteres.
+                </p>
+
+                <form id="formPassword">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Contraseña actual
+                            </label>
+
+                            <input
+                                    type="password"
+                                    id="passwordActual"
+                                    class="form-control"
+                                    autocomplete="current-password"
+                                    required
+                            >
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Nueva contraseña
+                            </label>
+
+                            <input
+                                    type="password"
+                                    id="passwordNueva"
+                                    class="form-control"
+                                    minlength="12"
+                                    maxlength="128"
+                                    autocomplete="new-password"
+                                    required
+                            >
+
+                        </div>
+
+                        <div class="col-md-4">
+
+                            <label class="form-label">
+                                Confirmar contraseña
+                            </label>
+
+                            <input
+                                    type="password"
+                                    id="passwordConfirmacion"
+                                    class="form-control"
+                                    minlength="12"
+                                    maxlength="128"
+                                    autocomplete="new-password"
+                                    required
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="text-end mt-4">
+
+                        <button
+                                type="submit"
+                                class="btn btn-outline-danger fw-bold"
+                                id="btnCambiarPassword"
+                        >
+                            <i class="fa-solid fa-key me-2"></i>
+                            Cambiar contraseña
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+
+        <!-- =============================================
+             AVANCE RETICULAR
+        ============================================= -->
+
+        <section
+                id="seccion-avance"
+                class="section-view"
+        >
+
+            <div class="card-custom">
+
+                <h5 class="section-title">
+                    <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+                    Avance Reticular
+                </h5>
+
+                <div class="mb-4">
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <span class="fw-bold text-muted">
+                            Créditos universitarios aprobados
+                        </span>
+
+                        <strong
+                                class="text-primary"
+                                id="txtPorcentaje"
+                        >
+                            0%
+                        </strong>
+
+                    </div>
+
+                    <div
+                            class="progress"
+                            role="progressbar"
+                            aria-label="Avance académico"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-valuenow="0"
+                            id="progresoContenedor"
+                    >
+
+                        <div
+                                class="progress-bar progress-bar-striped"
+                                id="barraProgreso"
+                                style="width: 0%;"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="row g-4">
+
+                    <div class="col-md-4">
+
+                        <div class="metric-card">
+
+                            <h6>CRÉDITOS APROBADOS</h6>
+
+                            <h2 id="txtCreditos">
+                                0 / 0
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <div class="metric-card">
+
+                            <h6>SERVICIO SOCIAL</h6>
+
+                            <span
+                                    class="badge bg-warning text-dark fs-6 mt-2"
+                                    id="badgeServicio"
+                            >
+                                PENDIENTE
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <div class="metric-card">
+
+                            <h6>RESIDENCIA PROFESIONAL</h6>
+
+                            <span
+                                    class="badge bg-warning text-dark fs-6 mt-2"
+                                    id="badgeResidencia"
+                            >
+                                PENDIENTE
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =============================================
+             HORARIO
+        ============================================= -->
+
+        <section
+                id="seccion-horario"
+                class="section-view"
+        >
+
+            <div class="card-custom border-top border-success border-4">
+
+                <h5 class="section-title">
+                    <i class="fa-solid fa-calendar-check text-success me-2"></i>
+                    Horario de Clases
+                </h5>
+
+                <div class="alert alert-light border small">
+                    Estas son las asignaturas en las que estás
+                    inscrito actualmente.
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover">
+
+                        <thead class="table-dark">
+
+                        <tr>
+                            <th>Asignatura</th>
+                            <th>Profesor</th>
+                            <th>Horario</th>
+                            <th>Créditos</th>
+                            <th>Estado</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="tablaHorario">
+
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                Cargando horario...
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =============================================
+             KARDEX
+        ============================================= -->
+
+        <section
+                id="seccion-kardex"
+                class="section-view"
+        >
+
+            <div class="card-custom">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+
+                    <h5 class="section-title m-0">
+                        <i class="fa-solid fa-folder-open text-primary me-2"></i>
+                        Kárdex Histórico
+                    </h5>
+
+                    <button
+                            type="button"
+                            class="btn btn-outline-secondary btn-sm no-print"
+                            id="btnImprimir"
+                    >
+                        <i class="fa-solid fa-print me-1"></i>
+                        Imprimir
+                    </button>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover">
+
+                        <thead class="table-light">
+
+                        <tr>
+                            <th>Semestre</th>
+                            <th>Clave</th>
+                            <th>Asignatura</th>
+                            <th>Créditos</th>
+                            <th>Calificación</th>
+                            <th>Estado</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="tablaKardex">
+
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                Cargando historial...
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="text-muted small mt-3">
+                    Este documento es informativo.
+                    No sustituye una constancia oficial emitida
+                    por la institución.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
-    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
-    const usuarioSesion = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
+    "use strict";
 
-    if (!usuarioSesion || usuarioSesion.rol !== 'alumno') {
-        window.location.href = '../../index.html';
+    /*
+    ==========================================================
+    SECURITYCAMPUS V2 — PORTAL ALUMNO
+
+    API ESPERADA:
+
+    GET  /api/auth/me
+    GET  /api/auth/csrf
+    POST /api/auth/logout
+
+    GET  /api/alumno/perfil
+    PUT  /api/alumno/perfil
+    PUT  /api/alumno/password
+
+    GET  /api/alumno/progreso
+
+    El backend debe comprobar:
+    - Sesión válida.
+    - Rol alumno.
+    - Correo verificado.
+    - Inactividad máxima de 120 segundos.
+    - Acceso exclusivo a datos del alumno autenticado.
+    - CSRF en operaciones de escritura.
+    ==========================================================
+    */
+
+
+    // ========================================================
+    // 1. CONFIGURACIÓN
+    // ========================================================
+
+    const API_BASE = "/api";
+
+    const LOGIN_URL = "../../index.html";
+
+    const INACTIVITY_LIMIT = 120000;
+
+    let csrfToken = null;
+
+    let usuarioActual = null;
+
+    let perfilCompleto = false;
+
+    let sesionFinalizada = false;
+
+    let ultimaActividad = Date.now();
+
+    let ultimaInteraccion = 0;
+
+
+    // ========================================================
+    // 2. UTILIDADES
+    // ========================================================
+
+    function $(id) {
+        return document.getElementById(id);
     }
 
-    document.getElementById('nombreUsuario').innerText = `${usuarioSesion.nombre} (${usuarioSesion.matricula || 'N/A'})`;
-    document.getElementById('inst-nombre').value = usuarioSesion.nombre;
-    document.getElementById('inst-correo').value = usuarioSesion.correo;
-    document.getElementById('inst-matricula').value = usuarioSesion.matricula || 'PENDIENTE';
-    document.getElementById('perfil-curp').value = usuarioSesion.curp || '';
-    document.getElementById('perfil-tel').value = usuarioSesion.telefono || '';
-    document.getElementById('perfil-dir').value = usuarioSesion.direccion || '';
 
-    // Lógica de Bloqueo de Seguridad (Candado)
-    function verificarCandado() {
-        const isCompleto = (usuarioSesion.perfil_completo == 1 || usuarioSesion.perfil_completo === true);
-        const navs = ['nav-avance', 'nav-horario', 'nav-kardex'];
-        
-        if (!isCompleto) {
-            navs.forEach(id => document.getElementById(id).classList.add('disabled'));
-            document.getElementById('alerta-perfil').style.display = 'block';
-            cambiarSeccion('perfil', document.getElementById('nav-perfil'));
-        } else {
-            navs.forEach(id => document.getElementById(id).classList.remove('disabled'));
-            document.getElementById('alerta-perfil').style.display = 'none';
-            // Quitar requerimiento de contraseña si ya completó su perfil
-            document.getElementById('perfil-pass').required = false;
-            document.getElementById('perfil-pass-conf').required = false;
-            cambiarSeccion('avance', document.getElementById('nav-avance'));
+    function valor(id) {
+        return $(id).value.trim();
+    }
+
+
+    function textoSeguro(dato) {
+        return String(dato ?? "");
+    }
+
+
+    function crearCelda(fila, contenido, clase = "") {
+        const td = document.createElement("td");
+
+        td.textContent = textoSeguro(contenido);
+
+        if (clase) {
+            td.className = clase;
         }
+
+        fila.appendChild(td);
+
+        return td;
     }
 
-    function cambiarSeccion(seccionId, elementoLi) {
-        if(elementoLi.classList.contains('disabled')) return; 
-        document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById(`seccion-${seccionId}`).classList.add('active');
-        elementoLi.classList.add('active');
-        if (['avance', 'horario', 'kardex'].includes(seccionId)) cargarDatosAcademicos();
+
+    function mostrarFilaVacia(idTabla, columnas, mensaje) {
+        const tbody = $(idTabla);
+
+        tbody.replaceChildren();
+
+        const tr = document.createElement("tr");
+
+        const td = document.createElement("td");
+
+        td.colSpan = columnas;
+        td.className = "empty-state";
+        td.textContent = mensaje;
+
+        tr.appendChild(td);
+
+        tbody.appendChild(tr);
     }
 
-    // Actualizar Expediente y Contraseña
-    document.getElementById('formPerfil').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btn-guardar-perfil');
-        
-        const pass1 = document.getElementById('perfil-pass').value;
-        const pass2 = document.getElementById('perfil-pass-conf').value;
-        
-        if (pass1 || pass2) {
-            if (pass1 !== pass2) {
-                Swal.fire('Las contraseñas no coinciden', 'Verifica tu nueva contraseña.', 'warning');
-                return;
+
+    function mostrarError(error) {
+        console.error("SecurityCampus V2:", error);
+
+        Swal.fire({
+            icon: "error",
+            title: "No se pudo completar la operación",
+            text: error.message || "Ocurrió un error inesperado."
+        });
+    }
+
+
+    function establecerBadge(elemento, activo, positivo, negativo) {
+        elemento.textContent = activo ? positivo : negativo;
+
+        elemento.className = activo
+            ? "badge bg-success fs-6 mt-2"
+            : "badge bg-warning text-dark fs-6 mt-2";
+    }
+
+
+    // ========================================================
+    // 3. CLIENTE API
+    // ========================================================
+
+    async function apiRequest(
+        endpoint,
+        {
+            method = "GET",
+            body = null,
+            requireCsrf = true
+        } = {}
+    ) {
+        const metodo = method.toUpperCase();
+
+        const headers = {
+            "Accept": "application/json"
+        };
+
+        if (body !== null) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        if (
+            requireCsrf &&
+            !["GET", "HEAD", "OPTIONS"].includes(metodo)
+        ) {
+            if (!csrfToken) {
+                throw new Error("Protección CSRF no disponible.");
             }
-        } else if (usuarioSesion.perfil_completo == 0) {
-            Swal.fire('Requerido', 'Debes establecer una nueva contraseña de seguridad.', 'warning');
+
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
+        const respuesta = await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                method: metodo,
+                credentials: "include",
+                headers,
+                cache: "no-store",
+                body: body === null
+                    ? null
+                    : JSON.stringify(body)
+            }
+        );
+
+        const contentType =
+            respuesta.headers.get("content-type") || "";
+
+        let data = {};
+
+        if (contentType.includes("application/json")) {
+            data = await respuesta.json();
+        }
+
+        if (respuesta.status === 401) {
+            await finalizarSesionLocal(
+                "Tu sesión ya no es válida."
+            );
+        }
+
+        if (!respuesta.ok) {
+            throw new Error(
+                data.error ||
+                data.mensaje ||
+                `Error HTTP ${respuesta.status}`
+            );
+        }
+
+        return data;
+    }
+
+
+    // ========================================================
+    // 4. AUTENTICACIÓN
+    // ========================================================
+
+    async function verificarSesion() {
+        const respuesta = await apiRequest(
+            "/auth/me",
+            {
+                requireCsrf: false
+            }
+        );
+
+        const usuario = respuesta.usuario || respuesta;
+
+        if (
+            !usuario ||
+            usuario.rol !== "alumno" ||
+            !usuario.id_usuario
+        ) {
+            throw new Error(
+                "No tienes autorización para acceder al portal."
+            );
+        }
+
+        if (
+            usuario.correo_verificado !== true &&
+            usuario.correo_verificado !== 1
+        ) {
+            throw new Error(
+                "Debes verificar tu correo antes de continuar."
+            );
+        }
+
+        usuarioActual = usuario;
+
+        const csrf = await apiRequest(
+            "/auth/csrf",
+            {
+                requireCsrf: false
+            }
+        );
+
+        csrfToken = csrf.csrf_token;
+
+        if (!csrfToken) {
+            throw new Error(
+                "El servidor no proporcionó el token CSRF."
+            );
+        }
+
+        $("nombreUsuario").textContent =
+            usuario.nombre || "Alumno";
+
+        $("matriculaHeader").textContent =
+            usuario.matricula || "Sin matrícula";
+
+        $("badgeCorreo").textContent = "VERIFICADO";
+
+        $("badgeCorreo").className = "badge bg-success";
+
+        $("loadingScreen").classList.add("hidden");
+    }
+
+
+    // ========================================================
+    // 5. CIERRE DE SESIÓN
+    // ========================================================
+
+    async function finalizarSesionLocal(mensaje) {
+        if (sesionFinalizada) {
             return;
         }
 
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
+        sesionFinalizada = true;
 
-        const payload = {
-            curp: document.getElementById('perfil-curp').value.toUpperCase(),
-            telefono: document.getElementById('perfil-tel').value,
-            direccion: document.getElementById('perfil-dir').value,
-            password_nueva: pass1 || null // Si no la cambia (y ya tiene perfil), el backend la ignora
-        };
-        
-        try {
-            const res = await fetch(`${API_BASE}/alumno/perfil/${usuarioSesion.id_usuario}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        usuarioActual = null;
+
+        csrfToken = null;
+
+        if (mensaje) {
+            await Swal.fire({
+                icon: "info",
+                title: "Sesión finalizada",
+                text: mensaje,
+                timer: 1600,
+                showConfirmButton: false
             });
-            if(res.ok) {
-                Swal.fire({
-                    icon: 'success', title: 'Expediente Blindado',
-                    text: 'Tus datos se guardaron correctamente. Inicia sesión nuevamente para aplicar los cambios de seguridad.',
-                    confirmButtonColor: '#2563eb'
-                }).then(() => cerrarSesion());
-            } else { Swal.fire('Error', 'No se pudo guardar el expediente.', 'error'); }
-        } catch (error) { 
-            Swal.fire('Error de Red', 'Problema al contactar a AWS.', 'error'); 
-        } finally {
-            btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-2"></i> Guardar y Firmar Expediente'; btn.disabled = false;
         }
-    });
 
-    // Cargar toda la data Académica (Kárdex y Horario)
-    async function cargarDatosAcademicos() {
-        try {
-            const res = await fetch(`${API_BASE}/alumno/progreso/${usuarioSesion.id_usuario}`);
-            const data = await res.json();
-            
-            if(!res.ok) {
-                document.getElementById('tituloCarrera').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Sin Carrera Asignada`;
-                return;
-            }
-
-            document.getElementById('tituloCarrera').innerHTML = `<i class="fa-solid fa-graduation-cap text-primary me-2"></i> ${data.carrera}`;
-            document.getElementById('txt-creditos').innerText = `${data.creditos_aprobados} / ${data.creditos_totales}`;
-            document.getElementById('txt-porcentaje').innerText = `${data.porcentaje_avance}%`;
-            setTimeout(() => { document.getElementById('barra-progreso').style.width = `${data.porcentaje_avance}%`; }, 200);
-
-            if(data.servicio_liberado) { 
-                let b = document.getElementById('badge-servicio'); 
-                b.innerText = "LIBERADO"; b.className = "badge bg-success text-white fs-5 px-3 py-2"; 
-            }
-            if(data.residencia_liberada) { 
-                let b = document.getElementById('badge-residencia'); 
-                b.innerText = "ACREDITADA"; b.className = "badge bg-success text-white fs-5 px-3 py-2"; 
-            }
-
-            const tbodyKardex = document.getElementById('tablaKardex'); tbodyKardex.innerHTML = '';
-            const tbodyHorario = document.getElementById('tablaHorario'); tbodyHorario.innerHTML = '';
-
-            if(data.historial.length === 0) {
-                const emptyRow = `<tr><td colspan="6" class="text-center text-muted py-4"><i class="fa-solid fa-folder-open fs-3 mb-2 d-block"></i> No hay registros académicos disponibles.</td></tr>`;
-                tbodyKardex.innerHTML = emptyRow;
-                tbodyHorario.innerHTML = emptyRow;
-            } else {
-                let horarioCount = 0;
-                data.historial.forEach(m => {
-                    // Llenado de Kárdex Global
-                    let badgeColor = m.estatus === 'Aprobada' ? 'bg-success' : (m.estatus === 'Reprobada' ? 'bg-danger' : 'bg-warning text-dark');
-                    tbodyKardex.innerHTML += `
-                        <tr>
-                            <td><span class="badge bg-light text-dark border">S${m.semestre}</span></td>
-                            <td><span class="font-monospace text-primary fw-bold">${m.clave}</span></td>
-                            <td class="fw-bold">${m.nombre} <br><small class="text-muted">${m.tipo.replace('_', ' ')}</small></td>
-                            <td class="text-center">${m.creditos}</td>
-                            <td class="text-center fw-bold fs-5">${m.calificacion > 0 ? m.calificacion : '--'}</td>
-                            <td class="text-center"><span class="badge ${badgeColor}">${m.estatus.toUpperCase()}</span></td>
-                        </tr>`;
-                    
-                    // Llenado de Carga Actual (Solo las que dicen 'Cursando')
-                    if(m.estatus === 'Cursando') {
-                        horarioCount++;
-                        let profe = m.profesor || '<span class="text-muted fst-italic">Por asignar</span>';
-                        let horario = m.horario || '<span class="text-muted fst-italic">Sin horario registrado</span>';
-                        
-                        tbodyHorario.innerHTML += `
-                        <tr>
-                            <td>
-                                <span class="fw-bold text-dark d-block">${m.nombre}</span>
-                                <span class="badge bg-light text-primary border font-monospace mt-1">${m.clave}</span>
-                            </td>
-                            <td><i class="fa-solid fa-user-tie text-muted me-2"></i> ${profe}</td>
-                            <td><i class="fa-regular fa-clock text-muted me-2"></i> ${horario}</td>
-                            <td>${m.creditos} Crts.</td>
-                            <td class="text-center"><span class="badge bg-success px-3 py-2 spinner-grow spinner-grow-sm" style="animation-duration: 2s;"></span> <span class="fw-bold text-success ms-1">EN CURSO</span></td>
-                        </tr>`;
-                    }
-                });
-                
-                if (horarioCount === 0) {
-                    tbodyHorario.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4"><i class="fa-solid fa-bed fs-3 mb-2 d-block"></i> No tienes materias asignadas para este ciclo.</td></tr>`;
-                }
-            }
-        } catch (error) { console.error(error); }
+        window.location.replace(LOGIN_URL);
     }
 
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
-    window.addEventListener('DOMContentLoaded', verificarCandado);
+
+    async function cerrarSesion() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        try {
+            await apiRequest(
+                "/auth/logout",
+                {
+                    method: "POST"
+                }
+            );
+
+            await finalizarSesionLocal(
+                "Cerraste sesión correctamente."
+            );
+
+        } catch (error) {
+            mostrarError(
+                new Error(
+                    "No se pudo confirmar el cierre de sesión " +
+                    "en el servidor. Inténtalo nuevamente."
+                )
+            );
+        }
+    }
+
+
+    // ========================================================
+    // 6. CONTROL DE INACTIVIDAD
+    // ========================================================
+
+    function registrarActividad() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        ultimaActividad = Date.now();
+    }
+
+
+    function detectarActividad() {
+        const ahora = Date.now();
+
+        if (ahora - ultimaInteraccion < 1000) {
+            return;
+        }
+
+        ultimaInteraccion = ahora;
+
+        registrarActividad();
+    }
+
+
+    function actualizarContador() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        const transcurrido =
+            Date.now() - ultimaActividad;
+
+        const restante = Math.max(
+            0,
+            INACTIVITY_LIMIT - transcurrido
+        );
+
+        const segundos = Math.ceil(
+            restante / 1000
+        );
+
+        const minutosTexto = String(
+            Math.floor(segundos / 60)
+        ).padStart(2, "0");
+
+        const segundosTexto = String(
+            segundos % 60
+        ).padStart(2, "0");
+
+        $("contadorSesion").textContent =
+            `${minutosTexto}:${segundosTexto}`;
+
+        if (restante <= 0) {
+            /*
+            Este cierre es visual.
+
+            El backend también debe invalidar la sesión
+            después de 120 segundos de inactividad.
+            */
+
+            finalizarSesionLocal(
+                "Tu sesión expiró por inactividad."
+            );
+        }
+    }
+
+
+    [
+        "pointerdown",
+        "keydown",
+        "touchstart",
+        "scroll"
+    ].forEach(evento => {
+        window.addEventListener(
+            evento,
+            detectarActividad,
+            {
+                passive: true
+            }
+        );
+    });
+
+    setInterval(
+        actualizarContador,
+        1000
+    );
+
+
+    // ========================================================
+    // 7. EXPEDIENTE
+    // ========================================================
+
+    async function cargarPerfil() {
+        const respuesta = await apiRequest(
+            "/alumno/perfil"
+        );
+
+        const perfil = respuesta.perfil || respuesta;
+
+        $("instNombre").value =
+            perfil.nombre || usuarioActual.nombre || "";
+
+        $("instMatricula").value =
+            perfil.matricula || usuarioActual.matricula || "";
+
+        $("instCorreo").value =
+            perfil.correo || usuarioActual.correo || "";
+
+        $("perfilCurp").value =
+            perfil.curp || "";
+
+        $("perfilTelefono").value =
+            perfil.telefono || "";
+
+        $("perfilDireccion").value =
+            perfil.direccion || "";
+
+        perfilCompleto =
+            perfil.perfil_completo === true ||
+            perfil.perfil_completo === 1;
+
+        actualizarCandado();
+    }
+
+
+    // ========================================================
+    // 8. CANDADO ACADÉMICO
+    // ========================================================
+
+    function actualizarCandado() {
+        const seccionesProtegidas = [
+            "avance",
+            "horario",
+            "kardex"
+        ];
+
+        seccionesProtegidas.forEach(seccion => {
+            const boton = $(`nav-${seccion}`);
+
+            boton.disabled = !perfilCompleto;
+
+            boton.title = perfilCompleto
+                ? ""
+                : "Completa primero tu expediente.";
+        });
+
+        $("alertaPerfil").hidden = perfilCompleto;
+
+        if (!perfilCompleto) {
+            cambiarSeccion("perfil");
+        } else {
+            cambiarSeccion("avance");
+        }
+    }
+
+
+    // ========================================================
+    // 9. NAVEGACIÓN
+    // ========================================================
+
+    function cambiarSeccion(seccion) {
+        if (
+            !perfilCompleto &&
+            seccion !== "perfil"
+        ) {
+            return;
+        }
+
+        document.querySelectorAll(".section-view")
+            .forEach(elemento => {
+                elemento.classList.remove("active");
+            });
+
+        document.querySelectorAll(".sidebar .nav-link")
+            .forEach(elemento => {
+                elemento.classList.remove("active");
+            });
+
+        $(`seccion-${seccion}`).classList.add("active");
+
+        $(`nav-${seccion}`).classList.add("active");
+
+        if (
+            ["avance", "horario", "kardex"].includes(seccion)
+        ) {
+            cargarDatosAcademicos();
+        }
+    }
+
+
+    // ========================================================
+    // 10. GUARDAR PERFIL
+    // ========================================================
+
+    async function guardarPerfil(evento) {
+        evento.preventDefault();
+
+        const boton = $("btnGuardarPerfil");
+
+        const payload = {
+            curp: valor("perfilCurp").toUpperCase(),
+            telefono: valor("perfilTelefono"),
+            direccion: valor("perfilDireccion")
+        };
+
+        if (
+            payload.curp.length !== 18 ||
+            !payload.telefono ||
+            !payload.direccion
+        ) {
+            await Swal.fire({
+                icon: "warning",
+                title: "Datos incompletos",
+                text: "Revisa los campos del expediente."
+            });
+
+            return;
+        }
+
+        boton.disabled = true;
+
+        try {
+            const resultado = await apiRequest(
+                "/alumno/perfil",
+                {
+                    method: "PUT",
+                    body: payload
+                }
+            );
+
+            await Swal.fire({
+                icon: "success",
+                title: "Expediente actualizado",
+                text: resultado.mensaje ||
+                    "Tus datos se guardaron correctamente."
+            });
+
+            await cargarPerfil();
+
+        } catch (error) {
+            mostrarError(error);
+
+        } finally {
+            boton.disabled = false;
+        }
+    }
+
+
+    // ========================================================
+    // 11. CAMBIAR CONTRASEÑA
+    // ========================================================
+
+    async function cambiarPassword(evento) {
+        evento.preventDefault();
+
+        const actual = $("passwordActual").value;
+
+        const nueva = $("passwordNueva").value;
+
+        const confirmacion =
+            $("passwordConfirmacion").value;
+
+        if (nueva.length < 12) {
+            await Swal.fire({
+                icon: "warning",
+                title: "Contraseña demasiado corta",
+                text: "Utiliza al menos 12 caracteres."
+            });
+
+            return;
+        }
+
+        if (nueva !== confirmacion) {
+            await Swal.fire({
+                icon: "warning",
+                title: "Las contraseñas no coinciden"
+            });
+
+            return;
+        }
+
+        if (actual === nueva) {
+            await Swal.fire({
+                icon: "warning",
+                title: "Contraseña repetida",
+                text: "La nueva contraseña debe ser diferente."
+            });
+
+            return;
+        }
+
+        const boton = $("btnCambiarPassword");
+
+        boton.disabled = true;
+
+        try {
+            await apiRequest(
+                "/alumno/password",
+                {
+                    method: "PUT",
+                    body: {
+                        password_actual: actual,
+                        password_nueva: nueva
+                    }
+                }
+            );
+
+            $("formPassword").reset();
+
+            /*
+            Contrato V2:
+            El backend debe verificar la contraseña actual,
+            actualizar el hash y revocar las sesiones.
+            */
+
+            await Swal.fire({
+                icon: "success",
+                title: "Contraseña actualizada",
+                text: "Vuelve a iniciar sesión con tu nueva contraseña."
+            });
+
+            await finalizarSesionLocal();
+
+        } catch (error) {
+            mostrarError(error);
+
+        } finally {
+            boton.disabled = false;
+        }
+    }
+
+
+    // ========================================================
+    // 12. AVANCE, HORARIO Y KARDEX
+    // ========================================================
+
+    async function cargarDatosAcademicos() {
+        try {
+            const data = await apiRequest(
+                "/alumno/progreso"
+            );
+
+            if (!data || typeof data !== "object") {
+                throw new Error(
+                    "Respuesta académica incorrecta."
+                );
+            }
+
+            mostrarProgreso(data);
+
+            mostrarKardex(data.historial || []);
+
+            mostrarHorario(data.historial || []);
+
+        } catch (error) {
+            mostrarError(error);
+        }
+    }
+
+
+    // ========================================================
+    // 13. MOSTRAR PROGRESO
+    // ========================================================
+
+    function mostrarProgreso(data) {
+        $("tituloCarrera").textContent =
+            data.carrera || "Carrera no asignada";
+
+        const aprobados = Number(
+            data.creditos_aprobados || 0
+        );
+
+        const totales = Number(
+            data.creditos_totales || 0
+        );
+
+        const porcentaje = Math.max(
+            0,
+            Math.min(
+                100,
+                Number(data.porcentaje_avance || 0)
+            )
+        );
+
+        $("txtCreditos").textContent =
+            `${aprobados} / ${totales}`;
+
+        $("txtPorcentaje").textContent =
+            `${porcentaje}%`;
+
+        $("barraProgreso").style.width =
+            `${porcentaje}%`;
+
+        $("progresoContenedor").setAttribute(
+            "aria-valuenow",
+            porcentaje
+        );
+
+        establecerBadge(
+            $("badgeServicio"),
+            Boolean(data.servicio_liberado),
+            "LIBERADO",
+            "PENDIENTE"
+        );
+
+        establecerBadge(
+            $("badgeResidencia"),
+            Boolean(data.residencia_liberada),
+            "ACREDITADA",
+            "PENDIENTE"
+        );
+    }
+
+
+    // ========================================================
+    // 14. MOSTRAR KARDEX SIN INNERHTML
+    // ========================================================
+
+    function mostrarKardex(historial) {
+        const tbody = $("tablaKardex");
+
+        tbody.replaceChildren();
+
+        if (
+            !Array.isArray(historial) ||
+            historial.length === 0
+        ) {
+            mostrarFilaVacia(
+                "tablaKardex",
+                6,
+                "No existen registros académicos."
+            );
+
+            return;
+        }
+
+        historial.forEach(materia => {
+            const fila = document.createElement("tr");
+
+            crearCelda(
+                fila,
+                `S${materia.semestre || "—"}`
+            );
+
+            crearCelda(
+                fila,
+                materia.clave,
+                "fw-bold text-primary"
+            );
+
+            crearCelda(
+                fila,
+                materia.nombre,
+                "fw-bold"
+            );
+
+            crearCelda(
+                fila,
+                materia.creditos,
+                "text-center"
+            );
+
+            /*
+            La calificación cero es válida.
+            No debe confundirse con una calificación ausente.
+            */
+
+            const calificacion =
+                materia.calificacion === null ||
+                materia.calificacion === undefined
+                    ? "—"
+                    : materia.calificacion;
+
+            crearCelda(
+                fila,
+                calificacion,
+                "text-center fw-bold"
+            );
+
+            const celdaEstado = crearCelda(
+                fila,
+                "",
+                "text-center"
+            );
+
+            const badge = document.createElement("span");
+
+            const clases = {
+                Aprobada: "bg-success",
+                Reprobada: "bg-danger",
+                Cursando: "bg-primary",
+                Pendiente: "bg-warning text-dark",
+                Baja: "bg-secondary"
+            };
+
+            badge.className =
+                `badge ${clases[materia.estatus] || "bg-secondary"}`;
+
+            badge.textContent =
+                materia.estatus || "Sin estado";
+
+            celdaEstado.appendChild(badge);
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // ========================================================
+    // 15. MOSTRAR HORARIO
+    // ========================================================
+
+    function mostrarHorario(historial) {
+        const tbody = $("tablaHorario");
+
+        tbody.replaceChildren();
+
+        if (!Array.isArray(historial)) {
+            mostrarFilaVacia(
+                "tablaHorario",
+                5,
+                "No hay información de horarios."
+            );
+
+            return;
+        }
+
+        const materiasActuales = historial.filter(
+            materia => materia.estatus === "Cursando"
+        );
+
+        if (materiasActuales.length === 0) {
+            mostrarFilaVacia(
+                "tablaHorario",
+                5,
+                "No tienes materias asignadas actualmente."
+            );
+
+            return;
+        }
+
+        materiasActuales.forEach(materia => {
+            const fila = document.createElement("tr");
+
+            crearCelda(
+                fila,
+                materia.nombre,
+                "fw-bold"
+            );
+
+            crearCelda(
+                fila,
+                materia.profesor || "Por asignar"
+            );
+
+            crearCelda(
+                fila,
+                materia.horario || "Sin horario"
+            );
+
+            crearCelda(
+                fila,
+                materia.creditos
+            );
+
+            const celda = crearCelda(
+                fila,
+                "",
+                "text-center"
+            );
+
+            const badge = document.createElement("span");
+
+            badge.className = "badge bg-success";
+
+            badge.textContent = "EN CURSO";
+
+            celda.appendChild(badge);
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // ========================================================
+    // 16. IMPRESIÓN
+    // ========================================================
+
+    function imprimirKardex() {
+        if (!perfilCompleto) {
+            Swal.fire({
+                icon: "warning",
+                title: "Expediente incompleto",
+                text: "Completa tu perfil antes de continuar."
+            });
+
+            return;
+        }
+
+        /*
+        Solo imprime los datos ya autorizados y mostrados.
+        No genera una constancia oficial.
+        */
+
+        window.print();
+    }
+
+
+    // ========================================================
+    // 17. EVENTOS
+    // ========================================================
+
+    function configurarEventos() {
+        document.querySelectorAll("[data-section]")
+            .forEach(boton => {
+                boton.addEventListener(
+                    "click",
+                    () => {
+                        cambiarSeccion(
+                            boton.dataset.section
+                        );
+                    }
+                );
+            });
+
+        $("btnCerrarSesion").addEventListener(
+            "click",
+            cerrarSesion
+        );
+
+        $("formPerfil").addEventListener(
+            "submit",
+            guardarPerfil
+        );
+
+        $("formPassword").addEventListener(
+            "submit",
+            cambiarPassword
+        );
+
+        $("btnImprimir").addEventListener(
+            "click",
+            imprimirKardex
+        );
+    }
+
+
+    // ========================================================
+    // 18. INICIALIZACIÓN
+    // ========================================================
+
+    async function iniciarPortalAlumno() {
+        configurarEventos();
+
+        try {
+            await verificarSesion();
+
+            await cargarPerfil();
+
+            registrarActividad();
+
+            console.info(
+                "SecurityCampus V2: portal estudiantil inicializado."
+            );
+
+        } catch (error) {
+            console.error(
+                "Error de autenticación:",
+                error
+            );
+
+            await finalizarSesionLocal(
+                "No se pudo verificar tu acceso estudiantil."
+            );
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarPortalAlumno
+    );
+
 </script>
+
 </body>
 </html>

@@ -1,452 +1,1543 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coordinación Académica | ERP Campus</title>
+
+    <title>SecurityCampus V2 | Portal del Profesor</title>
+
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+    >
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <style>
-        :root { --primary-color: #0f172a; --accent-color: #8b5cf6; --bg-color: #f1f5f9; }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-        
-        /* Sidebar */
-        .sidebar { background-color: var(--primary-color); min-height: 100vh; color: white; padding-top: 20px; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .brand { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .brand span { color: #c4b5fd; }
-        .nav-link { color: #94a3b8; padding: 12px 20px; margin: 5px 15px; border-radius: 8px; transition: all 0.3s; font-weight: 500; cursor: pointer;}
-        .nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; border-left: 4px solid var(--accent-color); }
-        .nav-link i { width: 25px; text-align: center; margin-right: 10px; }
-        
-        /* Contenido Principal */
-        .main-content { padding: 30px; height: 100vh; overflow-y: auto; }
-        .header-top { background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .card-custom { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; padding: 25px; }
-        
-        /* Vistas y Tablas */
-        .section-view { display: none; animation: fadeIn 0.4s; }
-        .section-view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .table > :not(caption) > * > * { padding: 12px 15px; border-bottom-color: #e2e8f0; vertical-align: middle; }
-        .badge-soft { background-color: #ede9fe; color: #6d28d9; padding: 5px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
-    </style>
-</head>
-<body>
-
-<div class="container-fluid p-0">
-    <div class="row g-0">
-        <!-- SIDEBAR -->
-        <div class="col-md-2 sidebar d-flex flex-column justify-content-between">
-            <div>
-                <div class="brand">ERP<span>Académico</span><br><small class="text-muted fw-normal fs-6">Coordinación</small></div>
-                <ul class="nav flex-column mt-4">
-                    <li class="nav-item"><a class="nav-link active" onclick="cambiarSeccion('dashboard', this)"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="cambiarSeccion('grupos', this)"><i class="fa-solid fa-chalkboard-user"></i> Gestión de Grupos</a></li>
-                    <li class="nav-item"><a class="nav-link" onclick="cambiarSeccion('alumnos', this)"><i class="fa-solid fa-user-graduate"></i> Inscripción de Alumnos</a></li>
-                </ul>
-            </div>
-            <div class="p-4">
-                <button class="btn btn-danger w-100 shadow-sm rounded-3 fw-bold" onclick="cerrarSesion()"><i class="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button>
-            </div>
-        </div>
-
-        <!-- MAIN CONTENT -->
-        <div class="col-md-10 main-content">
-            <div class="header-top">
-                <h5 id="tituloCarrera" class="m-0 text-secondary fw-bold"><i class="fa-solid fa-building-columns text-primary me-2"></i> Cargando carrera...</h5>
-                <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
-                    <i class="fa-solid fa-user-tie text-primary me-2"></i>
-                    <span id="nombreUsuario" class="fw-bold text-dark fs-6">Cargando...</span>
-                </div>
-            </div>
-
-            <!-- ALERTA DE BLOQUEO SI NO TIENE CARRERA -->
-            <div class="alert alert-danger" id="alerta-sin-carrera" style="display: none;">
-                <h4 class="fw-bold"><i class="fa-solid fa-lock me-2"></i> Perfil Incompleto</h4>
-                <p>El administrador no te ha asignado una carrera para coordinar. No puedes operar el sistema hasta que se asigne tu territorio académico.</p>
-            </div>
-
-            <div id="contenedor-modulos">
-                <!-- SECCIÓN 1: DASHBOARD -->
-                <div id="seccion-dashboard" class="section-view active">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="card-custom border-start border-primary border-4 text-center">
-                                <h6 class="text-muted text-uppercase fw-bold">Alumnos Activos en la Carrera</h6>
-                                <h1 class="fw-bold text-primary mb-0 display-4" id="statAlumnos">0</h1>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card-custom border-start border-success border-4 text-center">
-                                <h6 class="text-muted text-uppercase fw-bold">Grupos Abiertos</h6>
-                                <h1 class="fw-bold text-success mb-0 display-4" id="statGrupos">0</h1>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-custom text-center py-5">
-                        <i class="fa-solid fa-sitemap fs-1 mb-3" style="color: var(--accent-color);"></i>
-                        <h4>Motor de Reglas Estrictas Activo</h4>
-                        <p class="text-muted">Como coordinador(a), la base de datos está segmentada. Solo puedes operar, abrir grupos e inscribir a alumnos pertenecientes a tu plan de estudios.</p>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN 2: GESTIÓN DE GRUPOS -->
-                <div id="seccion-grupos" class="section-view">
-                    <div class="card-custom">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="fw-bold m-0"><i class="fa-solid fa-layer-group" style="color: var(--accent-color);"></i> Grupos Académicos</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalGrupo"><i class="fa-solid fa-plus me-1"></i> Aperturar Grupo</button>
-                        </div>
-                        <input type="text" id="buscadorGrupos" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar por materia, aula o profesor..." onkeyup="filtrarTabla('tablaGruposBody', this.value)">
-                        
-                        <div class="table-responsive">
-                            <table class="table align-middle table-hover">
-                                <thead class="table-light text-muted">
-                                    <tr>
-                                        <th>Identificador</th>
-                                        <th>Asignatura</th>
-                                        <th>Semestre</th>
-                                        <th>Profesor Titular</th>
-                                        <th>Horario y Aula</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaGruposBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECCIÓN 3: INSCRIPCIÓN DE ALUMNOS -->
-                <div id="seccion-alumnos" class="section-view">
-                    <div class="card-custom">
-                        <h5 class="fw-bold mb-4"><i class="fa-solid fa-users text-success me-2"></i> Padrón de Alumnos</h5>
-                        <input type="text" id="buscadorAlumnos" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar por matrícula o nombre..." onkeyup="filtrarTabla('tablaAlumnosBody', this.value)">
-                        
-                        <div class="table-responsive">
-                            <table class="table align-middle table-hover">
-                                <thead class="table-light text-muted">
-                                    <tr>
-                                        <th>Matrícula</th>
-                                        <th>Nombre del Estudiante</th>
-                                        <th>Estatus del Perfil</th>
-                                        <th class="text-center">Operaciones Académicas</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablaAlumnosBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ==========================================
-                 MODALES DINÁMICOS
-=========================================== -->
-
-<!-- Modal Crear Grupo -->
-<div class="modal fade" id="modalGrupo" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-folder-plus me-2"></i> Apertura de Nuevo Grupo</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <form id="formGrupo" onsubmit="guardarGrupo(event)">
-            <div class="row g-3">
-                <div class="col-md-12">
-                    <label class="form-label fw-bold text-primary">Materia a Impartir</label>
-                    <select id="grMateria" class="form-select border-primary" required><option value="">Cargando materias de tu retícula...</option></select>
-                </div>
-                <div class="col-md-12">
-                    <label class="form-label fw-bold">Profesor Asignado</label>
-                    <select id="grProfesor" class="form-select" required><option value="">Cargando catálogo docente global...</option></select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Nombre/Número de Grupo</label>
-                    <input type="text" id="grNombre" class="form-control" placeholder="Ej. 101, 204A" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Horario</label>
-                    <input type="text" id="grHorario" class="form-control" placeholder="Ej. L-V 09:00-11:00" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Aula / Laboratorio</label>
-                    <input type="text" id="grAula" class="form-control" placeholder="Ej. Lab Cisco, Aula 5" required>
-                </div>
-            </div>
-            <div class="mt-4 text-end">
-                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary px-4" id="btnGuardarGrupo"><i class="fa-solid fa-check me-2"></i> Aperturar Grupo</button>
-            </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Inscribir Alumno -->
-<div class="modal fade" id="modalInscripcion" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header text-white" style="background-color: var(--accent-color);">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-signature me-2"></i> Inscribir Materia a Estudiante</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <h6 class="fw-bold text-dark mb-3">Alumno Seleccionado: <span id="inscNombreAlumno" class="text-primary"></span></h6>
-        
-        <div class="alert alert-info border-0 shadow-sm small mb-4">
-            <i class="fa-solid fa-filter me-2"></i> <strong>Filtro Automático:</strong> La lista desplegable inferior solo muestra los grupos disponibles de materias que el alumno aún no ha aprobado y que no está cursando actualmente.
-        </div>
-
-        <form id="formInscripcion" onsubmit="guardarInscripcion(event)">
-            <input type="hidden" id="inscIdAlumno">
-            <div class="mb-4">
-                <label class="form-label fw-bold">Seleccionar Grupo Disponible</label>
-                <select id="inscIdGrupo" class="form-select border-primary" style="height: 50px;" required>
-                    <option value="">Cargando opciones compatibles...</option>
-                </select>
-                <input type="hidden" id="inscIdMateria"> <!-- Se llenará al cambiar el select -->
-            </div>
-            
-            <div class="mt-4 text-end">
-                <button type="submit" class="btn btn-success px-4" id="btnInscribir"><i class="fa-solid fa-plus me-2"></i> Inscribir Oficialmente</button>
-            </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
-    
-    // Validación Estricta de Sesión
-    const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
-    if (!usuario || usuario.rol !== 'coordinadora') {
-        window.location.href = '../../index.html';
-    } else {
-        document.getElementById('nombreUsuario').innerText = `Coord. ${usuario.nombre}`;
-        if (!usuario.id_carrera) {
-            document.getElementById('alerta-sin-carrera').style.display = 'block';
-            document.getElementById('contenedor-modulos').style.display = 'none';
-        } else {
-            // Obtener el nombre de su carrera (simulado con el número si no se guardó el string)
-            document.getElementById('tituloCarrera').innerHTML = `<i class="fa-solid fa-building-columns text-primary me-2"></i> Panel de Coordinación`;
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #0891b2;
+            --background: #f1f5f9;
+            --border: #e2e8f0;
         }
-    }
 
-    const idCarrera = usuario.id_carrera; // REGLA DE ORO: Todas las consultas dependen de este ID
-
-    function cambiarSeccion(seccionId, elementoLi) {
-        document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(li => li.classList.remove('active'));
-        document.getElementById(`seccion-${seccionId}`).classList.add('active');
-        elementoLi.classList.add('active');
-    }
-
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
-
-    function filtrarTabla(idTabla, texto) {
-        const filas = document.getElementById(idTabla).getElementsByTagName('tr');
-        texto = texto.toLowerCase();
-        for (let i = 0; i < filas.length; i++) {
-            filas[i].style.display = filas[i].innerText.toLowerCase().includes(texto) ? '' : 'none';
+        * {
+            box-sizing: border-box;
         }
-    }
 
-    // ==========================================
-    // CARGA DE DATOS CENTRALIZADA
-    // ==========================================
-    async function inicializarDashboard() {
-        if(!idCarrera) return;
-        await Promise.all([
-            cargarGrupos(),
-            cargarAlumnos(),
-            cargarSelectsFormularioGrupos()
-        ]);
-    }
+        body {
+            margin: 0;
+            background: var(--background);
+            font-family: "Segoe UI", system-ui, sans-serif;
+            color: #334155;
+        }
 
-    async function cargarGrupos() {
-        try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos/${idCarrera}`);
-            const grupos = await res.json();
-            const tbody = document.getElementById('tablaGruposBody');
-            tbody.innerHTML = '';
-            
-            document.getElementById('statGrupos').innerText = grupos.length;
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
 
-            grupos.forEach(g => {
-                const profe = g.profesor ? g.profesor : '<span class="text-danger">Sin asignar</span>';
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="badge bg-primary font-monospace fs-6">Gpo: ${g.nombre_grupo}</span></td>
-                        <td class="fw-bold text-dark">${g.materia}</td>
-                        <td><span class="badge-soft">Semestre ${g.semestre}</span></td>
-                        <td><i class="fa-solid fa-user-tie text-muted me-2"></i>${profe}</td>
-                        <td class="text-muted"><i class="fa-regular fa-clock me-1"></i> ${g.horario} <br> <i class="fa-solid fa-door-open me-1"></i> ${g.aula}</td>
-                    </tr>`;
-            });
-        } catch (err) { console.error(err); }
-    }
+        /* SIDEBAR */
 
-    async function cargarAlumnos() {
-        try {
-            const res = await fetch(`${API_BASE}/coordinador/alumnos/${idCarrera}`);
-            const alumnos = await res.json();
-            const tbody = document.getElementById('tablaAlumnosBody');
-            tbody.innerHTML = '';
-            
-            document.getElementById('statAlumnos').innerText = alumnos.length;
+        .sidebar {
+            width: 265px;
+            min-width: 265px;
+            background: var(--primary);
+            color: white;
+            padding: 25px 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
 
-            alumnos.forEach(a => {
-                const badgePerfil = a.perfil_completo 
-                    ? '<span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> Expediente Listo</span>' 
-                    : '<span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Incompleto</span>';
-                
-                // Si el perfil está incompleto, bloqueamos el botón de inscripción por seguridad
-                const btnInscribir = a.perfil_completo 
-                    ? `<button class="btn btn-sm btn-outline-success fw-bold" onclick="prepararInscripcion(${a.id_usuario}, '${a.nombre}')"><i class="fa-solid fa-plus me-1"></i> Inscribir a Grupo</button>`
-                    : `<button class="btn btn-sm btn-secondary disabled" title="El alumno debe completar su expediente primero"><i class="fa-solid fa-lock me-1"></i> Perfil Bloqueado</button>`;
+        .brand {
+            font-size: 23px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 35px;
+        }
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="badge bg-light text-dark border p-2 font-monospace">${a.matricula}</span></td>
-                        <td class="fw-bold">${a.nombre}</td>
-                        <td>${badgePerfil}</td>
-                        <td class="text-center">${btnInscribir}</td>
-                    </tr>`;
-            });
-        } catch (err) { console.error(err); }
-    }
+        .brand span {
+            color: #67e8f9;
+        }
 
-    async function cargarSelectsFormularioGrupos() {
-        try {
-            // Cargar Materias de SU carrera
-            const resMat = await fetch(`${API_BASE}/coordinador/materias_carrera/${idCarrera}`);
-            const materias = await resMat.json();
-            const selMat = document.getElementById('grMateria');
-            selMat.innerHTML = '<option value="" selected disabled>Seleccione materia...</option>';
-            materias.forEach(m => selMat.innerHTML += `<option value="${m.id_materia}">Semestre ${m.semestre} - ${m.nombre} (${m.clave})</option>`);
+        .brand small {
+            display: block;
+            color: #94a3b8;
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
 
-            // Cargar Profesores globales
-            const resProf = await fetch(`${API_BASE}/coordinador/profesores`);
-            const profes = await resProf.json();
-            const selProf = document.getElementById('grProfesor');
-            selProf.innerHTML = '<option value="" selected disabled>Seleccione catedrático...</option>';
-            profes.forEach(p => selProf.innerHTML += `<option value="${p.id_usuario}">${p.nombre}</option>`);
-        } catch (err) { console.error(err); }
-    }
+        .sidebar .nav-btn {
+            display: block;
+            width: 100%;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 7px;
+            text-align: left;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    // ==========================================
-    // OPERACIONES (POST)
-    // ==========================================
-    async function guardarGrupo(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnGuardarGrupo');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...'; btn.disabled = true;
+        .sidebar .nav-btn i {
+            width: 28px;
+        }
 
-        const payload = {
-            id_materia: document.getElementById('grMateria').value,
-            id_profesor: document.getElementById('grProfesor').value,
-            nombre_grupo: document.getElementById('grNombre').value.toUpperCase(),
-            horario: document.getElementById('grHorario').value,
-            aula: document.getElementById('grAula').value
-        };
+        .sidebar .nav-btn:hover,
+        .sidebar .nav-btn.active {
+            background: var(--secondary);
+            color: white;
+        }
 
-        try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos/${idCarrera}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+        .sidebar .nav-btn.active {
+            border-left: 4px solid var(--accent);
+        }
 
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalGrupo')).hide();
-                Swal.fire({ icon: 'success', title: 'Grupo Aperturado', text: data.mensaje, timer: 2000, showConfirmButton: false });
-                cargarGrupos();
-                e.target.reset();
-            } else { Swal.fire('Error', data.error, 'error'); }
-        } catch (err) { Swal.fire('Error', 'Problema de red.', 'error'); }
-        finally { btn.innerHTML = '<i class="fa-solid fa-check me-2"></i> Aperturar Grupo'; btn.disabled = false; }
-    }
+        .security-box {
+            background: #164e63;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
 
-    // Lógica de Inscripción (Carga Grupos Compatibles)
-    async function prepararInscripcion(id_alumno, nombre_alumno) {
-        document.getElementById('inscNombreAlumno').innerText = nombre_alumno;
-        document.getElementById('inscIdAlumno').value = id_alumno;
-        
-        const select = document.getElementById('inscIdGrupo');
-        select.innerHTML = '<option value="">Buscando grupos compatibles...</option>';
-        
-        // Mostrar Modal
-        const modal = new bootstrap.Modal(document.getElementById('modalInscripcion'));
-        modal.show();
+        /* MAIN */
 
-        try {
-            const res = await fetch(`${API_BASE}/coordinador/grupos_disponibles/${id_alumno}`);
-            const grupos_disponibles = await res.json();
-            
-            if (grupos_disponibles.length === 0) {
-                select.innerHTML = '<option value="" disabled>No hay grupos disponibles o ya cursó todo.</option>';
-                return;
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            padding: 28px;
+        }
+
+        .header-top {
+            background: white;
+            border-radius: 16px;
+            padding: 22px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+        }
+
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        .metric-number {
+            font-size: 45px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .badge-docente {
+            background: #cffafe;
+            color: #155e75;
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .table {
+            vertical-align: middle;
+        }
+
+        .table th,
+        .table td {
+            padding: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+            padding: 30px !important;
+        }
+
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--primary);
+            color: white;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-screen[hidden] {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .app-layout {
+                flex-direction: column;
             }
 
-            select.innerHTML = '<option value="" selected disabled>Seleccione el grupo y horario...</option>';
-            grupos_disponibles.forEach(g => {
-                const text = `S${g.semestre} | ${g.materia} - Grupo ${g.nombre_grupo} (${g.horario} con ${g.profesor || 'Sin Asignar'})`;
-                // Metemos el id_materia como dataset para enviarlo luego en el POST
-                select.innerHTML += `<option value="${g.id_grupo}" data-materia="${g.id_materia}">${text}</option>`;
-            });
-            
-            // Evento para capturar el id_materia al seleccionar
-            select.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                document.getElementById('inscIdMateria').value = selectedOption.dataset.materia;
+            .sidebar {
+                width: 100%;
+                min-width: 0;
+                gap: 15px;
+            }
+
+            .sidebar nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .sidebar .nav-btn {
+                width: auto;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .header-top,
+            .card-custom {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- =========================================
+     PANTALLA DE VERIFICACIÓN
+========================================= -->
+
+<div id="loadingScreen" class="loading-screen">
+
+    <div class="spinner-border text-info mb-4"></div>
+
+    <h4 class="fw-bold">
+        SecurityCampus V2
+    </h4>
+
+    <p class="text-secondary">
+        Verificando acceso docente...
+    </p>
+
+</div>
+
+
+<div class="app-layout">
+
+    <!-- =====================================
+         SIDEBAR
+    ===================================== -->
+
+    <aside class="sidebar">
+
+        <div>
+
+            <div class="brand">
+                Security<span>Campus</span>
+                <small>PORTAL DOCENTE V2</small>
+            </div>
+
+            <nav>
+
+                <button
+                        type="button"
+                        class="nav-btn active"
+                        data-view="dashboard"
+                >
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Dashboard
+                </button>
+
+                <button
+                        type="button"
+                        class="nav-btn"
+                        data-view="grupos"
+                >
+                    <i class="fa-solid fa-layer-group"></i>
+                    Mis Grupos
+                </button>
+
+                <button
+                        type="button"
+                        class="nav-btn"
+                        data-view="evaluacion"
+                >
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    Evaluación Académica
+                </button>
+
+            </nav>
+
+        </div>
+
+        <div>
+
+            <div class="security-box">
+
+                <div class="fw-bold mb-2">
+                    <i class="fa-solid fa-shield-halved me-2"></i>
+                    Sesión protegida
+                </div>
+
+                <div>
+                    <i class="fa-regular fa-clock me-2"></i>
+                    Inactividad:
+                    <strong id="relojSesion">02:00</strong>
+                </div>
+
+            </div>
+
+            <button
+                    type="button"
+                    class="btn btn-danger w-100 fw-bold"
+                    id="btnCerrarSesion"
+            >
+                <i class="fa-solid fa-power-off me-2"></i>
+                Cerrar sesión
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================
+         MAIN
+    ===================================== -->
+
+    <main class="main-content">
+
+        <header class="header-top">
+
+            <div>
+
+                <h4 class="fw-bold mb-1">
+                    Portal de Evaluación Académica
+                </h4>
+
+                <div class="text-muted small">
+                    Gestión de grupos y calificaciones
+                </div>
+
+            </div>
+
+            <span
+                    class="badge-docente"
+                    id="nombreDocente"
+            >
+                Profesor
+            </span>
+
+        </header>
+
+
+        <!-- =================================
+             DASHBOARD
+        ================================= -->
+
+        <section
+                id="view-dashboard"
+                class="section-view active"
+        >
+
+            <div class="row g-4">
+
+                <div class="col-md-6">
+
+                    <div class="card-custom">
+
+                        <h6 class="text-muted fw-bold">
+                            GRUPOS ASIGNADOS
+                        </h6>
+
+                        <div
+                                class="metric-number"
+                                id="totalGrupos"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <div class="card-custom">
+
+                        <h6 class="text-muted fw-bold">
+                            ESTUDIANTES DEL GRUPO SELECCIONADO
+                        </h6>
+
+                        <div
+                                class="metric-number"
+                                id="totalAlumnos"
+                        >
+                            0
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card-custom">
+
+                <h5 class="fw-bold">
+                    <i class="fa-solid fa-shield-halved text-info me-2"></i>
+                    Evaluación con Trazabilidad
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Las calificaciones se envían al servidor.
+                    El backend debe verificar que seas titular
+                    del grupo, que el estudiante esté inscrito
+                    y que el periodo de evaluación permita
+                    registrar calificaciones.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             MIS GRUPOS
+        ================================= -->
+
+        <section
+                id="view-grupos"
+                class="section-view"
+        >
+
+            <div class="card-custom">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+                    <h5 class="fw-bold m-0">
+                        <i class="fa-solid fa-layer-group text-info me-2"></i>
+                        Mis Grupos Académicos
+                    </h5>
+
+                    <button
+                            type="button"
+                            class="btn btn-outline-info"
+                            id="btnActualizarGrupos"
+                    >
+                        <i class="fa-solid fa-rotate me-1"></i>
+                        Actualizar
+                    </button>
+
+                </div>
+
+                <input
+                        type="search"
+                        id="buscarGrupos"
+                        class="form-control mb-4"
+                        placeholder="Buscar materia, clave o carrera..."
+                >
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover">
+
+                        <thead class="table-light">
+
+                        <tr>
+                            <th>Grupo</th>
+                            <th>Asignatura</th>
+                            <th>Carrera</th>
+                            <th>Semestre</th>
+                            <th>Horario / Aula</th>
+                            <th>Acciones</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="tablaGrupos"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================
+             EVALUACIÓN
+        ================================= -->
+
+        <section
+                id="view-evaluacion"
+                class="section-view"
+        >
+
+            <div class="card-custom">
+
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+                    <div>
+
+                        <h5
+                                class="fw-bold mb-1"
+                                id="tituloGrupo"
+                        >
+                            Selecciona un grupo
+                        </h5>
+
+                        <p
+                                class="text-muted small mb-0"
+                                id="detalleGrupo"
+                        >
+                            Abre un grupo desde Mis Grupos.
+                        </p>
+
+                    </div>
+
+                    <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            id="btnVolverGrupos"
+                    >
+                        <i class="fa-solid fa-arrow-left me-1"></i>
+                        Volver
+                    </button>
+
+                </div>
+
+                <input
+                        type="search"
+                        id="buscarAlumnos"
+                        class="form-control mb-4"
+                        placeholder="Buscar matrícula o nombre del alumno..."
+                >
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover">
+
+                        <thead class="table-dark">
+
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Estudiante</th>
+                            <th>Calificación</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+
+                        </thead>
+
+                        <tbody id="tablaAlumnos"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================
+     MODAL CALIFICACIÓN
+========================================= -->
+
+<div
+        class="modal fade"
+        id="modalCalificacion"
+        tabindex="-1"
+        aria-labelledby="tituloModal"
+        aria-hidden="true"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-info text-white">
+
+                <h5
+                        class="modal-title fw-bold"
+                        id="tituloModal"
+                >
+                    Registrar Calificación
+                </h5>
+
+                <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                ></button>
+
+            </div>
+
+            <form id="formCalificacion">
+
+                <div class="modal-body">
+
+                    <p
+                            class="fw-bold"
+                            id="nombreAlumnoModal"
+                    ></p>
+
+                    <div class="mb-3">
+
+                        <label
+                                for="calificacion"
+                                class="form-label fw-bold"
+                        >
+                            Calificación (0 a 100)
+                        </label>
+
+                        <input
+                                type="number"
+                                id="calificacion"
+                                class="form-control"
+                                min="0"
+                                max="100"
+                                step="1"
+                                required
+                        >
+
+                    </div>
+
+                    <div class="mb-3">
+
+                        <label
+                                for="estatusCalificacion"
+                                class="form-label fw-bold"
+                        >
+                            Resultado Académico
+                        </label>
+
+                        <select
+                                id="estatusCalificacion"
+                                class="form-select"
+                                required
+                        >
+
+                            <option value="Aprobada">
+                                Aprobada
+                            </option>
+
+                            <option value="Reprobada">
+                                Reprobada
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="alert alert-warning small">
+
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
+                        Esta operación modifica el historial académico
+                        del estudiante y debe registrarse en auditoría.
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button
+                            type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                            type="submit"
+                            class="btn btn-info text-white fw-bold"
+                            id="btnGuardarCalificacion"
+                    >
+                        <i class="fa-solid fa-check me-2"></i>
+                        Registrar Calificación
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+    "use strict";
+
+    /*
+    ==========================================================
+    SECURITYCAMPUS V2 — PORTAL PROFESOR
+
+    ENDPOINTS REQUERIDOS:
+
+    GET  /api/auth/me
+    GET  /api/auth/csrf
+    POST /api/auth/logout
+
+    GET  /api/profesor/grupos
+    GET  /api/profesor/grupo/<id_grupo>/alumnos
+    POST /api/profesor/calificar
+
+    SEGURIDAD DEL BACKEND:
+
+    - Validar sesión activa.
+    - Validar rol profesor.
+    - Exigir correo verificado.
+    - Expirar sesiones tras 120 segundos de inactividad.
+    - Verificar que el grupo pertenece al profesor.
+    - Verificar que el alumno pertenece al grupo.
+    - Validar calificación y estado académico.
+    - Registrar cambios en auditoría.
+    ==========================================================
+    */
+
+
+    // ========================================================
+    // 1. CONFIGURACIÓN
+    // ========================================================
+
+    const API_BASE = "/api";
+
+    const LOGIN_URL = "../../index.html";
+
+    const LIMITE_INACTIVIDAD = 120000;
+
+    let csrfToken = null;
+
+    let usuarioActual = null;
+
+    let grupos = [];
+
+    let alumnos = [];
+
+    let grupoActual = null;
+
+    let alumnoActual = null;
+
+    let sesionFinalizada = false;
+
+    let ultimaActividad = Date.now();
+
+    let ultimaMarcaActividad = 0;
+
+
+    // ========================================================
+    // 2. UTILIDADES
+    // ========================================================
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+
+    function crearCelda(fila, contenido, clase = "") {
+        const celda = document.createElement("td");
+
+        celda.textContent = String(contenido ?? "—");
+
+        if (clase) {
+            celda.className = clase;
+        }
+
+        fila.appendChild(celda);
+
+        return celda;
+    }
+
+
+    function mostrarFilaVacia(idTabla, columnas, mensaje) {
+        const tbody = $(idTabla);
+
+        tbody.replaceChildren();
+
+        const fila = document.createElement("tr");
+
+        const celda = document.createElement("td");
+
+        celda.colSpan = columnas;
+
+        celda.className = "empty-state";
+
+        celda.textContent = mensaje;
+
+        fila.appendChild(celda);
+
+        tbody.appendChild(fila);
+    }
+
+
+    function mostrarError(error) {
+        console.error("SecurityCampus V2:", error);
+
+        Swal.fire({
+            icon: "error",
+            title: "Operación no completada",
+            text: error.message || "Ocurrió un error inesperado."
+        });
+    }
+
+
+    // ========================================================
+    // 3. CLIENTE API
+    // ========================================================
+
+    async function apiRequest(
+        endpoint,
+        {
+            method = "GET",
+            body = null
+        } = {}
+    ) {
+        const metodo = method.toUpperCase();
+
+        const headers = {
+            "Accept": "application/json"
+        };
+
+        if (body !== null) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
+            if (!csrfToken) {
+                throw new Error("Token CSRF no disponible.");
+            }
+
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
+        const respuesta = await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                method: metodo,
+                credentials: "include",
+                headers,
+                cache: "no-store",
+                body: body === null
+                    ? undefined
+                    : JSON.stringify(body)
+            }
+        );
+
+        const contentType =
+            respuesta.headers.get("content-type") || "";
+
+        const data = contentType.includes("application/json")
+            ? await respuesta.json()
+            : {};
+
+        if (respuesta.status === 401) {
+            sesionFinalizada = true;
+            window.location.replace(LOGIN_URL);
+            throw new Error("La sesión ha expirado.");
+        }
+
+        if (!respuesta.ok) {
+            throw new Error(
+                data.error ||
+                data.mensaje ||
+                `Error HTTP ${respuesta.status}`
+            );
+        }
+
+        return data;
+    }
+
+
+    // ========================================================
+    // 4. NAVEGACIÓN
+    // ========================================================
+
+    function cambiarSeccion(seccion) {
+        document.querySelectorAll(".section-view")
+            .forEach(elemento => {
+                elemento.classList.toggle(
+                    "active",
+                    elemento.id === `view-${seccion}`
+                );
             });
 
-        } catch (err) {
-            select.innerHTML = '<option value="" disabled>Error al cargar grupos.</option>';
+        document.querySelectorAll("[data-view]")
+            .forEach(elemento => {
+                elemento.classList.toggle(
+                    "active",
+                    elemento.dataset.view === seccion
+                );
+            });
+    }
+
+
+    // ========================================================
+    // 5. CARGAR GRUPOS
+    // ========================================================
+
+    async function cargarGrupos() {
+        const respuesta = await apiRequest(
+            "/profesor/grupos"
+        );
+
+        grupos = Array.isArray(respuesta)
+            ? respuesta
+            : respuesta.grupos || [];
+
+        $("totalGrupos").textContent = grupos.length;
+
+        mostrarGrupos();
+    }
+
+
+    // ========================================================
+    // 6. MOSTRAR GRUPOS
+    // ========================================================
+
+    function mostrarGrupos() {
+        const tbody = $("tablaGrupos");
+
+        tbody.replaceChildren();
+
+        const filtro = $("buscarGrupos")
+            .value
+            .toLocaleLowerCase("es");
+
+        const filtrados = grupos.filter(grupo => {
+            const campos = [
+                grupo.nombre_grupo,
+                grupo.nombre_materia,
+                grupo.clave_materia,
+                grupo.carrera
+            ];
+
+            return campos.some(campo =>
+                String(campo ?? "")
+                    .toLocaleLowerCase("es")
+                    .includes(filtro)
+            );
+        });
+
+        if (filtrados.length === 0) {
+            mostrarFilaVacia(
+                "tablaGrupos",
+                6,
+                "No se encontraron grupos."
+            );
+
+            return;
+        }
+
+        filtrados.forEach(grupo => {
+            const fila = document.createElement("tr");
+
+            crearCelda(
+                fila,
+                grupo.nombre_grupo
+            );
+
+            crearCelda(
+                fila,
+                `${grupo.nombre_materia || "—"} (${grupo.clave_materia || "—"})`,
+                "fw-bold"
+            );
+
+            crearCelda(
+                fila,
+                grupo.carrera
+            );
+
+            crearCelda(
+                fila,
+                grupo.semestre
+            );
+
+            crearCelda(
+                fila,
+                `${grupo.horario || "Sin horario"} / ${grupo.aula || "Sin aula"}`
+            );
+
+            const celdaAccion = crearCelda(fila, "");
+
+            const boton = document.createElement("button");
+
+            boton.type = "button";
+
+            boton.className =
+                "btn btn-sm btn-outline-info fw-bold";
+
+            boton.textContent = "Ver alumnos";
+
+            boton.addEventListener(
+                "click",
+                () => abrirGrupo(grupo)
+            );
+
+            celdaAccion.appendChild(boton);
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // ========================================================
+    // 7. ABRIR GRUPO
+    // ========================================================
+
+    async function abrirGrupo(grupo) {
+        grupoActual = grupo;
+
+        $("tituloGrupo").textContent =
+            `Grupo ${grupo.nombre_grupo}`;
+
+        $("detalleGrupo").textContent =
+            `${grupo.nombre_materia || ""} · ${grupo.carrera || ""}`;
+
+        cambiarSeccion("evaluacion");
+
+        try {
+            await cargarAlumnos();
+        } catch (error) {
+            mostrarError(error);
         }
     }
 
-    async function guardarInscripcion(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnInscribir');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; btn.disabled = true;
 
-        const payload = {
-            id_alumno: document.getElementById('inscIdAlumno').value,
-            id_grupo: document.getElementById('inscIdGrupo').value,
-            id_materia: document.getElementById('inscIdMateria').value
-        };
+    // ========================================================
+    // 8. CARGAR ALUMNOS
+    // ========================================================
 
-        try {
-            const res = await fetch(`${API_BASE}/coordinador/inscribir`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+    async function cargarAlumnos() {
+        if (!grupoActual) {
+            return;
+        }
 
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalInscripcion')).hide();
-                Swal.fire({ icon: 'success', title: 'Inscripción Sellada', text: data.mensaje, timer: 2000, showConfirmButton: false });
-            } else { Swal.fire('Error', data.error, 'error'); }
-        } catch (err) { Swal.fire('Error', 'Problema de conexión.', 'error'); }
-        finally { btn.innerHTML = '<i class="fa-solid fa-plus me-2"></i> Inscribir Oficialmente'; btn.disabled = false; }
+        const idGrupo = Number(
+            grupoActual.id_grupo
+        );
+
+        if (
+            !Number.isSafeInteger(idGrupo) ||
+            idGrupo <= 0
+        ) {
+            throw new Error("Identificador de grupo inválido.");
+        }
+
+        const respuesta = await apiRequest(
+            `/profesor/grupo/${idGrupo}/alumnos`
+        );
+
+        alumnos = Array.isArray(respuesta)
+            ? respuesta
+            : respuesta.alumnos || [];
+
+        $("totalAlumnos").textContent =
+            alumnos.length;
+
+        mostrarAlumnos();
     }
 
-    // Arrancar la maquinaria
-    window.addEventListener('DOMContentLoaded', inicializarDashboard);
+
+    // ========================================================
+    // 9. MOSTRAR ALUMNOS
+    // ========================================================
+
+    function mostrarAlumnos() {
+        const tbody = $("tablaAlumnos");
+
+        tbody.replaceChildren();
+
+        const filtro = $("buscarAlumnos")
+            .value
+            .toLocaleLowerCase("es");
+
+        const filtrados = alumnos.filter(alumno => {
+            return [
+                alumno.matricula,
+                alumno.nombre
+            ].some(campo =>
+                String(campo ?? "")
+                    .toLocaleLowerCase("es")
+                    .includes(filtro)
+            );
+        });
+
+        if (filtrados.length === 0) {
+            mostrarFilaVacia(
+                "tablaAlumnos",
+                5,
+                "No se encontraron alumnos inscritos."
+            );
+
+            return;
+        }
+
+        filtrados.forEach(alumno => {
+            const fila = document.createElement("tr");
+
+            crearCelda(
+                fila,
+                alumno.matricula
+            );
+
+            crearCelda(
+                fila,
+                alumno.nombre,
+                "fw-bold"
+            );
+
+            const calificacion =
+                alumno.calificacion === null ||
+                alumno.calificacion === undefined
+                    ? "Sin calificar"
+                    : alumno.calificacion;
+
+            crearCelda(
+                fila,
+                calificacion,
+                "text-center"
+            );
+
+            crearCelda(
+                fila,
+                alumno.estatus
+            );
+
+            const celdaAccion = crearCelda(fila, "");
+
+            if (alumno.estatus === "Cursando") {
+                const boton = document.createElement("button");
+
+                boton.type = "button";
+
+                boton.className =
+                    "btn btn-sm btn-info text-white fw-bold";
+
+                boton.textContent = "Calificar";
+
+                boton.addEventListener(
+                    "click",
+                    () => abrirModalCalificacion(alumno)
+                );
+
+                celdaAccion.appendChild(boton);
+
+            } else {
+                celdaAccion.textContent =
+                    "Sin edición disponible";
+            }
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // ========================================================
+    // 10. MODAL CALIFICACIÓN
+    // ========================================================
+
+    function abrirModalCalificacion(alumno) {
+        alumnoActual = alumno;
+
+        $("nombreAlumnoModal").textContent =
+            `${alumno.nombre || ""} · ${alumno.matricula || ""}`;
+
+        $("calificacion").value =
+            alumno.calificacion ?? "";
+
+        $("estatusCalificacion").value =
+            alumno.estatus === "Reprobada"
+                ? "Reprobada"
+                : "Aprobada";
+
+        bootstrap.Modal.getOrCreateInstance(
+            $("modalCalificacion")
+        ).show();
+    }
+
+
+    // ========================================================
+    // 11. GUARDAR CALIFICACIÓN
+    // ========================================================
+
+    async function guardarCalificacion(evento) {
+        evento.preventDefault();
+
+        if (!alumnoActual || !grupoActual) {
+            return;
+        }
+
+        const calificacion = Number(
+            $("calificacion").value
+        );
+
+        const estatus =
+            $("estatusCalificacion").value;
+
+        if (
+            !Number.isInteger(calificacion) ||
+            calificacion < 0 ||
+            calificacion > 100
+        ) {
+            mostrarError(
+                new Error(
+                    "La calificación debe ser un entero entre 0 y 100."
+                )
+            );
+
+            return;
+        }
+
+        if (!["Aprobada", "Reprobada"].includes(estatus)) {
+            mostrarError(
+                new Error("Estado académico inválido.")
+            );
+
+            return;
+        }
+
+        const confirmacion = await Swal.fire({
+            icon: "warning",
+            title: "¿Confirmar calificación?",
+            text:
+                `Registrar ${calificacion} (${estatus}) ` +
+                `para ${alumnoActual.nombre}`,
+            showCancelButton: true,
+            confirmButtonText: "Confirmar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (!confirmacion.isConfirmed) {
+            return;
+        }
+
+        const boton = $("btnGuardarCalificacion");
+
+        boton.disabled = true;
+
+        try {
+            await apiRequest(
+                "/profesor/calificar",
+                {
+                    method: "POST",
+                    body: {
+                        id_kardex: Number(
+                            alumnoActual.id_kardex
+                        ),
+                        calificacion,
+                        estatus
+                    }
+                }
+            );
+
+            bootstrap.Modal.getInstance(
+                $("modalCalificacion")
+            ).hide();
+
+            await cargarAlumnos();
+
+            await Swal.fire({
+                icon: "success",
+                title: "Calificación registrada",
+                text: "El resultado académico fue actualizado.",
+                timer: 1800,
+                showConfirmButton: false
+            });
+
+        } catch (error) {
+            mostrarError(error);
+
+        } finally {
+            boton.disabled = false;
+        }
+    }
+
+
+    // ========================================================
+    // 12. CERRAR SESIÓN
+    // ========================================================
+
+    async function cerrarSesion() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        try {
+            await apiRequest(
+                "/auth/logout",
+                {
+                    method: "POST"
+                }
+            );
+
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+
+        } catch (error) {
+            mostrarError(
+                new Error(
+                    "No se pudo confirmar el cierre de sesión " +
+                    "en el servidor. Inténtalo nuevamente."
+                )
+            );
+        }
+    }
+
+
+    // ========================================================
+    // 13. INACTIVIDAD
+    // ========================================================
+
+    function registrarActividad() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        const ahora = Date.now();
+
+        if (ahora - ultimaMarcaActividad < 1000) {
+            return;
+        }
+
+        ultimaMarcaActividad = ahora;
+
+        ultimaActividad = ahora;
+    }
+
+
+    function actualizarReloj() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        const transcurrido =
+            Date.now() - ultimaActividad;
+
+        const restante = Math.max(
+            0,
+            LIMITE_INACTIVIDAD - transcurrido
+        );
+
+        const segundos = Math.ceil(
+            restante / 1000
+        );
+
+        const minutosTexto = String(
+            Math.floor(segundos / 60)
+        ).padStart(2, "0");
+
+        const segundosTexto = String(
+            segundos % 60
+        ).padStart(2, "0");
+
+        $("relojSesion").textContent =
+            `${minutosTexto}:${segundosTexto}`;
+
+        if (restante <= 0) {
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+        }
+    }
+
+
+    [
+        "pointerdown",
+        "keydown",
+        "touchstart",
+        "scroll"
+    ].forEach(evento => {
+        window.addEventListener(
+            evento,
+            registrarActividad,
+            {
+                passive: true
+            }
+        );
+    });
+
+    setInterval(
+        actualizarReloj,
+        1000
+    );
+
+
+    // ========================================================
+    // 14. EVENTOS
+    // ========================================================
+
+    function configurarEventos() {
+        document.querySelectorAll("[data-view]")
+            .forEach(boton => {
+                boton.addEventListener(
+                    "click",
+                    () => cambiarSeccion(boton.dataset.view)
+                );
+            });
+
+        $("buscarGrupos").addEventListener(
+            "input",
+            mostrarGrupos
+        );
+
+        $("buscarAlumnos").addEventListener(
+            "input",
+            mostrarAlumnos
+        );
+
+        $("btnVolverGrupos").addEventListener(
+            "click",
+            () => cambiarSeccion("grupos")
+        );
+
+        $("btnActualizarGrupos").addEventListener(
+            "click",
+            async () => {
+                try {
+                    await cargarGrupos();
+                } catch (error) {
+                    mostrarError(error);
+                }
+            }
+        );
+
+        $("btnCerrarSesion").addEventListener(
+            "click",
+            cerrarSesion
+        );
+
+        $("formCalificacion").addEventListener(
+            "submit",
+            guardarCalificacion
+        );
+    }
+
+
+    // ========================================================
+    // 15. INICIAR PORTAL
+    // ========================================================
+
+    async function iniciarPortal() {
+        configurarEventos();
+
+        try {
+            const respuesta = await apiRequest(
+                "/auth/me"
+            );
+
+            const usuario =
+                respuesta.usuario || respuesta;
+
+            if (
+                usuario.rol !== "profesor" ||
+                !usuario.id_usuario
+            ) {
+                throw new Error(
+                    "No tienes autorización para este portal."
+                );
+            }
+
+            if (
+                usuario.correo_verificado !== true &&
+                usuario.correo_verificado !== 1
+            ) {
+                throw new Error(
+                    "Debes verificar tu correo electrónico."
+                );
+            }
+
+            usuarioActual = usuario;
+
+            const csrf = await apiRequest(
+                "/auth/csrf"
+            );
+
+            csrfToken = csrf.csrf_token;
+
+            if (!csrfToken) {
+                throw new Error(
+                    "El servidor no proporcionó el token CSRF."
+                );
+            }
+
+            $("nombreDocente").textContent =
+                usuario.nombre || "Profesor";
+
+            await cargarGrupos();
+
+            $("loadingScreen").hidden = true;
+
+            ultimaActividad = Date.now();
+
+        } catch (error) {
+            console.error(
+                "Error al iniciar portal docente:",
+                error
+            );
+
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarPortal
+    );
+
 </script>
+
 </body>
 </html>

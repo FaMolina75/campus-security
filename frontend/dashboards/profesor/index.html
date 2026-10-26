@@ -1,359 +1,1784 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Docente | ERP Académico</title>
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <title>Portal Docente V2 | SecurityCampus</title>
+
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+    >
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <style>
-        :root { --primary-color: #0f172a; --accent-color: #0ea5e9; --bg-color: #f1f5f9; }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-        
-        /* Sidebar */
-        .sidebar { background-color: var(--primary-color); min-height: 100vh; color: white; padding-top: 20px; box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .brand { font-size: 1.4rem; font-weight: 800; text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .brand span { color: #7dd3fc; }
-        .nav-link { color: #94a3b8; padding: 12px 20px; margin: 5px 15px; border-radius: 8px; transition: all 0.3s; font-weight: 500; cursor: pointer;}
-        .nav-link:hover, .nav-link.active { background-color: #1e293b; color: white; border-left: 4px solid var(--accent-color); }
-        .nav-link i { width: 25px; text-align: center; margin-right: 10px; }
-        
-        /* Contenido Principal */
-        .main-content { padding: 30px; height: 100vh; overflow-y: auto; }
-        .header-top { background: white; padding: 15px 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .card-custom { background: white; border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 30px; padding: 25px; }
-        
-        /* Vistas y Tablas */
-        .section-view { display: none; animation: fadeIn 0.4s; }
-        .section-view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .table > :not(caption) > * > * { padding: 12px 15px; border-bottom-color: #e2e8f0; vertical-align: middle; }
-        .badge-soft { background-color: #e0f2fe; color: #0369a1; padding: 5px 10px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
+        :root {
+            --primary-color: #0f172a;
+            --secondary-color: #1e293b;
+            --accent-color: #0ea5e9;
+            --bg-color: #f1f5f9;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: "Segoe UI", system-ui, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR */
+
+        .sidebar {
+            background-color: var(--primary-color);
+            min-height: 100vh;
+            color: white;
+            padding-top: 20px;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .brand span {
+            color: #7dd3fc;
+        }
+
+        .sidebar .nav-link {
+            color: #94a3b8;
+            padding: 12px 20px;
+            margin: 5px 15px;
+            border-radius: 8px;
+            transition: 0.3s;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            text-align: left;
+            width: calc(100% - 30px);
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .sidebar .nav-link i {
+            width: 25px;
+            text-align: center;
+            margin-right: 10px;
+        }
+
+        /* CONTENIDO */
+
+        .main-content {
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .header-top {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            margin-bottom: 30px;
+            padding: 25px;
+        }
+
+        /* VISTAS */
+
+        .section-view {
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* TABLAS */
+
+        .table > :not(caption) > * > * {
+            padding: 12px 15px;
+            border-bottom-color: var(--border-color);
+            vertical-align: middle;
+        }
+
+        .badge-soft {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #64748b;
+            padding: 35px !important;
+        }
+
+        /* SEGURIDAD */
+
+        .security-box {
+            background: #164e63;
+            border: 1px solid #0891b2;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .security-box i {
+            color: #67e8f9;
+        }
+
+        /* LOADING */
+
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .loading-screen[hidden] {
+            display: none;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 767px) {
+            .sidebar {
+                min-height: auto;
+                padding-bottom: 15px;
+            }
+
+            .main-content {
+                padding: 15px;
+            }
+
+            .header-top {
+                padding: 20px;
+            }
+
+            .card-custom {
+                padding: 18px;
+            }
+
+            .sidebar .nav-link {
+                margin: 5px 10px;
+                width: calc(100% - 20px);
+            }
+        }
+
+        /* IMPRESIÓN */
+
+        @media print {
+            .sidebar,
+            .header-top,
+            .no-print,
+            .modal {
+                display: none !important;
+            }
+
+            .main-content {
+                padding: 0;
+            }
+
+            .section-view {
+                display: none !important;
+            }
+
+            #seccion-evaluacion {
+                display: block !important;
+            }
+
+            .card-custom {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container-fluid p-0">
-    <div class="row g-0">
-        <!-- SIDEBAR -->
-        <div class="col-md-2 sidebar d-flex flex-column justify-content-between">
-            <div>
-                <div class="brand">ERP<span>Académico</span><br><small class="text-muted fw-normal fs-6">Catedrático</small></div>
-                <ul class="nav flex-column mt-4">
-                    <li class="nav-item"><a class="nav-link active" onclick="cambiarSeccion('dashboard', this)"><i class="fa-solid fa-chalkboard-user"></i> Mis Clases</a></li>
-                </ul>
-            </div>
-            <div class="p-4">
-                <button class="btn btn-danger w-100 shadow-sm rounded-3 fw-bold" onclick="cerrarSesion()"><i class="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button>
-            </div>
-        </div>
+<!-- ==========================================
+     VERIFICACIÓN DE SESIÓN
+========================================== -->
 
-        <!-- MAIN CONTENT -->
-        <div class="col-md-10 main-content">
-            <div class="header-top">
-                <h5 class="m-0 text-secondary fw-bold"><i class="fa-solid fa-book-open-reader text-info me-2"></i> Portal de Evaluación Académica</h5>
-                <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
-                    <i class="fa-solid fa-chalkboard-user text-info me-2"></i>
-                    <span id="nombreUsuario" class="fw-bold text-dark fs-6">Cargando...</span>
-                </div>
-            </div>
+<div id="loadingScreen" class="loading-screen">
 
-            <!-- SECCIÓN 1: DASHBOARD DE GRUPOS -->
-            <div id="seccion-dashboard" class="section-view active">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card-custom border-start border-info border-4 text-center h-100">
-                            <h6 class="text-muted text-uppercase fw-bold">Grupos Asignados este Ciclo</h6>
-                            <h1 class="fw-bold text-info mb-0 display-4" id="statGrupos">0</h1>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-custom text-center h-100 py-4">
-                            <i class="fa-solid fa-shield-halved fs-2 text-warning mb-2"></i>
-                            <h5 class="fw-bold text-dark">Aislamiento de Cátedra Activo</h5>
-                            <p class="text-muted small m-0">Solo puedes visualizar y emitir calificaciones para las listas de alumnos que los coordinadores han matriculado en tus clases.</p>
-                        </div>
-                    </div>
-                </div>
+    <div class="spinner-border text-info mb-4"></div>
 
-                <div class="card-custom">
-                    <h5 class="fw-bold mb-4"><i class="fa-solid fa-layer-group text-info me-2"></i> Mis Grupos y Horarios</h5>
-                    <input type="text" id="buscadorGrupos" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar materia o carrera..." onkeyup="filtrarTabla('tablaMisGruposBody', this.value)">
-                    
-                    <div class="table-responsive">
-                        <table class="table align-middle table-hover border">
-                            <thead class="table-light text-muted">
-                                <tr>
-                                    <th>Grupo / Semestre</th>
-                                    <th>Asignatura</th>
-                                    <th>Programa Académico</th>
-                                    <th>Aula y Horario</th>
-                                    <th class="text-center">Listas y Calificaciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaMisGruposBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    <h4 class="fw-bold">
+        SecurityCampus V2
+    </h4>
 
-            <!-- SECCIÓN 2: LISTA DE ALUMNOS DEL GRUPO (Se muestra al hacer clic en un grupo) -->
-            <div id="seccion-evaluacion" class="section-view">
-                <div class="card-custom">
-                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                        <div>
-                            <button class="btn btn-sm btn-outline-secondary mb-2" onclick="volverAGrupos()"><i class="fa-solid fa-arrow-left me-1"></i> Regresar a mis clases</button>
-                            <h4 class="fw-bold m-0 text-primary" id="tituloGrupoEval">Grupo Seleccionado</h4>
-                            <p class="text-muted m-0" id="subtituloGrupoEval">Asignatura</p>
-                        </div>
-                        <button class="btn btn-outline-info"><i class="fa-solid fa-print me-1"></i> Imprimir Acta</button>
-                    </div>
+    <p class="text-secondary">
+        Verificando credenciales docentes...
+    </p>
 
-                    <input type="text" class="form-control bg-light border-0 mb-3 p-3 rounded-3" placeholder="🔍 Buscar alumno por nombre o matrícula..." onkeyup="filtrarTabla('tablaAlumnosEvalBody', this.value)">
-
-                    <div class="table-responsive">
-                        <table class="table align-middle table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Matrícula</th>
-                                    <th>Nombre del Alumno</th>
-                                    <th class="text-center">Calificación</th>
-                                    <th class="text-center">Estatus Final</th>
-                                    <th class="text-center">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaAlumnosEvalBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
 </div>
+
+
+<div class="container-fluid p-0">
+
+    <div class="row g-0">
+
+        <!-- ==================================
+             SIDEBAR
+        ================================== -->
+
+        <aside class="col-md-2 sidebar d-flex flex-column justify-content-between">
+
+            <div>
+
+                <div class="brand">
+                    Security<span>Campus</span>
+                    <br>
+                    <small class="text-secondary fw-normal fs-6">
+                        Portal Docente V2
+                    </small>
+                </div>
+
+                <nav class="nav flex-column mt-4">
+
+                    <button
+                            type="button"
+                            class="nav-link active"
+                            id="nav-dashboard"
+                    >
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                        Mis Clases
+                    </button>
+
+                </nav>
+
+            </div>
+
+            <div class="p-4">
+
+                <div class="security-box">
+
+                    <div class="fw-bold mb-2">
+                        <i class="fa-solid fa-shield-halved me-2"></i>
+                        Seguridad V2
+                    </div>
+
+                    <div>
+                        <i class="fa-regular fa-clock me-1"></i>
+                        Inactividad:
+                        <strong id="contadorSesion">02:00</strong>
+                    </div>
+
+                </div>
+
+                <button
+                        type="button"
+                        class="btn btn-danger w-100 shadow-sm rounded-3 fw-bold"
+                        id="btnCerrarSesion"
+                >
+                    <i class="fa-solid fa-power-off me-2"></i>
+                    Cerrar Sesión
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- ==================================
+             MAIN
+        ================================== -->
+
+        <main class="col-md-10 main-content">
+
+            <header class="header-top">
+
+                <h5 class="m-0 text-secondary fw-bold">
+
+                    <i class="fa-solid fa-book-open-reader text-info me-2"></i>
+
+                    Portal de Evaluación Académica
+
+                </h5>
+
+                <div class="d-flex align-items-center bg-light px-3 py-2 rounded-pill border">
+
+                    <i class="fa-solid fa-chalkboard-user text-info me-2"></i>
+
+                    <span
+                            id="nombreUsuario"
+                            class="fw-bold text-dark fs-6"
+                    >
+                        Cargando...
+                    </span>
+
+                </div>
+
+            </header>
+
+
+            <!-- ==============================
+                 MIS CLASES
+            ============================== -->
+
+            <section
+                    id="seccion-dashboard"
+                    class="section-view active"
+            >
+
+                <div class="row mb-4 g-3">
+
+                    <div class="col-md-6">
+
+                        <div class="card-custom border-start border-info border-4 text-center h-100">
+
+                            <h6 class="text-muted text-uppercase fw-bold">
+                                Grupos Asignados este Ciclo
+                            </h6>
+
+                            <h1
+                                    class="fw-bold text-info mb-0 display-4"
+                                    id="statGrupos"
+                            >
+                                0
+                            </h1>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card-custom text-center h-100 py-4">
+
+                            <i class="fa-solid fa-shield-halved fs-2 text-warning mb-2"></i>
+
+                            <h5 class="fw-bold text-dark">
+                                Aislamiento de Cátedra
+                            </h5>
+
+                            <p class="text-muted small m-0">
+                                Solo puedes consultar y evaluar a estudiantes
+                                inscritos en los grupos que tienes asignados.
+                                Flask debe aplicar esta restricción en cada solicitud.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-custom">
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+
+                        <h5 class="fw-bold m-0">
+
+                            <i class="fa-solid fa-layer-group text-info me-2"></i>
+
+                            Mis Grupos y Horarios
+
+                        </h5>
+
+                        <button
+                                type="button"
+                                class="btn btn-outline-info no-print"
+                                id="btnActualizarGrupos"
+                        >
+
+                            <i class="fa-solid fa-rotate me-1"></i>
+                            Actualizar
+
+                        </button>
+
+                    </div>
+
+                    <input
+                            type="search"
+                            id="buscadorGrupos"
+                            class="form-control bg-light border-0 mb-3 p-3 rounded-3"
+                            placeholder="Buscar materia o carrera..."
+                    >
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle table-hover border">
+
+                            <thead class="table-light text-muted">
+
+                            <tr>
+                                <th>Grupo / Semestre</th>
+                                <th>Asignatura</th>
+                                <th>Programa Académico</th>
+                                <th>Aula y Horario</th>
+                                <th class="text-center">
+                                    Listas y Calificaciones
+                                </th>
+                            </tr>
+
+                            </thead>
+
+                            <tbody id="tablaMisGruposBody">
+
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    Cargando grupos...
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ==============================
+                 EVALUACIÓN
+            ============================== -->
+
+            <section
+                    id="seccion-evaluacion"
+                    class="section-view"
+            >
+
+                <div class="card-custom">
+
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 flex-wrap gap-3">
+
+                        <div>
+
+                            <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-secondary mb-2 no-print"
+                                    id="btnVolverGrupos"
+                            >
+
+                                <i class="fa-solid fa-arrow-left me-1"></i>
+                                Regresar a mis clases
+
+                            </button>
+
+                            <h4
+                                    class="fw-bold m-0 text-primary"
+                                    id="tituloGrupoEval"
+                            >
+                                Grupo Seleccionado
+                            </h4>
+
+                            <p
+                                    class="text-muted m-0"
+                                    id="subtituloGrupoEval"
+                            >
+                                Asignatura
+                            </p>
+
+                        </div>
+
+                        <button
+                                type="button"
+                                class="btn btn-outline-info no-print"
+                                id="btnImprimirActa"
+                        >
+
+                            <i class="fa-solid fa-print me-1"></i>
+                            Imprimir Acta
+
+                        </button>
+
+                    </div>
+
+                    <div class="alert alert-info small">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        La impresión es una copia informativa.
+                        Un acta oficial requiere autorización y firma institucional.
+                    </div>
+
+                    <input
+                            type="search"
+                            id="buscadorAlumnos"
+                            class="form-control bg-light border-0 mb-3 p-3 rounded-3 no-print"
+                            placeholder="Buscar alumno por nombre o matrícula..."
+                    >
+
+                    <div class="table-responsive">
+
+                        <table class="table align-middle table-hover">
+
+                            <thead class="table-dark">
+
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Nombre del Alumno</th>
+                                <th class="text-center">Calificación</th>
+                                <th class="text-center">Estatus Final</th>
+                                <th class="text-center no-print">Acción</th>
+                            </tr>
+
+                            </thead>
+
+                            <tbody id="tablaAlumnosEvalBody">
+
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    Selecciona un grupo.
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
 
 <!-- ==========================================
-                 MODAL PARA CALIFICAR
-=========================================== -->
-<div class="modal fade" id="modalCalificar" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header text-white" style="background-color: var(--accent-color);">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i> Asentar Calificación Ordinaria</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <h6 class="fw-bold text-dark mb-4 text-center">Alumno: <span id="califNombreAlumno" class="text-primary"></span></h6>
-        
-        <form id="formCalificar" onsubmit="guardarCalificacion(event)">
-            <input type="hidden" id="califIdKardex">
-            
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Calificación Obtenida</label>
-                    <input type="number" id="califValor" class="form-control form-control-lg text-center fw-bold text-primary" min="0" max="100" placeholder="0 - 100" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold">Resolución Final</label>
-                    <select id="califEstatus" class="form-select form-select-lg border-primary" required>
-                        <option value="Aprobada" class="text-success fw-bold">Aprobada</option>
-                        <option value="Reprobada" class="text-danger fw-bold">Reprobada</option>
-                        <option value="Cursando" class="text-warning fw-bold">Cursando (Sin asentar)</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="alert alert-info border-0 shadow-sm small">
-                <i class="fa-solid fa-info-circle me-1"></i> Una vez asentada la calificación, se reflejará inmediatamente en el Kárdex oficial del estudiante.
+     MODAL CALIFICAR
+========================================== -->
+
+<div
+        class="modal fade"
+        id="modalCalificar"
+        tabindex="-1"
+        data-bs-backdrop="static"
+        aria-labelledby="tituloModalCalificar"
+        aria-hidden="true"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div
+                    class="modal-header text-white"
+                    style="background-color: var(--accent-color);"
+            >
+
+                <h5
+                        class="modal-title fw-bold"
+                        id="tituloModalCalificar"
+                >
+
+                    <i class="fa-solid fa-pen-to-square me-2"></i>
+                    Asentar Calificación Ordinaria
+
+                </h5>
+
+                <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                ></button>
+
             </div>
 
-            <div class="mt-4 text-end">
-                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-info text-white px-4 fw-bold" id="btnGuardarCalif"><i class="fa-solid fa-stamp me-2"></i> Firmar Calificación</button>
+            <div class="modal-body p-4 bg-light">
+
+                <h6 class="fw-bold text-dark mb-4 text-center">
+
+                    Alumno:
+
+                    <span
+                            id="califNombreAlumno"
+                            class="text-primary"
+                    ></span>
+
+                </h6>
+
+                <form id="formCalificar">
+
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-6">
+
+                            <label
+                                    for="califValor"
+                                    class="form-label fw-bold"
+                            >
+                                Calificación Obtenida
+                            </label>
+
+                            <input
+                                    type="number"
+                                    id="califValor"
+                                    class="form-control form-control-lg text-center fw-bold text-primary"
+                                    min="0"
+                                    max="100"
+                                    step="1"
+                                    placeholder="0 - 100"
+                                    required
+                            >
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <label
+                                    for="califEstatus"
+                                    class="form-label fw-bold"
+                            >
+                                Resolución Final
+                            </label>
+
+                            <input
+                                    type="text"
+                                    id="califEstatus"
+                                    class="form-control form-control-lg"
+                                    value="Pendiente de calificación"
+                                    readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <div class="alert alert-info border-0 shadow-sm small">
+
+                        <i class="fa-solid fa-info-circle me-1"></i>
+
+                        La resolución académica se calcula automáticamente
+                        a partir de la calificación.
+
+                        El servidor deberá aplicar la regla oficial
+                        de aprobación y registrar la operación en auditoría.
+
+                    </div>
+
+                    <div class="text-end">
+
+                        <button
+                                type="button"
+                                class="btn btn-light me-2"
+                                data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-info text-white px-4 fw-bold"
+                                id="btnGuardarCalif"
+                        >
+
+                            <i class="fa-solid fa-stamp me-2"></i>
+                            Firmar Calificación
+
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
-        </form>
-      </div>
+
+        </div>
+
     </div>
-  </div>
+
 </div>
 
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
 <script>
-    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
-    
-    // Validación de Sesión Segura
-    const usuario = JSON.parse(sessionStorage.getItem('usuarioLogueado'));
-    if (!usuario || usuario.rol !== 'profesor') {
-        window.location.href = '../../index.html';
-    } else {
-        document.getElementById('nombreUsuario').innerText = `Prof. ${usuario.nombre}`;
+    "use strict";
+
+    /*
+    =========================================================
+    SECURITYCAMPUS V2 — PORTAL DOCENTE
+
+    CONTRATO DE API:
+
+    GET  /api/auth/me
+    GET  /api/auth/csrf
+    POST /api/auth/logout
+
+    GET  /api/profesor/grupos
+    GET  /api/profesor/grupo/<id_grupo>/alumnos
+    POST /api/profesor/calificar
+
+    RESPONSABILIDADES DEL BACKEND:
+
+    1. Autenticación real con cookies HttpOnly.
+    2. Rol profesor obligatorio.
+    3. Correo verificado.
+    4. Sesión expirada tras 120 segundos de inactividad.
+    5. Solo grupos asignados al profesor autenticado.
+    6. Solo alumnos inscritos en esos grupos.
+    7. Validación de calificaciones.
+    8. Auditoría de operaciones.
+    9. CSRF para operaciones de escritura.
+    10. Bloqueo de modificaciones no autorizadas.
+
+    =========================================================
+    */
+
+
+    // =======================================================
+    // CONFIGURACIÓN
+    // =======================================================
+
+    const API_BASE = "/api";
+
+    const LOGIN_URL = "../../index.html";
+
+    const LIMITE_INACTIVIDAD = 120000;
+
+    const CALIFICACION_MINIMA_APROBATORIA = 70;
+
+    let csrfToken = null;
+
+    let usuarioActual = null;
+
+    let gruposActuales = [];
+
+    let alumnosActuales = [];
+
+    let grupoActual = null;
+
+    let alumnoActual = null;
+
+    let sesionFinalizada = false;
+
+    let ultimaActividad = Date.now();
+
+    let ultimaMarcaActividad = 0;
+
+    let solicitudAlumnosVersion = 0;
+
+
+    // =======================================================
+    // UTILIDADES
+    // =======================================================
+
+    function $(id) {
+        return document.getElementById(id);
     }
 
-    const idProfesor = usuario.id_usuario;
-    let grupoActualId = null;
 
-    function cambiarSeccion(seccionId, elementoLi) {
-        document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
-        if(elementoLi) {
-            document.querySelectorAll('.nav-link').forEach(li => li.classList.remove('active'));
-            elementoLi.classList.add('active');
+    function crearCelda(fila, texto, clase = "") {
+        const celda = document.createElement("td");
+
+        celda.textContent = String(texto ?? "—");
+
+        if (clase) {
+            celda.className = clase;
         }
-        document.getElementById(`seccion-${seccionId}`).classList.add('active');
+
+        fila.appendChild(celda);
+
+        return celda;
     }
 
-    function volverAGrupos() { cambiarSeccion('dashboard'); }
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = '/index.html'; }
 
-    function filtrarTabla(idTabla, texto) {
-        const filas = document.getElementById(idTabla).getElementsByTagName('tr');
-        texto = texto.toLowerCase();
-        for (let i = 0; i < filas.length; i++) {
-            filas[i].style.display = filas[i].innerText.toLowerCase().includes(texto) ? '' : 'none';
-        }
+    function crearBadge(texto, clase) {
+        const badge = document.createElement("span");
+
+        badge.className = `badge ${clase}`;
+
+        badge.textContent = String(texto ?? "");
+
+        return badge;
     }
 
-    // ==========================================
-    // CARGAR MIS GRUPOS (AL INICIAR)
-    // ==========================================
-    async function cargarMisGrupos() {
-        try {
-            const res = await fetch(`${API_BASE}/profesor/grupos/${idProfesor}`);
-            const grupos = await res.json();
-            const tbody = document.getElementById('tablaMisGruposBody');
-            tbody.innerHTML = '';
-            
-            document.getElementById('statGrupos').innerText = grupos.length;
 
-            if (grupos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fa-solid fa-mug-hot fs-3 mb-2 d-block"></i> No tienes grupos asignados en este ciclo escolar.</td></tr>';
-                return;
-            }
+    function mostrarFilaVacia(idTabla, columnas, mensaje) {
+        const tbody = $(idTabla);
 
-            grupos.forEach(g => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            <span class="badge bg-primary font-monospace fs-6">Gpo: ${g.nombre_grupo}</span><br>
-                            <span class="badge-soft mt-1 d-inline-block">Semestre ${g.semestre}</span>
-                        </td>
-                        <td>
-                            <span class="fw-bold text-dark d-block">${g.nombre_materia}</span>
-                            <span class="badge bg-light text-muted border font-monospace mt-1">${g.clave_materia}</span>
-                        </td>
-                        <td class="fw-bold text-secondary">${g.carrera}</td>
-                        <td class="text-muted"><i class="fa-regular fa-clock text-info me-1"></i> ${g.horario} <br> <i class="fa-solid fa-door-open text-info me-1"></i> ${g.aula}</td>
-                        <td class="text-center">
-                            <button class="btn btn-info text-white fw-bold shadow-sm" onclick="abrirListaAlumnos(${g.id_grupo}, '${g.nombre_grupo}', '${g.nombre_materia}', '${g.carrera}')">
-                                <i class="fa-solid fa-users-viewfinder me-1"></i> Ver Lista
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        } catch (err) { console.error(err); }
+        tbody.replaceChildren();
+
+        const fila = document.createElement("tr");
+
+        const celda = document.createElement("td");
+
+        celda.colSpan = columnas;
+
+        celda.className = "empty-state";
+
+        celda.textContent = mensaje;
+
+        fila.appendChild(celda);
+
+        tbody.appendChild(fila);
     }
 
-    // ==========================================
-    // CARGAR LISTA DE ALUMNOS DE UN GRUPO
-    // ==========================================
-    async function abrirListaAlumnos(id_grupo, nombre_grupo, materia, carrera) {
-        grupoActualId = id_grupo;
-        document.getElementById('tituloGrupoEval').innerText = `Grupo ${nombre_grupo} - ${carrera}`;
-        document.getElementById('subtituloGrupoEval').innerText = `Asignatura: ${materia}`;
-        
-        cambiarSeccion('evaluacion'); // Ocultar dashboard, mostrar tabla de evaluación
 
-        try {
-            const res = await fetch(`${API_BASE}/profesor/grupo/${id_grupo}/alumnos`);
-            const alumnos = await res.json();
-            const tbody = document.getElementById('tablaAlumnosEvalBody');
-            tbody.innerHTML = '';
+    function mostrarError(error) {
+        console.error("SecurityCampus V2:", error);
 
-            if (alumnos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fa-solid fa-user-xmark fs-3 mb-2 d-block"></i> Ningún alumno ha sido inscrito en este grupo aún.</td></tr>';
-                return;
-            }
-
-            alumnos.forEach(a => {
-                let badgeStatus = 'bg-warning text-dark';
-                if (a.estatus === 'Aprobada') badgeStatus = 'bg-success';
-                if (a.estatus === 'Reprobada') badgeStatus = 'bg-danger';
-
-                const califTexto = a.calificacion > 0 ? a.calificacion : '--';
-                
-                tbody.innerHTML += `
-                    <tr>
-                        <td><span class="badge bg-light text-dark border p-2 font-monospace">${a.matricula}</span></td>
-                        <td class="fw-bold">${a.nombre}</td>
-                        <td class="text-center fw-bold fs-5 text-primary">${califTexto}</td>
-                        <td class="text-center"><span class="badge ${badgeStatus} px-3 py-2 text-uppercase">${a.estatus}</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="prepararCalificacion(${a.id_kardex}, '${a.nombre}', ${a.calificacion}, '${a.estatus}')">
-                                <i class="fa-solid fa-pen-nib me-1"></i> Asentar Calif.
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        } catch (err) { console.error(err); }
-    }
-
-    // ==========================================
-    // EVALUACIÓN (CALIFICAR ALUMNO)
-    // ==========================================
-    function prepararCalificacion(id_kardex, nombre, calificacion_actual, estatus_actual) {
-        document.getElementById('califIdKardex').value = id_kardex;
-        document.getElementById('califNombreAlumno').innerText = nombre;
-        
-        // Pre-llenar valores si ya existen
-        document.getElementById('califValor').value = calificacion_actual > 0 ? calificacion_actual : '';
-        document.getElementById('califEstatus').value = estatus_actual || 'Cursando';
-        
-        // Auto-cambiar estatus al escribir calificación (Lógica visual)
-        document.getElementById('califValor').addEventListener('input', function() {
-            const num = parseInt(this.value);
-            const select = document.getElementById('califEstatus');
-            if (num >= 70) select.value = 'Aprobada'; // Suponiendo que la mínima aprobatoria es 70
-            else if (num < 70 && num > 0) select.value = 'Reprobada';
+        Swal.fire({
+            icon: "error",
+            title: "Operación no completada",
+            text: error.message || "Ocurrió un error inesperado."
         });
-
-        const modal = new bootstrap.Modal(document.getElementById('modalCalificar'));
-        modal.show();
     }
 
-    async function guardarCalificacion(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnGuardarCalif');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...'; btn.disabled = true;
 
-        const payload = {
-            id_kardex: document.getElementById('califIdKardex').value,
-            calificacion: document.getElementById('califValor').value,
-            estatus: document.getElementById('califEstatus').value
+    function validarId(id) {
+        const numero = Number(id);
+
+        if (
+            !Number.isSafeInteger(numero) ||
+            numero <= 0
+        ) {
+            throw new Error("Identificador inválido.");
+        }
+
+        return numero;
+    }
+
+
+    // =======================================================
+    // CLIENTE API SEGURO
+    // =======================================================
+
+    async function apiRequest(
+        endpoint,
+        {
+            method = "GET",
+            body = null
+        } = {}
+    ) {
+        const metodo = method.toUpperCase();
+
+        const headers = {
+            "Accept": "application/json"
         };
 
-        try {
-            const res = await fetch(`${API_BASE}/profesor/calificar`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+        if (body !== null) {
+            headers["Content-Type"] = "application/json";
+        }
 
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalCalificar')).hide();
-                Swal.fire({ icon: 'success', title: 'Acta Actualizada', text: data.mensaje, timer: 1500, showConfirmButton: false });
-                // Recargar solo la lista de este grupo para ver el cambio instantáneo
-                abrirListaAlumnos(grupoActualId, document.getElementById('tituloGrupoEval').innerText.split(' - ')[0].replace('Grupo ', ''), document.getElementById('subtituloGrupoEval').innerText.replace('Asignatura: ', ''), '');
-            } else { Swal.fire('Error', data.error, 'error'); }
-        } catch (err) { Swal.fire('Error', 'Problema de conexión.', 'error'); }
-        finally { btn.innerHTML = '<i class="fa-solid fa-stamp me-2"></i> Firmar Calificación'; btn.disabled = false; }
+        if (!["GET", "HEAD", "OPTIONS"].includes(metodo)) {
+            if (!csrfToken) {
+                throw new Error(
+                    "No se pudo obtener la protección CSRF."
+                );
+            }
+
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
+        const respuesta = await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                method: metodo,
+                credentials: "include",
+                headers,
+                cache: "no-store",
+                body: body === null
+                    ? undefined
+                    : JSON.stringify(body)
+            }
+        );
+
+        const tipoContenido =
+            respuesta.headers.get("content-type") || "";
+
+        const data = tipoContenido.includes("application/json")
+            ? await respuesta.json()
+            : {};
+
+        if (respuesta.status === 401) {
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+
+            throw new Error("Sesión expirada.");
+        }
+
+        if (!respuesta.ok) {
+            throw new Error(
+                data.error ||
+                data.mensaje ||
+                `Error HTTP ${respuesta.status}`
+            );
+        }
+
+        return data;
     }
 
-    // Arrancar la maquinaria
-    window.addEventListener('DOMContentLoaded', cargarMisGrupos);
+
+    // =======================================================
+    // NAVEGACIÓN
+    // =======================================================
+
+    function cambiarSeccion(seccion) {
+        document.querySelectorAll(".section-view")
+            .forEach(elemento => {
+                elemento.classList.toggle(
+                    "active",
+                    elemento.id === `seccion-${seccion}`
+                );
+            });
+    }
+
+
+    function volverAGrupos() {
+        grupoActual = null;
+
+        alumnoActual = null;
+
+        solicitudAlumnosVersion++;
+
+        cambiarSeccion("dashboard");
+    }
+
+
+    // =======================================================
+    // CARGAR MIS GRUPOS
+    // =======================================================
+
+    async function cargarMisGrupos() {
+        const respuesta = await apiRequest(
+            "/profesor/grupos"
+        );
+
+        const grupos = Array.isArray(respuesta)
+            ? respuesta
+            : respuesta.grupos;
+
+        if (!Array.isArray(grupos)) {
+            throw new Error(
+                "El servidor devolvió un catálogo de grupos inválido."
+            );
+        }
+
+        gruposActuales = grupos;
+
+        $("statGrupos").textContent =
+            gruposActuales.length;
+
+        mostrarGrupos();
+    }
+
+
+    // =======================================================
+    // MOSTRAR GRUPOS
+    // =======================================================
+
+    function mostrarGrupos() {
+        const tbody = $("tablaMisGruposBody");
+
+        tbody.replaceChildren();
+
+        const filtro = $("buscadorGrupos")
+            .value
+            .toLocaleLowerCase("es");
+
+        const filtrados = gruposActuales.filter(grupo => {
+            return [
+                grupo.nombre_grupo,
+                grupo.nombre_materia,
+                grupo.clave_materia,
+                grupo.carrera
+            ].some(valor =>
+                String(valor ?? "")
+                    .toLocaleLowerCase("es")
+                    .includes(filtro)
+            );
+        });
+
+        if (filtrados.length === 0) {
+            mostrarFilaVacia(
+                "tablaMisGruposBody",
+                5,
+                "No tienes grupos asignados o no hay coincidencias."
+            );
+
+            return;
+        }
+
+        filtrados.forEach(grupo => {
+            const fila = document.createElement("tr");
+
+            const celdaGrupo = crearCelda(fila, "");
+
+            celdaGrupo.appendChild(
+                crearBadge(
+                    `Gpo: ${grupo.nombre_grupo || "—"}`,
+                    "bg-primary font-monospace"
+                )
+            );
+
+            celdaGrupo.appendChild(
+                document.createElement("br")
+            );
+
+            const semestre = crearBadge(
+                `Semestre ${grupo.semestre ?? "—"}`,
+                "bg-info text-dark mt-2"
+            );
+
+            celdaGrupo.appendChild(semestre);
+
+            const celdaMateria = crearCelda(
+                fila,
+                "",
+                "fw-bold"
+            );
+
+            const nombreMateria =
+                document.createElement("div");
+
+            nombreMateria.textContent =
+                grupo.nombre_materia || "Sin asignatura";
+
+            celdaMateria.appendChild(nombreMateria);
+
+            celdaMateria.appendChild(
+                crearBadge(
+                    grupo.clave_materia || "Sin clave",
+                    "bg-light text-muted border mt-1"
+                )
+            );
+
+            crearCelda(
+                fila,
+                grupo.carrera,
+                "fw-bold text-secondary"
+            );
+
+            crearCelda(
+                fila,
+                `${grupo.horario || "Sin horario"} / ${grupo.aula || "Sin aula"}`
+            );
+
+            const celdaAcciones = crearCelda(
+                fila,
+                "",
+                "text-center"
+            );
+
+            const boton = document.createElement("button");
+
+            boton.type = "button";
+
+            boton.className =
+                "btn btn-info text-white fw-bold shadow-sm no-print";
+
+            boton.textContent = "Ver Lista";
+
+            boton.addEventListener(
+                "click",
+                () => abrirListaAlumnos(grupo)
+            );
+
+            celdaAcciones.appendChild(boton);
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // =======================================================
+    // ABRIR LISTA DE ALUMNOS
+    // =======================================================
+
+    async function abrirListaAlumnos(grupo) {
+        const idGrupo = validarId(
+            grupo.id_grupo
+        );
+
+        grupoActual = grupo;
+
+        alumnoActual = null;
+
+        const version = ++solicitudAlumnosVersion;
+
+        $("tituloGrupoEval").textContent =
+            `Grupo ${grupo.nombre_grupo || "—"} - ${grupo.carrera || "—"}`;
+
+        $("subtituloGrupoEval").textContent =
+            `Asignatura: ${grupo.nombre_materia || "—"}`;
+
+        $("buscadorAlumnos").value = "";
+
+        cambiarSeccion("evaluacion");
+
+        mostrarFilaVacia(
+            "tablaAlumnosEvalBody",
+            5,
+            "Cargando estudiantes..."
+        );
+
+        try {
+            const respuesta = await apiRequest(
+                `/profesor/grupo/${idGrupo}/alumnos`
+            );
+
+            if (version !== solicitudAlumnosVersion) {
+                return;
+            }
+
+            const alumnos = Array.isArray(respuesta)
+                ? respuesta
+                : respuesta.alumnos;
+
+            if (!Array.isArray(alumnos)) {
+                throw new Error(
+                    "El servidor devolvió una lista de alumnos inválida."
+                );
+            }
+
+            alumnosActuales = alumnos;
+
+            mostrarAlumnos();
+
+        } catch (error) {
+            if (version !== solicitudAlumnosVersion) {
+                return;
+            }
+
+            mostrarFilaVacia(
+                "tablaAlumnosEvalBody",
+                5,
+                "No fue posible cargar la lista."
+            );
+
+            mostrarError(error);
+        }
+    }
+
+
+    // =======================================================
+    // MOSTRAR ALUMNOS
+    // =======================================================
+
+    function mostrarAlumnos() {
+        const tbody = $("tablaAlumnosEvalBody");
+
+        tbody.replaceChildren();
+
+        const filtro = $("buscadorAlumnos")
+            .value
+            .toLocaleLowerCase("es");
+
+        const filtrados = alumnosActuales.filter(alumno => {
+            return [
+                alumno.matricula,
+                alumno.nombre
+            ].some(valor =>
+                String(valor ?? "")
+                    .toLocaleLowerCase("es")
+                    .includes(filtro)
+            );
+        });
+
+        if (filtrados.length === 0) {
+            mostrarFilaVacia(
+                "tablaAlumnosEvalBody",
+                5,
+                "No hay estudiantes inscritos o no existen coincidencias."
+            );
+
+            return;
+        }
+
+        filtrados.forEach(alumno => {
+            const fila = document.createElement("tr");
+
+            const celdaMatricula = crearCelda(fila, "");
+
+            celdaMatricula.appendChild(
+                crearBadge(
+                    alumno.matricula || "Sin matrícula",
+                    "bg-light text-dark border p-2 font-monospace"
+                )
+            );
+
+            crearCelda(
+                fila,
+                alumno.nombre,
+                "fw-bold"
+            );
+
+            const calificacion =
+                alumno.calificacion === null ||
+                alumno.calificacion === undefined
+                    ? "—"
+                    : alumno.calificacion;
+
+            crearCelda(
+                fila,
+                calificacion,
+                "text-center fw-bold fs-5 text-primary"
+            );
+
+            const celdaEstado = crearCelda(
+                fila,
+                "",
+                "text-center"
+            );
+
+            const clasesEstado = {
+                Aprobada: "bg-success",
+                Reprobada: "bg-danger",
+                Cursando: "bg-warning text-dark",
+                Pendiente: "bg-secondary",
+                Baja: "bg-secondary"
+            };
+
+            celdaEstado.appendChild(
+                crearBadge(
+                    alumno.estatus || "Sin estado",
+                    `${clasesEstado[alumno.estatus] || "bg-secondary"} px-3 py-2`
+                )
+            );
+
+            const celdaAccion = crearCelda(
+                fila,
+                "",
+                "text-center no-print"
+            );
+
+            if (alumno.estatus === "Cursando") {
+                const boton = document.createElement("button");
+
+                boton.type = "button";
+
+                boton.className =
+                    "btn btn-sm btn-outline-primary fw-bold";
+
+                boton.textContent = "Asentar Calif.";
+
+                boton.addEventListener(
+                    "click",
+                    () => prepararCalificacion(alumno)
+                );
+
+                celdaAccion.appendChild(boton);
+
+            } else {
+                celdaAccion.textContent =
+                    "Sin edición disponible";
+            }
+
+            tbody.appendChild(fila);
+        });
+    }
+
+
+    // =======================================================
+    // PREPARAR CALIFICACIÓN
+    // =======================================================
+
+    function prepararCalificacion(alumno) {
+        if (
+            !grupoActual ||
+            alumno.estatus !== "Cursando"
+        ) {
+            return;
+        }
+
+        alumnoActual = alumno;
+
+        $("califNombreAlumno").textContent =
+            `${alumno.nombre || ""} (${alumno.matricula || ""})`;
+
+        $("califValor").value =
+            alumno.calificacion ?? "";
+
+        actualizarEstatusVisual();
+
+        bootstrap.Modal.getOrCreateInstance(
+            $("modalCalificar")
+        ).show();
+    }
+
+
+    // =======================================================
+    // ESTATUS VISUAL
+    // =======================================================
+
+    function actualizarEstatusVisual() {
+        const entrada = $("califValor").value;
+
+        if (entrada === "") {
+            $("califEstatus").value =
+                "Pendiente de calificación";
+
+            return;
+        }
+
+        const calificacion = Number(entrada);
+
+        if (
+            !Number.isInteger(calificacion) ||
+            calificacion < 0 ||
+            calificacion > 100
+        ) {
+            $("califEstatus").value =
+                "Calificación inválida";
+
+            return;
+        }
+
+        $("califEstatus").value =
+            calificacion >= CALIFICACION_MINIMA_APROBATORIA
+                ? "Aprobada"
+                : "Reprobada";
+    }
+
+
+    // =======================================================
+    // GUARDAR CALIFICACIÓN
+    // =======================================================
+
+    async function guardarCalificacion(evento) {
+        evento.preventDefault();
+
+        if (
+            !grupoActual ||
+            !alumnoActual ||
+            alumnoActual.estatus !== "Cursando"
+        ) {
+            mostrarError(
+                new Error("No existe una inscripción válida seleccionada.")
+            );
+
+            return;
+        }
+
+        const entrada = $("califValor").value;
+
+        const calificacion = Number(entrada);
+
+        if (
+            entrada === "" ||
+            !Number.isInteger(calificacion) ||
+            calificacion < 0 ||
+            calificacion > 100
+        ) {
+            mostrarError(
+                new Error(
+                    "La calificación debe ser un número entero de 0 a 100."
+                )
+            );
+
+            return;
+        }
+
+        const estatus =
+            calificacion >= CALIFICACION_MINIMA_APROBATORIA
+                ? "Aprobada"
+                : "Reprobada";
+
+        const confirmacion = await Swal.fire({
+            icon: "warning",
+            title: "¿Firmar calificación?",
+            html: `
+            <p>Se registrará la calificación:</p>
+            <h2>${calificacion}</h2>
+            <p><strong>${estatus}</strong></p>
+            <p class="small text-muted">
+                Esta operación debe quedar registrada en auditoría.
+            </p>
+        `,
+            showCancelButton: true,
+            confirmButtonText: "Sí, registrar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#0284c7"
+        });
+
+        if (!confirmacion.isConfirmed) {
+            return;
+        }
+
+        const boton = $("btnGuardarCalif");
+
+        boton.disabled = true;
+
+        try {
+            const idKardex = validarId(
+                alumnoActual.id_kardex
+            );
+
+            const idGrupo = validarId(
+                grupoActual.id_grupo
+            );
+
+            const resultado = await apiRequest(
+                "/profesor/calificar",
+                {
+                    method: "POST",
+                    body: {
+                        id_kardex: idKardex,
+                        calificacion: calificacion
+                    }
+                }
+            );
+
+            bootstrap.Modal.getInstance(
+                $("modalCalificar")
+            ).hide();
+
+            await Swal.fire({
+                icon: "success",
+                title: "Calificación registrada",
+                text: resultado.mensaje ||
+                    "La calificación fue enviada correctamente.",
+                timer: 1800,
+                showConfirmButton: false
+            });
+
+            const grupo = gruposActuales.find(
+                item => Number(item.id_grupo) === idGrupo
+            );
+
+            if (grupo) {
+                await abrirListaAlumnos(grupo);
+            }
+
+        } catch (error) {
+            mostrarError(error);
+
+        } finally {
+            boton.disabled = false;
+        }
+    }
+
+
+    // =======================================================
+    // CERRAR SESIÓN
+    // =======================================================
+
+    async function cerrarSesion() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        try {
+            await apiRequest(
+                "/auth/logout",
+                {
+                    method: "POST"
+                }
+            );
+
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+
+        } catch (error) {
+            mostrarError(
+                new Error(
+                    "No se pudo confirmar el cierre de sesión en el servidor."
+                )
+            );
+        }
+    }
+
+
+    // =======================================================
+    // CONTROL DE INACTIVIDAD
+    // =======================================================
+
+    function registrarActividad() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        const ahora = Date.now();
+
+        if (ahora - ultimaMarcaActividad < 1000) {
+            return;
+        }
+
+        ultimaMarcaActividad = ahora;
+
+        ultimaActividad = ahora;
+    }
+
+
+    function actualizarContador() {
+        if (sesionFinalizada) {
+            return;
+        }
+
+        const transcurrido =
+            Date.now() - ultimaActividad;
+
+        const restante = Math.max(
+            0,
+            LIMITE_INACTIVIDAD - transcurrido
+        );
+
+        const segundos = Math.ceil(
+            restante / 1000
+        );
+
+        const minutosTexto = String(
+            Math.floor(segundos / 60)
+        ).padStart(2, "0");
+
+        const segundosTexto = String(
+            segundos % 60
+        ).padStart(2, "0");
+
+        $("contadorSesion").textContent =
+            `${minutosTexto}:${segundosTexto}`;
+
+        if (restante <= 0) {
+            /*
+            Este contador protege la interfaz.
+
+            Flask debe aplicar la misma expiración
+            a la sesión del servidor.
+            */
+
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+        }
+    }
+
+
+    // =======================================================
+    // EVENTOS
+    // =======================================================
+
+    function configurarEventos() {
+        $("nav-dashboard").addEventListener(
+            "click",
+            volverAGrupos
+        );
+
+        $("btnVolverGrupos").addEventListener(
+            "click",
+            volverAGrupos
+        );
+
+        $("btnCerrarSesion").addEventListener(
+            "click",
+            cerrarSesion
+        );
+
+        $("btnActualizarGrupos").addEventListener(
+            "click",
+            async () => {
+                try {
+                    await cargarMisGrupos();
+                } catch (error) {
+                    mostrarError(error);
+                }
+            }
+        );
+
+        $("buscadorGrupos").addEventListener(
+            "input",
+            mostrarGrupos
+        );
+
+        $("buscadorAlumnos").addEventListener(
+            "input",
+            mostrarAlumnos
+        );
+
+        $("califValor").addEventListener(
+            "input",
+            actualizarEstatusVisual
+        );
+
+        $("formCalificar").addEventListener(
+            "submit",
+            guardarCalificacion
+        );
+
+        $("btnImprimirActa").addEventListener(
+            "click",
+            () => {
+                if (!grupoActual) {
+                    return;
+                }
+
+                window.print();
+            }
+        );
+
+        [
+            "pointerdown",
+            "keydown",
+            "touchstart",
+            "scroll"
+        ].forEach(evento => {
+            window.addEventListener(
+                evento,
+                registrarActividad,
+                {
+                    passive: true
+                }
+            );
+        });
+
+        setInterval(
+            actualizarContador,
+            1000
+        );
+    }
+
+
+    // =======================================================
+    // INICIALIZAR PORTAL
+    // =======================================================
+
+    async function iniciarPortal() {
+        configurarEventos();
+
+        try {
+            /*
+            El navegador no decide qué profesor
+            está autenticado.
+
+            Flask obtiene la identidad desde
+            la sesión segura.
+            */
+
+            const respuesta = await apiRequest(
+                "/auth/me"
+            );
+
+            const usuario =
+                respuesta.usuario || respuesta;
+
+            if (
+                !usuario ||
+                usuario.rol !== "profesor" ||
+                !usuario.id_usuario
+            ) {
+                throw new Error(
+                    "No tienes autorización para acceder a este portal."
+                );
+            }
+
+            if (
+                usuario.correo_verificado !== true &&
+                usuario.correo_verificado !== 1
+            ) {
+                throw new Error(
+                    "Debes verificar tu correo electrónico."
+                );
+            }
+
+            usuarioActual = usuario;
+
+            const csrf = await apiRequest(
+                "/auth/csrf"
+            );
+
+            csrfToken = csrf.csrf_token;
+
+            if (!csrfToken) {
+                throw new Error(
+                    "El servidor no proporcionó el token CSRF."
+                );
+            }
+
+            $("nombreUsuario").textContent =
+                `Prof. ${usuario.nombre || "Docente"}`;
+
+            await cargarMisGrupos();
+
+            $("loadingScreen").hidden = true;
+
+            ultimaActividad = Date.now();
+
+        } catch (error) {
+            console.error(
+                "Error de acceso docente:",
+                error
+            );
+
+            sesionFinalizada = true;
+
+            window.location.replace(LOGIN_URL);
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        iniciarPortal
+    );
+
 </script>
+
 </body>
 </html>
