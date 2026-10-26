@@ -3,449 +3,1842 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Security | ERP Institucional</title>
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <title>Campus Security V2 | ERP Institucional</title>
+
     <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+    >
+
     <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+    >
+
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <style>
-        :root { --primary-color: #0f172a; --accent-color: #2563eb; --bg-color: #f8fafc; }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; overflow: hidden; }
-        
-        /* Diseño Dividido Corporativo */
-        .split-left { 
-            background: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-            position: relative; 
-            height: 100vh;
+        :root {
+            --primary-color: #0f172a;
+            --accent-color: #2563eb;
+            --bg-color: #f8fafc;
+            --border-color: #e2e8f0;
         }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: "Segoe UI", system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* =====================================
+           DISEÑO DIVIDIDO
+        ===================================== */
+
+        .split-left {
+            background:
+                    url("https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1920&q=80")
+                    center / cover no-repeat;
+
+            position: relative;
+            min-height: 100vh;
+        }
+
         .split-left::before {
-            content: '';
+            content: "";
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, rgba(15,23,42,0.9) 0%, rgba(37,99,235,0.7) 100%);
+            inset: 0;
+
+            background: linear-gradient(
+                    135deg,
+                    rgba(15, 23, 42, 0.92) 0%,
+                    rgba(37, 99, 235, 0.76) 100%
+            );
         }
-        .brand-showcase { position: relative; z-index: 1; color: white; text-align: center; padding: 40px; }
-        .brand-showcase h1 { font-size: 3.5rem; font-weight: 900; letter-spacing: 2px; }
-        .brand-showcase h1 span { color: #60a5fa; }
-        
-        .split-right { height: 100vh; display: flex; align-items: center; justify-content: center; background: white; overflow-y: auto; }
-        
-        /* Tarjeta de Login */
-        .login-card { width: 100%; max-width: 420px; padding: 40px 20px; }
-        .mobile-brand { display: none; font-size: 2rem; font-weight: 800; text-align: center; margin-bottom: 30px; color: var(--primary-color); }
-        .mobile-brand span { color: var(--accent-color); }
-        
-        .form-control { padding: 12px 15px; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; }
-        .form-control:focus { border-color: var(--accent-color); box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1); background-color: white; }
-        
-        .btn-login { background-color: var(--primary-color); color: white; padding: 14px; font-weight: bold; border-radius: 8px; border: none; width: 100%; margin-top: 20px; transition: 0.3s; }
-        .btn-login:hover { background-color: var(--accent-color); }
-        
-        .captcha-box { background: #e2e8f0; padding: 15px; border-radius: 8px; text-align: center; font-size: 1.5rem; letter-spacing: 6px; font-family: monospace; font-weight: bold; text-decoration: line-through; user-select: none; color: #475569; }
-        .btn-refresh { background: none; border: none; color: #94a3b8; cursor: pointer; transition: 0.2s; }
-        .btn-refresh:hover { color: var(--accent-color); }
-        
-        .footer-links { text-align: center; margin-top: 30px; font-size: 0.9rem; }
-        .footer-links a { color: #475569; text-decoration: none; font-weight: 600; transition: 0.2s; }
-        .footer-links a:hover { color: var(--accent-color); }
+
+        .brand-showcase {
+            position: relative;
+            z-index: 1;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .brand-showcase h1 {
+            font-size: clamp(2.5rem, 4vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .brand-showcase h1 span {
+            color: #60a5fa;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .split-right {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 30px 15px;
+        }
+
+        /* =====================================
+           LOGIN
+        ===================================== */
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            padding: 30px 15px;
+        }
+
+        .mobile-brand {
+            display: none;
+            font-size: 2rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+        }
+
+        .mobile-brand span {
+            color: var(--accent-color);
+        }
+
+        .form-control,
+        .form-select {
+            padding: 12px 15px;
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.1);
+            background-color: white;
+        }
+
+        .input-group-text {
+            background: #f1f5f9;
+            border-color: var(--border-color);
+        }
+
+        .btn-login {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 14px;
+            font-weight: 700;
+            border-radius: 8px;
+            border: none;
+            width: 100%;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-login:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        /* =====================================
+           CAPTCHA
+        ===================================== */
+
+        .captcha-box {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 6px;
+            font-family: monospace;
+            font-weight: 800;
+            text-decoration: line-through;
+            user-select: none;
+            color: #475569;
+            min-height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .captcha-box.error {
+            color: #dc2626;
+            letter-spacing: 1px;
+            font-size: 0.95rem;
+            text-decoration: none;
+        }
+
+        .btn-refresh {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-refresh:hover {
+            color: var(--accent-color);
+        }
+
+        /* =====================================
+           FOOTER
+        ===================================== */
+
+        .footer-links {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a {
+            color: #475569;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-color);
+        }
+
+        .security-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .modal-content {
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        /* =====================================
+           RESPONSIVE
+        ===================================== */
 
         @media (max-width: 768px) {
-            .split-left { display: none !important; }
-            .mobile-brand { display: block; }
+            .split-left {
+                display: none !important;
+            }
+
+            .mobile-brand {
+                display: block;
+            }
+
+            .split-right {
+                min-height: 100vh;
+                padding: 20px 15px;
+            }
+
+            .login-card {
+                padding: 20px 5px;
+            }
         }
     </style>
 </head>
+
 <body>
 
 <div class="container-fluid p-0">
+
     <div class="row g-0">
-        <!-- MITAD IZQUIERDA: IMAGEN CORPORATIVA -->
-        <div class="col-md-7 split-left d-flex align-items-center justify-content-center">
+
+        <!-- =====================================
+             PANEL IZQUIERDO
+        ===================================== -->
+
+        <div
+                class="col-md-7 split-left d-flex align-items-center justify-content-center"
+        >
+
             <div class="brand-showcase">
-                <h1>Campus<span>Security</span></h1>
-                <p class="fs-5 mt-3 fw-light">Plataforma Integral de Gestión y Control Académico</p>
-                <div class="mt-5 d-flex justify-content-center gap-4">
-                    <div class="text-center"><i class="fa-solid fa-shield-halved fs-2 mb-2"></i><br><small>Red Segura</small></div>
-                    <div class="text-center"><i class="fa-solid fa-server fs-2 mb-2"></i><br><small>AWS Cloud</small></div>
-                    <div class="text-center"><i class="fa-solid fa-users fs-2 mb-2"></i><br><small>Multiusuario</small></div>
+
+                <h1>
+                    Campus<span>Security</span>
+                </h1>
+
+                <p class="fs-5 mt-3 fw-light">
+                    Plataforma Integral de Gestión y Control Académico
+                </p>
+
+                <div class="mt-5 d-flex justify-content-center gap-4 flex-wrap">
+
+                    <div class="text-center">
+
+                        <i class="fa-solid fa-shield-halved feature-icon"></i>
+
+                        <br>
+
+                        <small>
+                            Acceso Protegido
+                        </small>
+
+                    </div>
+
+                    <div class="text-center">
+
+                        <i class="fa-solid fa-server feature-icon"></i>
+
+                        <br>
+
+                        <small>
+                            Infraestructura Cloud
+                        </small>
+
+                    </div>
+
+                    <div class="text-center">
+
+                        <i class="fa-solid fa-users feature-icon"></i>
+
+                        <br>
+
+                        <small>
+                            Multiusuario
+                        </small>
+
+                    </div>
+
                 </div>
+
+                <div class="mt-5">
+
+                    <span class="badge bg-light text-primary px-4 py-2">
+
+                        <i class="fa-solid fa-lock me-2"></i>
+
+                        SecurityCampus V2
+
+                    </span>
+
+                </div>
+
             </div>
+
         </div>
 
-        <!-- MITAD DERECHA: FORMULARIO DE ACCESO -->
+
+        <!-- =====================================
+             PANEL DERECHO
+        ===================================== -->
+
         <div class="col-md-5 split-right">
+
             <div class="login-card">
-                <div class="mobile-brand">Campus<span>Security</span></div>
-                
-                <h4 class="fw-bold mb-1 text-dark">Bienvenido de nuevo</h4>
-                <p class="text-muted small mb-4">Ingresa tus credenciales institucionales para continuar.</p>
-                
-                <form id="formLogin" onsubmit="realizarLogin(event)">
+
+                <div class="mobile-brand">
+
+                    Campus<span>Security</span>
+
+                </div>
+
+                <h4 class="fw-bold mb-1 text-dark">
+                    Bienvenido de nuevo
+                </h4>
+
+                <p class="text-muted small mb-4">
+                    Ingresa tus credenciales institucionales para continuar.
+                </p>
+
+
+                <!-- =============================
+                     FORMULARIO LOGIN
+                ============================= -->
+
+                <form id="formLogin">
+
                     <div class="mb-3">
-                        <label class="form-label text-dark fw-bold small">Correo Institucional</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
-                            <input type="email" id="logCorreo" class="form-control border-start-0" placeholder="usuario@campus.edu.mx" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label text-dark fw-bold small">Contraseña</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
-                            <input type="password" id="logPass" class="form-control border-start-0" placeholder="••••••••" required>
-                        </div>
-                    </div>
 
-                    <div class="mb-4">
-                        <label class="form-label text-dark fw-bold small d-flex justify-content-between">
-                            Filtro de Seguridad
-                            <button type="button" class="btn-refresh" onclick="cargarCaptcha()" title="Generar nuevo código"><i class="fa-solid fa-arrows-rotate"></i></button>
+                        <label
+                                for="logCorreo"
+                                class="form-label text-dark fw-bold small"
+                        >
+                            Correo Institucional
                         </label>
-                        <div class="captcha-box mb-2 shadow-sm" id="boxCaptcha">Cargando...</div>
-                        <input type="hidden" id="captchaOculto">
-                        <input type="text" id="logCaptcha" class="form-control text-center text-uppercase font-monospace fw-bold" placeholder="Escribe el código superior" maxlength="5" required>
+
+                        <div class="input-group">
+
+                            <span class="input-group-text border-end-0">
+
+                                <i class="fa-solid fa-envelope text-muted"></i>
+
+                            </span>
+
+                            <input
+                                    type="email"
+                                    id="logCorreo"
+                                    class="form-control border-start-0"
+                                    placeholder="usuario@campus.edu.mx"
+                                    autocomplete="username"
+                                    maxlength="254"
+                                    required
+                            >
+
+                        </div>
+
                     </div>
 
-                    <button type="submit" class="btn-login shadow" id="btnLogin"><i class="fa-solid fa-right-to-bracket me-2"></i> Iniciar Sesión</button>
+
+                    <div class="mb-4">
+
+                        <label
+                                for="logPass"
+                                class="form-label text-dark fw-bold small"
+                        >
+                            Contraseña
+                        </label>
+
+                        <div class="input-group">
+
+                            <span class="input-group-text border-end-0">
+
+                                <i class="fa-solid fa-lock text-muted"></i>
+
+                            </span>
+
+                            <input
+                                    type="password"
+                                    id="logPass"
+                                    class="form-control border-start-0"
+                                    placeholder="••••••••"
+                                    autocomplete="current-password"
+                                    required
+                            >
+
+                            <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="btnMostrarPassword"
+                                    aria-label="Mostrar u ocultar contraseña"
+                            >
+
+                                <i class="fa-solid fa-eye"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CAPTCHA -->
+
+                    <div class="mb-4">
+
+                        <label
+                                for="logCaptcha"
+                                class="form-label text-dark fw-bold small d-flex justify-content-between align-items-center"
+                        >
+
+                            Filtro de Seguridad
+
+                            <button
+                                    type="button"
+                                    class="btn-refresh"
+                                    id="btnRefrescarCaptcha"
+                                    title="Generar nuevo código"
+                                    aria-label="Generar nuevo CAPTCHA"
+                            >
+
+                                <i class="fa-solid fa-arrows-rotate"></i>
+
+                            </button>
+
+                        </label>
+
+                        <div
+                                class="captcha-box mb-2 shadow-sm"
+                                id="boxCaptcha"
+                                aria-live="polite"
+                        >
+                            Cargando...
+                        </div>
+
+                        <input
+                                type="text"
+                                id="logCaptcha"
+                                class="form-control text-center text-uppercase font-monospace fw-bold"
+                                placeholder="Escribe el código superior"
+                                maxlength="8"
+                                autocomplete="off"
+                                spellcheck="false"
+                                required
+                        >
+
+                    </div>
+
+
+                    <button
+                            type="submit"
+                            class="btn-login shadow"
+                            id="btnLogin"
+                    >
+
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>
+
+                        Iniciar Sesión
+
+                    </button>
+
                 </form>
 
+
+                <!-- =============================
+                     ENLACES
+                ============================= -->
+
                 <div class="footer-links d-flex flex-column gap-2 mt-4">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalRecuperar"><i class="fa-solid fa-key me-1"></i> ¿Olvidaste tu contraseña?</a>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalSoporte" class="text-danger"><i class="fa-solid fa-headset me-1"></i> Contactar a Soporte TI</a>
+
+                    <a
+                            href="#"
+                            id="linkRecuperar"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalRecuperar"
+                    >
+
+                        <i class="fa-solid fa-key me-1"></i>
+
+                        ¿Olvidaste tu contraseña?
+
+                    </a>
+
+                    <a
+                            href="#"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalSoporte"
+                            class="text-danger"
+                    >
+
+                        <i class="fa-solid fa-headset me-1"></i>
+
+                        Contactar a Soporte TI
+
+                    </a>
+
                 </div>
+
+
+                <div class="security-note">
+
+                    <i class="fa-solid fa-shield-halved me-1"></i>
+
+                    Tus credenciales se procesan en el servidor.
+                    Nunca compartas tu contraseña ni códigos de recuperación.
+
+                </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 
-<!-- ==========================================
-     MODAL 1: SOLICITAR RECUPERAR CONTRASEÑA
-=========================================== -->
-<div class="modal fade" id="modalRecuperar" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header text-white" style="background-color: var(--primary-color);">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-key me-2"></i> Restablecer Credenciales</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <p class="text-muted small mb-4">Ingresa tu correo institucional. Te enviaremos un código temporal de recuperación que será válido por 15 minutos.</p>
-        <form id="formRecuperar" onsubmit="solicitarRecuperacion(event)">
-            <div class="mb-4">
-                <label class="form-label fw-bold">Correo Institucional Registrado</label>
-                <input type="email" id="recCorreo" class="form-control" required>
+
+<!-- ====================================================
+     MODAL 1: SOLICITAR RECUPERACIÓN
+==================================================== -->
+
+<div
+        class="modal fade"
+        id="modalRecuperar"
+        tabindex="-1"
+        aria-labelledby="tituloRecuperar"
+        aria-hidden="true"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div
+                    class="modal-header text-white"
+                    style="background-color: var(--primary-color);"
+            >
+
+                <h5
+                        class="modal-title fw-bold"
+                        id="tituloRecuperar"
+                >
+
+                    <i class="fa-solid fa-key me-2"></i>
+
+                    Restablecer Credenciales
+
+                </h5>
+
+                <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                ></button>
+
             </div>
-            <div class="text-end">
-                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary px-4 fw-bold" id="btnSolicitarRecuperacion"><i class="fa-solid fa-envelope me-2"></i> Enviar Código</button>
+
+            <div class="modal-body p-4 bg-light">
+
+                <p class="text-muted small mb-4">
+
+                    Ingresa tu correo institucional.
+
+                    Si existe una cuenta asociada,
+                    recibirás instrucciones para recuperar el acceso.
+
+                    El código tendrá una vigencia máxima de 15 minutos.
+
+                </p>
+
+                <form id="formRecuperar">
+
+                    <div class="mb-4">
+
+                        <label
+                                for="recCorreo"
+                                class="form-label fw-bold"
+                        >
+                            Correo Institucional Registrado
+                        </label>
+
+                        <input
+                                type="email"
+                                id="recCorreo"
+                                class="form-control"
+                                autocomplete="email"
+                                maxlength="254"
+                                required
+                        >
+
+                    </div>
+
+                    <div class="text-end">
+
+                        <button
+                                type="button"
+                                class="btn btn-light me-2"
+                                data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary px-4 fw-bold"
+                                id="btnSolicitarRecuperacion"
+                        >
+
+                            <i class="fa-solid fa-envelope me-2"></i>
+
+                            Enviar Código
+
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
-        </form>
-      </div>
+
+        </div>
+
     </div>
-  </div>
+
 </div>
 
-<!-- ==========================================
-     MODAL 2: INGRESAR CÓDIGO Y NUEVA CONTRASEÑA
-=========================================== -->
-<div class="modal fade" id="modalCambiarPass" tabindex="-1" data-bs-backdrop="static">
-  <div class="modal-dialog">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header text-white" style="background-color: var(--accent-color);">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-unlock-keyhole me-2"></i> Validar Código de Seguridad</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <p class="text-muted small mb-4">Ingresa el código de 6 dígitos que enviamos a tu correo y escribe tu nueva contraseña.</p>
-        <form id="formCambiarPass" onsubmit="ejecutarCambioPass(event)">
-            
-            <!-- Campo oculto para arrastrar el correo que solicitó el cambio -->
-            <input type="hidden" id="cambioCorreo">
-            
-            <div class="mb-3">
-                <label class="form-label fw-bold">Código de Recuperación</label>
-                <input type="text" id="cambioToken" class="form-control text-center font-monospace fw-bold fs-4 text-primary" placeholder="Ej. 123456" maxlength="6" required>
+
+<!-- ====================================================
+     MODAL 2: CAMBIAR CONTRASEÑA
+==================================================== -->
+
+<div
+        class="modal fade"
+        id="modalCambiarPass"
+        tabindex="-1"
+        data-bs-backdrop="static"
+        aria-labelledby="tituloCambiarPass"
+        aria-hidden="true"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div
+                    class="modal-header text-white"
+                    style="background-color: var(--accent-color);"
+            >
+
+                <h5
+                        class="modal-title fw-bold"
+                        id="tituloCambiarPass"
+                >
+
+                    <i class="fa-solid fa-unlock-keyhole me-2"></i>
+
+                    Validar Código de Seguridad
+
+                </h5>
+
+                <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                ></button>
+
             </div>
-            
-            <div class="mb-3">
-                <label class="form-label fw-bold">Nueva Contraseña</label>
-                <input type="password" id="cambioPass1" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" required>
+
+            <div class="modal-body p-4 bg-light">
+
+                <p class="text-muted small mb-4">
+
+                    Si recibiste un código de recuperación,
+                    introdúcelo junto con tu nueva contraseña.
+
+                </p>
+
+                <form id="formCambiarPass">
+
+                    <input
+                            type="hidden"
+                            id="cambioCorreo"
+                    >
+
+
+                    <div class="mb-3">
+
+                        <label
+                                for="cambioToken"
+                                class="form-label fw-bold"
+                        >
+                            Código de Recuperación
+                        </label>
+
+                        <input
+                                type="text"
+                                id="cambioToken"
+                                class="form-control text-center font-monospace fw-bold fs-4 text-primary"
+                                placeholder="123456"
+                                inputmode="numeric"
+                                pattern="[0-9]{6}"
+                                minlength="6"
+                                maxlength="6"
+                                autocomplete="one-time-code"
+                                required
+                        >
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                                for="cambioPass1"
+                                class="form-label fw-bold"
+                        >
+                            Nueva Contraseña
+                        </label>
+
+                        <input
+                                type="password"
+                                id="cambioPass1"
+                                class="form-control"
+                                placeholder="Mínimo 12 caracteres"
+                                minlength="12"
+                                maxlength="128"
+                                autocomplete="new-password"
+                                required
+                        >
+
+                        <div class="password-hint mt-1">
+
+                            Utiliza al menos 12 caracteres.
+                            Se recomienda combinar palabras,
+                            números y símbolos.
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label
+                                for="cambioPass2"
+                                class="form-label fw-bold"
+                        >
+                            Confirmar Nueva Contraseña
+                        </label>
+
+                        <input
+                                type="password"
+                                id="cambioPass2"
+                                class="form-control"
+                                placeholder="Repite la contraseña"
+                                minlength="12"
+                                maxlength="128"
+                                autocomplete="new-password"
+                                required
+                        >
+
+                    </div>
+
+
+                    <div class="text-end">
+
+                        <button
+                                type="button"
+                                class="btn btn-light me-2"
+                                data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-primary px-4 fw-bold"
+                                id="btnGuardarCambioPass"
+                        >
+
+                            <i class="fa-solid fa-floppy-disk me-2"></i>
+
+                            Cambiar Contraseña
+
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
-            
-            <div class="mb-4">
-                <label class="form-label fw-bold">Confirmar Nueva Contraseña</label>
-                <input type="password" id="cambioPass2" class="form-control" placeholder="Repite la contraseña" minlength="6" required>
-            </div>
-            
-            <div class="text-end">
-                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary px-4 fw-bold" id="btnGuardarCambioPass"><i class="fa-solid fa-floppy-disk me-2"></i> Cambiar Contraseña</button>
-            </div>
-        </form>
-      </div>
+
+        </div>
+
     </div>
-  </div>
+
 </div>
 
-<!-- ==========================================
-     MODAL 3: SOPORTE TÉCNICO (BREVO)
-=========================================== -->
-<div class="modal fade" id="modalSoporte" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content border-0 shadow-lg">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-headset me-2"></i> Centro de Ayuda TI</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body p-4 bg-light">
-        <p class="text-muted small mb-4">Si tienes problemas de acceso, levanta un ticket y el administrador te contactará por correo.</p>
-        
-        <form id="formSoporte" onsubmit="enviarTicketSoporte(event)">
-            <div class="mb-3">
-                <label class="form-label fw-bold">Nombre Completo</label>
-                <input type="text" id="sopNombre" class="form-control" placeholder="Ej. Fabián Molina" required>
+
+<!-- ====================================================
+     MODAL 3: SOPORTE TÉCNICO
+==================================================== -->
+
+<div
+        class="modal fade"
+        id="modalSoporte"
+        tabindex="-1"
+        aria-labelledby="tituloSoporte"
+        aria-hidden="true"
+>
+
+    <div class="modal-dialog">
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header bg-dark text-white">
+
+                <h5
+                        class="modal-title fw-bold"
+                        id="tituloSoporte"
+                >
+
+                    <i class="fa-solid fa-headset me-2"></i>
+
+                    Centro de Ayuda TI
+
+                </h5>
+
+                <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar"
+                ></button>
+
             </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Correo de Contacto</label>
-                <input type="email" id="sopCorreo" class="form-control" placeholder="Donde recibirás la respuesta" required>
+
+            <div class="modal-body p-4 bg-light">
+
+                <p class="text-muted small mb-4">
+
+                    Si tienes problemas de acceso,
+                    envía un ticket al equipo de soporte.
+
+                </p>
+
+                <form id="formSoporte">
+
+                    <div class="mb-3">
+
+                        <label
+                                for="sopNombre"
+                                class="form-label fw-bold"
+                        >
+                            Nombre Completo
+                        </label>
+
+                        <input
+                                type="text"
+                                id="sopNombre"
+                                class="form-control"
+                                placeholder="Nombre y apellidos"
+                                minlength="3"
+                                maxlength="120"
+                                autocomplete="name"
+                                required
+                        >
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                                for="sopCorreo"
+                                class="form-label fw-bold"
+                        >
+                            Correo de Contacto
+                        </label>
+
+                        <input
+                                type="email"
+                                id="sopCorreo"
+                                class="form-control"
+                                placeholder="Donde recibirás la respuesta"
+                                maxlength="254"
+                                autocomplete="email"
+                                required
+                        >
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label
+                                for="sopAsunto"
+                                class="form-label fw-bold"
+                        >
+                            Asunto
+                        </label>
+
+                        <select
+                                id="sopAsunto"
+                                class="form-select"
+                                required
+                        >
+
+                            <option value="" selected disabled>
+                                Selecciona el problema...
+                            </option>
+
+                            <option value="Cuenta Bloqueada">
+                                Cuenta Bloqueada / Suspendida
+                            </option>
+
+                            <option value="Error de Credenciales">
+                                Problemas de Contraseña
+                            </option>
+
+                            <option value="Falta de Modulos">
+                                Faltan materias / módulos en mi panel
+                            </option>
+
+                            <option value="Otro">
+                                Otro problema técnico
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="mb-4">
+
+                        <label
+                                for="sopMensaje"
+                                class="form-label fw-bold"
+                        >
+                            Descripción del Problema
+                        </label>
+
+                        <textarea
+                                id="sopMensaje"
+                                class="form-control"
+                                rows="4"
+                                minlength="10"
+                                maxlength="3000"
+                                placeholder="Explica detalladamente lo que ocurre..."
+                                required
+                        ></textarea>
+
+                    </div>
+
+
+                    <div class="text-end">
+
+                        <button
+                                type="button"
+                                class="btn btn-light me-2"
+                                data-bs-dismiss="modal"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                                type="submit"
+                                class="btn btn-dark px-4 fw-bold"
+                                id="btnSoporte"
+                        >
+
+                            <i class="fa-solid fa-paper-plane me-2"></i>
+
+                            Enviar Ticket
+
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
-            <div class="mb-3">
-                <label class="form-label fw-bold">Asunto</label>
-                <select id="sopAsunto" class="form-select" required>
-                    <option value="" selected disabled>Selecciona el problema...</option>
-                    <option value="Cuenta Bloqueada">Cuenta Bloqueada / Suspendida</option>
-                    <option value="Error de Credenciales">Problemas de Contraseña</option>
-                    <option value="Falta de Modulos">Faltan materias / módulos en mi panel</option>
-                    <option value="Otro">Otro problema técnico</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="form-label fw-bold">Descripción del Problema</label>
-                <textarea id="sopMensaje" class="form-control" rows="3" placeholder="Explica detalladamente lo que ocurre..." required></textarea>
-            </div>
-            
-            <div class="text-end">
-                <button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-dark px-4 fw-bold" id="btnSoporte">
-                    <i class="fa-solid fa-paper-plane me-2"></i> Enviar Ticket
-                </button>
-            </div>
-        </form>
-      </div>
+
+        </div>
+
     </div>
-  </div>
+
 </div>
+
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
 <script>
-    const API_BASE = 'https://campus-security-v4zh.onrender.com/api';
+    "use strict";
 
-    // Limpiar sesión siempre que entren al login
-    sessionStorage.clear();
+    /*
+    ===========================================================
+    SECURITYCAMPUS V2 — LOGIN INSTITUCIONAL
 
-    // 1. CARGAR CAPTCHA INICIAL
-    async function cargarCaptcha() {
-        try {
-            const res = await fetch(`${API_BASE}/auth/captcha`);
-            const data = await res.json();
-            document.getElementById('boxCaptcha').innerText = data.captcha_code;
-            document.getElementById('captchaOculto').value = data.captcha_code;
-            document.getElementById('logCaptcha').value = '';
-        } catch (error) {
-            document.getElementById('boxCaptcha').innerText = 'ERROR';
+    ENDPOINTS REQUERIDOS:
+
+    GET  /api/auth/captcha
+    GET  /api/auth/csrf
+    GET  /api/auth/me
+
+    POST /api/auth/login
+    POST /api/auth/recuperar-solicitar
+    POST /api/auth/recuperar-cambiar
+
+    POST /api/soporte/enviar
+
+    CONTRATO CAPTCHA:
+
+    GET /api/auth/captcha
+
+    {
+        "captcha_id": "identificador_aleatorio",
+        "captcha_code": "A7B2K"
+    }
+
+    POST /api/auth/login
+
+    {
+        "correo": "usuario@institucion.edu.mx",
+        "password": "contraseña",
+        "captcha_id": "identificador_aleatorio",
+        "captcha_input": "A7B2K"
+    }
+
+    IMPORTANTE:
+
+    El servidor NUNCA debe aceptar la respuesta correcta
+    del CAPTCHA enviada como captcha_real.
+
+    Debe comprobar captcha_input contra el hash almacenado
+    para captcha_id.
+
+    El captcha_id debe ser aleatorio, de un solo uso,
+    con expiración e intentos limitados.
+
+    ===========================================================
+    */
+
+
+    // =========================================================
+    // 1. CONFIGURACIÓN
+    // =========================================================
+
+    const API_BASE = "/api";
+
+    const RUTAS_POR_ROL = Object.freeze({
+        admin: "/dashboards/admin/index.html",
+        coordinadora: "/dashboards/coordinadora/index.html",
+        profesor: "/dashboards/profesor/index.html",
+        alumno: "/dashboards/alumno/index.html"
+    });
+
+    let csrfToken = null;
+
+    let captchaId = null;
+
+    let loginEnProceso = false;
+
+
+    // =========================================================
+    // 2. UTILIDADES
+    // =========================================================
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+
+    function mostrarAlerta(icon, title, text) {
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            confirmButtonColor: "#2563eb"
+        });
+    }
+
+
+    function activarBoton(id, activo, textoEspera = "Procesando...") {
+        const boton = $(id);
+
+        if (activo) {
+            boton.dataset.textoOriginal = boton.innerHTML;
+            boton.disabled = true;
+            boton.textContent = textoEspera;
+        } else {
+            boton.disabled = false;
+
+            if (boton.dataset.textoOriginal) {
+                boton.innerHTML = boton.dataset.textoOriginal;
+            }
         }
     }
 
-    // 2. LÓGICA DE INICIO DE SESIÓN Y ENRUTADOR SEGURO (CORREGIDO PARA /coordinadora/)
-    async function realizarLogin(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnLogin');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Autenticando...';
-        btn.disabled = true;
 
-        const payload = {
-            correo: document.getElementById('logCorreo').value,
-            password: document.getElementById('logPass').value,
-            captcha_input: document.getElementById('logCaptcha').value.toUpperCase(),
-            captcha_real: document.getElementById('captchaOculto').value
+    function normalizarCorreo(correo) {
+        return String(correo || "")
+            .trim()
+            .toLowerCase();
+    }
+
+
+    function obtenerRutaRol(rol) {
+        return RUTAS_POR_ROL[rol] || null;
+    }
+
+
+    function redirigirUsuario(usuario) {
+        if (!usuario || typeof usuario !== "object") {
+            throw new Error("El servidor no devolvió un usuario válido.");
+        }
+
+        const ruta = obtenerRutaRol(usuario.rol);
+
+        if (!ruta) {
+            throw new Error("El rol de la cuenta no está reconocido.");
+        }
+
+        window.location.replace(ruta);
+    }
+
+
+    // =========================================================
+    // 3. CLIENTE API
+    // =========================================================
+
+    async function apiRequest(
+        endpoint,
+        {
+            method = "GET",
+            body = null,
+            requireCsrf = true
+        } = {}
+    ) {
+        const metodo = method.toUpperCase();
+
+        const headers = {
+            "Accept": "application/json"
         };
 
-        try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+        if (body !== null) {
+            headers["Content-Type"] = "application/json";
+        }
 
-            if (res.ok) {
-                // Guardar usuario en sesión local
-                sessionStorage.setItem('usuarioLogueado', JSON.stringify(data.usuario));
-                
-                // Redirección del Enrutador asegurada con barra inicial absoluta (/) y nombre de carpeta exacto
-                const rol = data.usuario.rol;
-                if(rol === 'admin') window.location.href = '/dashboards/admin/index.html';
-                else if(rol === 'alumno') window.location.href = '/dashboards/alumno/index.html';
-                else if(rol === 'coordinadora' || rol === 'coordinador') window.location.href = '/dashboards/coordinadora/index.html';
-                else if(rol === 'profesor') window.location.href = '/dashboards/profesor/index.html';
-                else Swal.fire('Error', 'Rol no reconocido en el sistema: ' + rol, 'error');
+        const esEscritura = ![
+            "GET",
+            "HEAD",
+            "OPTIONS"
+        ].includes(metodo);
 
-            } else {
-                Swal.fire('Acceso Denegado', data.error, 'error');
-                cargarCaptcha();
-                document.getElementById('logPass').value = '';
+        if (esEscritura && requireCsrf) {
+            if (!csrfToken) {
+                throw new Error(
+                    "No se pudo inicializar la protección de seguridad."
+                );
             }
-        } catch (err) {
-            Swal.fire('Error de Red', 'No se pudo conectar al servidor.', 'error');
-            cargarCaptcha();
+
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
+        const respuesta = await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                method: metodo,
+                credentials: "include",
+                headers,
+                cache: "no-store",
+                body: body === null
+                    ? undefined
+                    : JSON.stringify(body)
+            }
+        );
+
+        const tipoContenido =
+            respuesta.headers.get("content-type") || "";
+
+        const data = tipoContenido.includes("application/json")
+            ? await respuesta.json()
+            : {};
+
+        if (!respuesta.ok) {
+            throw new Error(
+                data.error ||
+                data.mensaje ||
+                `Error HTTP ${respuesta.status}`
+            );
+        }
+
+        return data;
+    }
+
+
+    // =========================================================
+    // 4. OBTENER TOKEN CSRF
+    // =========================================================
+
+    async function cargarCsrf() {
+        const data = await apiRequest(
+            "/auth/csrf"
+        );
+
+        if (
+            !data.csrf_token ||
+            typeof data.csrf_token !== "string"
+        ) {
+            throw new Error(
+                "El servidor no proporcionó un token CSRF válido."
+            );
+        }
+
+        csrfToken = data.csrf_token;
+    }
+
+
+    // =========================================================
+    // 5. CAPTCHA
+    // =========================================================
+
+    async function cargarCaptcha() {
+        const caja = $("boxCaptcha");
+
+        const boton = $("btnRefrescarCaptcha");
+
+        boton.disabled = true;
+
+        caja.classList.remove("error");
+
+        caja.textContent = "Generando...";
+
+        captchaId = null;
+
+        $("logCaptcha").value = "";
+
+        try {
+            const data = await apiRequest(
+                "/auth/captcha"
+            );
+
+            if (
+                !data.captcha_id ||
+                !data.captcha_code
+            ) {
+                throw new Error(
+                    "El servidor devolvió un CAPTCHA inválido."
+                );
+            }
+
+            captchaId = data.captcha_id;
+
+            caja.textContent = data.captcha_code;
+
+        } catch (error) {
+            console.error(
+                "Error cargando CAPTCHA:",
+                error
+            );
+
+            caja.classList.add("error");
+
+            caja.textContent = "No disponible";
+
         } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            boton.disabled = false;
         }
     }
 
-    // 3. RECUPERAR CONTRASEÑA (Paso 1: Pedir Código)
-    async function solicitarRecuperacion(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSolicitarRecuperacion');
-        const textBtn = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Procesando...';
-        btn.disabled = true;
 
-        const correoIngresado = document.getElementById('recCorreo').value;
+    // =========================================================
+    // 6. LOGIN
+    // =========================================================
 
-        try {
-            const res = await fetch(`${API_BASE}/auth/recuperar-solicitar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ correo: correoIngresado })
-            });
-            const data = await res.json();
+    async function realizarLogin(evento) {
+        evento.preventDefault();
 
-            if(res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalRecuperar')).hide();
-                
-                document.getElementById('formCambiarPass').reset();
-                document.getElementById('cambioCorreo').value = correoIngresado;
-                
-                const modalCambio = new bootstrap.Modal(document.getElementById('modalCambiarPass'));
-                modalCambio.show();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Código Enviado',
-                    text: 'Revisa tu bandeja de entrada. Ingresa el código en la nueva ventana.',
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-
-            } else {
-                Swal.fire('Error', data.error, 'error');
-            }
-        } catch (err) {
-            Swal.fire('Error', 'Problema al contactar al servidor', 'error');
-        } finally {
-            btn.innerHTML = textBtn;
-            btn.disabled = false;
-        }
-    }
-
-    // 4. CAMBIAR CONTRASEÑA (Paso 2: Validar Código y Cambiar)
-    async function ejecutarCambioPass(e) {
-        e.preventDefault();
-        
-        const pass1 = document.getElementById('cambioPass1').value;
-        const pass2 = document.getElementById('cambioPass2').value;
-        
-        if (pass1 !== pass2) {
-            Swal.fire('Atención', 'Las nuevas contraseñas no coinciden. Verifícalas.', 'warning');
+        if (loginEnProceso) {
             return;
         }
 
-        const btn = document.getElementById('btnGuardarCambioPass');
-        const textBtn = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Validando...';
-        btn.disabled = true;
+        const correo = normalizarCorreo(
+            $("logCorreo").value
+        );
 
-        const payload = {
-            correo: document.getElementById('cambioCorreo').value,
-            token: document.getElementById('cambioToken').value,
-            nueva_password: pass1
-        };
+        const password = $("logPass").value;
 
-        try {
-            const res = await fetch(`${API_BASE}/auth/recuperar-cambiar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
+        const captchaInput = $("logCaptcha")
+            .value
+            .trim()
+            .toUpperCase();
 
-            if(res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalCambiarPass')).hide();
-                Swal.fire('¡Contraseña Actualizada!', 'Tu credencial ha sido restablecida con éxito. Ya puedes iniciar sesión de forma segura.', 'success');
-                e.target.reset();
-            } else {
-                Swal.fire('Acceso Denegado', data.error, 'error');
-            }
-        } catch (err) {
-            Swal.fire('Error', 'Problema al contactar al servidor de seguridad.', 'error');
-        } finally {
-            btn.innerHTML = textBtn;
-            btn.disabled = false;
+        if (!correo || !password) {
+            await mostrarAlerta(
+                "warning",
+                "Datos incompletos",
+                "Ingresa tu correo y contraseña."
+            );
+
+            return;
         }
-    }
 
-    // 5. ENVIAR TICKET DE SOPORTE (BREVO)
-    async function enviarTicketSoporte(e) {
-        e.preventDefault();
-        const btn = document.getElementById('btnSoporte');
-        const textoOriginal = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Enviando...'; 
-        btn.disabled = true;
+        if (!captchaId) {
+            await mostrarAlerta(
+                "warning",
+                "CAPTCHA no disponible",
+                "Actualiza el código de seguridad e inténtalo nuevamente."
+            );
 
-        const payload = {
-            nombre: document.getElementById('sopNombre').value,
-            correo: document.getElementById('sopCorreo').value,
-            asunto: document.getElementById('sopAsunto').value,
-            mensaje: document.getElementById('sopMensaje').value
-        };
+            await cargarCaptcha();
+
+            return;
+        }
+
+        if (!captchaInput) {
+            await mostrarAlerta(
+                "warning",
+                "CAPTCHA requerido",
+                "Escribe el código de seguridad."
+            );
+
+            return;
+        }
+
+        loginEnProceso = true;
+
+        activarBoton(
+            "btnLogin",
+            true,
+            "Autenticando..."
+        );
 
         try {
-            const res = await fetch(`${API_BASE}/soporte/enviar`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                bootstrap.Modal.getInstance(document.getElementById('modalSoporte')).hide();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Ticket Generado',
-                    text: data.mensaje,
-                    confirmButtonColor: '#0f172a'
-                });
-                e.target.reset();
-            } else {
-                Swal.fire('Atención', data.error, 'warning');
-            }
+            /*
+            El backend debe:
+
+            1. Validar CAPTCHA.
+            2. Verificar contraseña.
+            3. Comprobar correo verificado.
+            4. Comprobar bloqueos.
+            5. Crear sesión segura.
+            6. Enviar cookie HttpOnly.
+            7. Devolver usuario y rol.
+            */
+
+            const respuesta = await apiRequest(
+                "/auth/login",
+                {
+                    method: "POST",
+                    body: {
+                        correo,
+                        password,
+                        captcha_id: captchaId,
+                        captcha_input: captchaInput
+                    }
+                }
+            );
+
+            /*
+            Después de autenticar, obtenemos la identidad
+            desde la sesión del servidor.
+
+            No utilizamos sessionStorage.
+            */
+
+            const resultadoSesion = await apiRequest(
+                "/auth/me"
+            );
+
+            const usuario =
+                resultadoSesion.usuario || resultadoSesion;
+
+            $("logPass").value = "";
+
+            $("logCaptcha").value = "";
+
+            redirigirUsuario(usuario);
+
         } catch (error) {
-            Swal.fire('Error de Red', 'No se pudo contactar al servidor de correos.', 'error');
+            $("logPass").value = "";
+
+            $("logCaptcha").value = "";
+
+            await mostrarAlerta(
+                "error",
+                "Acceso denegado",
+                error.message ||
+                "No fue posible iniciar sesión."
+            );
+
+            await cargarCaptcha();
+
         } finally {
-            btn.innerHTML = textoOriginal; 
-            btn.disabled = false;
+            loginEnProceso = false;
+
+            activarBoton(
+                "btnLogin",
+                false
+            );
         }
     }
 
-    // Inicialización al cargar la página
-    window.addEventListener('DOMContentLoaded', cargarCaptcha);
+
+    // =========================================================
+    // 7. SOLICITAR RECUPERACIÓN
+    // =========================================================
+
+    async function solicitarRecuperacion(evento) {
+        evento.preventDefault();
+
+        const correo = normalizarCorreo(
+            $("recCorreo").value
+        );
+
+        activarBoton(
+            "btnSolicitarRecuperacion",
+            true,
+            "Procesando..."
+        );
+
+        try {
+            await apiRequest(
+                "/auth/recuperar-solicitar",
+                {
+                    method: "POST",
+                    body: {
+                        correo
+                    }
+                }
+            );
+
+            bootstrap.Modal.getOrCreateInstance(
+                $("modalRecuperar")
+            ).hide();
+
+            $("formCambiarPass").reset();
+
+            $("cambioCorreo").value = correo;
+
+            bootstrap.Modal.getOrCreateInstance(
+                $("modalCambiarPass")
+            ).show();
+
+            await mostrarAlerta(
+                "info",
+                "Revisa tu correo",
+                "Si existe una cuenta asociada, recibirás un código de recuperación."
+            );
+
+        } catch (error) {
+            await mostrarAlerta(
+                "error",
+                "No se pudo procesar la solicitud",
+                error.message
+            );
+
+        } finally {
+            activarBoton(
+                "btnSolicitarRecuperacion",
+                false
+            );
+        }
+    }
+
+
+    // =========================================================
+    // 8. CAMBIAR CONTRASEÑA
+    // =========================================================
+
+    async function ejecutarCambioPass(evento) {
+        evento.preventDefault();
+
+        const correo = normalizarCorreo(
+            $("cambioCorreo").value
+        );
+
+        const token = $("cambioToken")
+            .value
+            .trim();
+
+        const password1 = $("cambioPass1").value;
+
+        const password2 = $("cambioPass2").value;
+
+        if (!/^\d{6}$/.test(token)) {
+            await mostrarAlerta(
+                "warning",
+                "Código inválido",
+                "Ingresa los seis dígitos del código."
+            );
+
+            return;
+        }
+
+        if (password1.length < 12) {
+            await mostrarAlerta(
+                "warning",
+                "Contraseña demasiado corta",
+                "La nueva contraseña debe tener al menos 12 caracteres."
+            );
+
+            return;
+        }
+
+        if (password1 !== password2) {
+            await mostrarAlerta(
+                "warning",
+                "Las contraseñas no coinciden",
+                "Verifica los dos campos."
+            );
+
+            return;
+        }
+
+        activarBoton(
+            "btnGuardarCambioPass",
+            true,
+            "Validando..."
+        );
+
+        try {
+            await apiRequest(
+                "/auth/recuperar-cambiar",
+                {
+                    method: "POST",
+                    body: {
+                        correo,
+                        token,
+                        nueva_password: password1
+                    }
+                }
+            );
+
+            bootstrap.Modal.getOrCreateInstance(
+                $("modalCambiarPass")
+            ).hide();
+
+            $("formCambiarPass").reset();
+
+            $("logPass").value = "";
+
+            await mostrarAlerta(
+                "success",
+                "Contraseña actualizada",
+                "Si el código fue validado, tu contraseña se ha actualizado. Ya puedes iniciar sesión."
+            );
+
+            await cargarCaptcha();
+
+        } catch (error) {
+            await mostrarAlerta(
+                "error",
+                "No fue posible cambiar la contraseña",
+                error.message
+            );
+
+        } finally {
+            activarBoton(
+                "btnGuardarCambioPass",
+                false
+            );
+        }
+    }
+
+
+    // =========================================================
+    // 9. SOPORTE TÉCNICO
+    // =========================================================
+
+    async function enviarTicketSoporte(evento) {
+        evento.preventDefault();
+
+        const nombre = $("sopNombre")
+            .value
+            .trim();
+
+        const correo = normalizarCorreo(
+            $("sopCorreo").value
+        );
+
+        const asunto = $("sopAsunto").value;
+
+        const mensaje = $("sopMensaje")
+            .value
+            .trim();
+
+        if (
+            nombre.length < 3 ||
+            mensaje.length < 10
+        ) {
+            await mostrarAlerta(
+                "warning",
+                "Información insuficiente",
+                "Completa tu nombre y describe el problema."
+            );
+
+            return;
+        }
+
+        activarBoton(
+            "btnSoporte",
+            true,
+            "Enviando..."
+        );
+
+        try {
+            const respuesta = await apiRequest(
+                "/soporte/enviar",
+                {
+                    method: "POST",
+                    body: {
+                        nombre,
+                        correo,
+                        asunto,
+                        mensaje
+                    }
+                }
+            );
+
+            bootstrap.Modal.getOrCreateInstance(
+                $("modalSoporte")
+            ).hide();
+
+            $("formSoporte").reset();
+
+            await mostrarAlerta(
+                "success",
+                "Solicitud recibida",
+                respuesta.mensaje ||
+                "Tu solicitud fue recibida por soporte técnico."
+            );
+
+        } catch (error) {
+            await mostrarAlerta(
+                "error",
+                "No se pudo enviar el ticket",
+                error.message
+            );
+
+        } finally {
+            activarBoton(
+                "btnSoporte",
+                false
+            );
+        }
+    }
+
+
+    // =========================================================
+    // 10. MOSTRAR / OCULTAR CONTRASEÑA
+    // =========================================================
+
+    function configurarPasswordVisible() {
+        $("btnMostrarPassword").addEventListener(
+            "click",
+            () => {
+                const input = $("logPass");
+
+                const visible =
+                    input.type === "password";
+
+                input.type = visible
+                    ? "text"
+                    : "password";
+
+                $("btnMostrarPassword").innerHTML =
+                    visible
+                        ? '<i class="fa-solid fa-eye-slash"></i>'
+                        : '<i class="fa-solid fa-eye"></i>';
+
+                $("btnMostrarPassword").setAttribute(
+                    "aria-label",
+                    visible
+                        ? "Ocultar contraseña"
+                        : "Mostrar contraseña"
+                );
+            }
+        );
+    }
+
+
+    // =========================================================
+    // 11. COMPROBAR SESIÓN EXISTENTE
+    // =========================================================
+
+    async function comprobarSesionExistente() {
+        try {
+            const respuesta = await apiRequest(
+                "/auth/me"
+            );
+
+            const usuario =
+                respuesta.usuario || respuesta;
+
+            if (
+                usuario &&
+                usuario.rol &&
+                obtenerRutaRol(usuario.rol)
+            ) {
+                redirigirUsuario(usuario);
+            }
+
+        } catch (error) {
+            /*
+            Una respuesta 401 es normal cuando
+            el visitante todavía no ha iniciado sesión.
+
+            No se muestra un error por ese motivo.
+            */
+        }
+    }
+
+
+    // =========================================================
+    // 12. INICIALIZACIÓN
+    // =========================================================
+
+    async function inicializarLogin() {
+        $("formLogin").addEventListener(
+            "submit",
+            realizarLogin
+        );
+
+        $("formRecuperar").addEventListener(
+            "submit",
+            solicitarRecuperacion
+        );
+
+        $("formCambiarPass").addEventListener(
+            "submit",
+            ejecutarCambioPass
+        );
+
+        $("formSoporte").addEventListener(
+            "submit",
+            enviarTicketSoporte
+        );
+
+        $("btnRefrescarCaptcha").addEventListener(
+            "click",
+            cargarCaptcha
+        );
+
+        configurarPasswordVisible();
+
+        /*
+        No borramos sessionStorage.
+
+        Tampoco cerramos automáticamente
+        una sesión válida al entrar al login.
+        */
+
+        try {
+            await cargarCsrf();
+
+            await comprobarSesionExistente();
+
+            await cargarCaptcha();
+
+        } catch (error) {
+            console.error(
+                "Error inicializando login:",
+                error
+            );
+
+            await mostrarAlerta(
+                "error",
+                "Servicio temporalmente no disponible",
+                "No fue posible inicializar los controles de seguridad. Actualiza la página."
+            );
+        }
+    }
+
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        inicializarLogin
+    );
+
 </script>
+
 </body>
 </html>
