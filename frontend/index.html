@@ -21,6 +21,7 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
 
     <style>
         :root {
@@ -455,51 +456,14 @@
                     </div>
 
 
-                    <!-- CAPTCHA -->
-
+                    <!-- GOOGLE RECAPTCHA V2 -->
                     <div class="mb-4">
-
-                        <label
-                                for="logCaptcha"
-                                class="form-label text-dark fw-bold small d-flex justify-content-between align-items-center"
-                        >
-
-                            Filtro de Seguridad
-
-                            <button
-                                    type="button"
-                                    class="btn-refresh"
-                                    id="btnRefrescarCaptcha"
-                                    title="Generar nuevo código"
-                                    aria-label="Generar nuevo CAPTCHA"
-                            >
-
-                                <i class="fa-solid fa-arrows-rotate"></i>
-
-                            </button>
-
-                        </label>
-
-                        <div
-                                class="captcha-box mb-2 shadow-sm"
-                                id="boxCaptcha"
-                                aria-live="polite"
-                        >
-                            Cargando...
-                        </div>
-
-                        <input
-                                type="text"
-                                id="logCaptcha"
-                                class="form-control text-center text-uppercase font-monospace fw-bold"
-                                placeholder="Escribe el código superior"
-                                maxlength="8"
-                                autocomplete="off"
-                                spellcheck="false"
-                                required
-                        >
-
+                        <label class="form-label text-dark fw-bold small">Verificación de seguridad</label>
+                        <div id="googleRecaptchaLogin"></div>
+                        <div id="recaptchaMensaje" class="small text-danger mt-2" role="alert" aria-live="polite"></div>
                     </div>
+
+                    
 
 
                     <button
@@ -522,6 +486,7 @@
                 ============================= -->
 
                 <div class="footer-links d-flex flex-column gap-2 mt-4">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalRegistroAlumno" class="text-primary fw-bold"><i class="fa-solid fa-user-plus me-1"></i> Crear cuenta de alumno</a>
 
                     <a
                             href="#"
@@ -580,6 +545,34 @@
 
 </div>
 
+
+
+<!-- REGISTRO PÚBLICO: ÚNICAMENTE ALUMNOS -->
+<div class="modal fade" id="modalRegistroAlumno" tabindex="-1" aria-labelledby="tituloRegistroAlumno" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="tituloRegistroAlumno">Registro de alumno</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Tu matrícula se generará automáticamente. Después deberás verificar tu correo con un código de seis dígitos.</p>
+                <form id="formRegistroAlumno">
+                    <div class="mb-3"><label for="regNombre" class="form-label">Nombre completo</label><input id="regNombre" class="form-control" autocomplete="name" minlength="3" maxlength="120" required></div>
+                    <div class="mb-3"><label for="regCorreo" class="form-label">Correo electrónico</label><input id="regCorreo" type="email" class="form-control" autocomplete="email" maxlength="254" required></div>
+                    <div class="mb-3"><label for="regCarrera" class="form-label">Carrera</label><select id="regCarrera" class="form-select" required><option value="">Cargando carreras...</option></select></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="regPassword" class="form-label">Contraseña</label><input id="regPassword" type="password" class="form-control" autocomplete="new-password" minlength="12" maxlength="128" required></div>
+                        <div class="col-md-6 mb-3"><label for="regConfirmarPassword" class="form-label">Confirmar contraseña</label><input id="regConfirmarPassword" type="password" class="form-control" autocomplete="new-password" minlength="12" maxlength="128" required></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Verificación de seguridad</label><div id="googleRecaptchaRegistro"></div><div id="recaptchaRegistroMensaje" class="small text-danger mt-2" role="alert" aria-live="polite"></div></div>
+                    <div class="alert alert-info small">Este formulario crea exclusivamente cuentas con rol de alumno.</div>
+                    <button id="btnRegistrarAlumno" type="submit" class="btn btn-primary w-100">Crear cuenta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ====================================================
      MODAL 1: SOLICITAR RECUPERACIÓN
@@ -1118,53 +1111,7 @@
 <script>
     "use strict";
 
-    /*
-    ===========================================================
-    SECURITYCAMPUS V2 — LOGIN INSTITUCIONAL
-
-    ENDPOINTS REQUERIDOS:
-
-    GET  /api/auth/captcha
-    GET  /api/auth/csrf
-    GET  /api/auth/me
-
-    POST /api/auth/login
-    POST /api/auth/recuperar-solicitar
-    POST /api/auth/recuperar-cambiar
-
-    POST /api/soporte/enviar
-
-    CONTRATO CAPTCHA:
-
-    GET /api/auth/captcha
-
-    {
-        "captcha_id": "identificador_aleatorio",
-        "captcha_code": "A7B2K"
-    }
-
-    POST /api/auth/login
-
-    {
-        "correo": "usuario@institucion.edu.mx",
-        "password": "contraseña",
-        "captcha_id": "identificador_aleatorio",
-        "captcha_input": "A7B2K"
-    }
-
-    IMPORTANTE:
-
-    El servidor NUNCA debe aceptar la respuesta correcta
-    del CAPTCHA enviada como captcha_real.
-
-    Debe comprobar captcha_input contra el hash almacenado
-    para captcha_id.
-
-    El captcha_id debe ser aleatorio, de un solo uso,
-    con expiración e intentos limitados.
-
-    ===========================================================
-    */
+    /* SecurityCampus V2: login y registro con reCAPTCHA v2. */
 
 
     // =========================================================
@@ -1182,7 +1129,10 @@
 
     let csrfToken = null;
 
-    let captchaId = null;
+    let recaptchaSiteKey = null;
+    let recaptchaLoginId = null;
+    let recaptchaRegistroId = null;
+    let registroEnProceso = false;
 
     let loginEnProceso = false;
 
@@ -1342,58 +1292,89 @@
     }
 
 
-    // =========================================================
-    // 5. CAPTCHA
-    // =========================================================
 
-    async function cargarCaptcha() {
-        const caja = $("boxCaptcha");
+    async function prepararRecaptcha() {
+        const config = await apiRequest("/auth/recaptcha-config");
+        if (!config.site_key) throw new Error("reCAPTCHA no está configurado.");
+        recaptchaSiteKey = config.site_key;
+        const inicio = Date.now();
+        while ((!window.grecaptcha || typeof window.grecaptcha.render !== "function") && Date.now() - inicio < 15000) {
+            await new Promise(resolve => setTimeout(resolve, 150));
+        }
+        if (!window.grecaptcha || typeof window.grecaptcha.render !== "function") throw new Error("No se pudo cargar Google reCAPTCHA.");
+        recaptchaLoginId = window.grecaptcha.render("googleRecaptchaLogin", {sitekey: recaptchaSiteKey, "expired-callback": () => $("recaptchaMensaje").textContent = "La verificación expiró."});
+    }
 
-        const boton = $("btnRefrescarCaptcha");
+    function tokenRecaptcha(tipo) {
+        const id = tipo === "login" ? recaptchaLoginId : recaptchaRegistroId;
+        if (id === null || !window.grecaptcha) throw new Error("La verificación de seguridad no está disponible.");
+        const token = window.grecaptcha.getResponse(id);
+        if (!token) throw new Error("Marca la casilla de Google reCAPTCHA.");
+        return token;
+    }
 
-        boton.disabled = true;
+    function reiniciarRecaptcha(tipo) {
+        const id = tipo === "login" ? recaptchaLoginId : recaptchaRegistroId;
+        if (id !== null && window.grecaptcha) window.grecaptcha.reset(id);
+    }
 
-        caja.classList.remove("error");
-
-        caja.textContent = "Generando...";
-
-        captchaId = null;
-
-        $("logCaptcha").value = "";
-
+    async function cargarCarrerasRegistro() {
+        const selector = $("regCarrera");
+        selector.disabled = true;
+        selector.replaceChildren(new Option("Cargando carreras...", ""));
         try {
-            const data = await apiRequest(
-                "/auth/captcha"
-            );
-
-            if (
-                !data.captcha_id ||
-                !data.captcha_code
-            ) {
-                throw new Error(
-                    "El servidor devolvió un CAPTCHA inválido."
-                );
+            const data = await apiRequest("/auth/carreras");
+            const carreras = Array.isArray(data) ? data : data.carreras;
+            if (!Array.isArray(carreras)) throw new Error("Respuesta de carreras inválida.");
+            selector.replaceChildren(new Option("Selecciona una carrera", ""));
+            for (const c of carreras) {
+                if (c.id_carrera != null && (c.nombre || c.nombre_carrera)) selector.add(new Option(c.nombre || c.nombre_carrera, String(c.id_carrera)));
             }
-
-            captchaId = data.captcha_id;
-
-            caja.textContent = data.captcha_code;
-
+            if (selector.options.length < 2) throw new Error("No hay carreras activas.");
+            selector.disabled = false;
         } catch (error) {
-            console.error(
-                "Error cargando CAPTCHA:",
-                error
-            );
-
-            caja.classList.add("error");
-
-            caja.textContent = "No disponible";
-
-        } finally {
-            boton.disabled = false;
+            selector.replaceChildren(new Option("Carreras no disponibles", ""));
+            $("recaptchaRegistroMensaje").textContent = error.message;
         }
     }
 
+    async function registrarAlumno(evento) {
+        evento.preventDefault();
+        if (registroEnProceso) return;
+        const nombre = $("regNombre").value.trim();
+        const correo = normalizarCorreo($("regCorreo").value);
+        const id_carrera = Number($("regCarrera").value);
+        const password = $("regPassword").value;
+        if (nombre.length < 3 || !correo || !Number.isSafeInteger(id_carrera) || id_carrera <= 0) {
+            await mostrarAlerta("warning", "Datos incompletos", "Revisa tu nombre, correo y carrera."); return;
+        }
+        if (password.length < 12 || password.length > 128 || password !== $("regConfirmarPassword").value) {
+            await mostrarAlerta("warning", "Contraseña inválida", "Usa entre 12 y 128 caracteres y confirma la misma contraseña."); return;
+        }
+        let recaptcha_token;
+        try { recaptcha_token = tokenRecaptcha("registro"); }
+        catch (error) { $("recaptchaRegistroMensaje").textContent = error.message; return; }
+        registroEnProceso = true;
+        activarBoton("btnRegistrarAlumno", true, "Registrando...");
+        try {
+            const respuesta = await apiRequest("/auth/registro-alumno", {method:"POST", body:{nombre,correo,password,id_carrera,recaptcha_token}});
+            const matricula = respuesta.matricula || (respuesta.usuario && respuesta.usuario.matricula);
+            $("formRegistroAlumno").reset();
+            reiniciarRecaptcha("registro");
+            $("logCorreo").value = correo;
+            $("verCorreo").value = correo;
+            await mostrarAlerta("success", "Cuenta creada", "Matrícula: " + (matricula || "generada por el servidor") + ". Solicita el código para verificar tu correo.");
+            const modal = $("modalRegistroAlumno");
+            modal.addEventListener("hidden.bs.modal", () => bootstrap.Modal.getOrCreateInstance($("modalVerificarCorreo")).show(), {once:true});
+            bootstrap.Modal.getOrCreateInstance(modal).hide();
+        } catch (error) {
+            reiniciarRecaptcha("registro");
+            await mostrarAlerta("error", "No se pudo registrar", error.message);
+        } finally {
+            registroEnProceso = false;
+            activarBoton("btnRegistrarAlumno", false);
+        }
+    }
 
     // =========================================================
     // 6. LOGIN
@@ -1412,10 +1393,6 @@
 
         const password = $("logPass").value;
 
-        const captchaInput = $("logCaptcha")
-            .value
-            .trim()
-            .toUpperCase();
 
         if (!correo || !password) {
             await mostrarAlerta(
@@ -1427,27 +1404,9 @@
             return;
         }
 
-        if (!captchaId) {
-            await mostrarAlerta(
-                "warning",
-                "CAPTCHA no disponible",
-                "Actualiza el código de seguridad e inténtalo nuevamente."
-            );
-
-            await cargarCaptcha();
-
-            return;
-        }
-
-        if (!captchaInput) {
-            await mostrarAlerta(
-                "warning",
-                "CAPTCHA requerido",
-                "Escribe el código de seguridad."
-            );
-
-            return;
-        }
+        let recaptcha_token;
+        try { recaptcha_token = tokenRecaptcha("login"); }
+        catch (error) { $("recaptchaMensaje").textContent = error.message; return; }
 
         loginEnProceso = true;
 
@@ -1477,8 +1436,7 @@
                     body: {
                         correo,
                         password,
-                        captcha_id: captchaId,
-                        captcha_input: captchaInput
+                        recaptcha_token
                     }
                 }
             );
@@ -1499,14 +1457,14 @@
 
             $("logPass").value = "";
 
-            $("logCaptcha").value = "";
+
 
             redirigirUsuario(usuario);
 
         } catch (error) {
             $("logPass").value = "";
 
-            $("logCaptcha").value = "";
+
 
             await mostrarAlerta(
                 "error",
@@ -1515,7 +1473,7 @@
                 "No fue posible iniciar sesión."
             );
 
-            await cargarCaptcha();
+            reiniciarRecaptcha("login");
 
         } finally {
             loginEnProceso = false;
@@ -1672,7 +1630,7 @@
                 "Si el código fue validado, tu contraseña se ha actualizado. Ya puedes iniciar sesión."
             );
 
-            await cargarCaptcha();
+            reiniciarRecaptcha("login");
 
         } catch (error) {
             await mostrarAlerta(
@@ -1899,7 +1857,7 @@
                 "Correo verificado",
                 respuesta.mensaje || "Ya puedes iniciar sesión."
             );
-            await cargarCaptcha();
+            reiniciarRecaptcha("login");
         } catch (error) {
             await mostrarAlerta(
                 "error", "No se pudo verificar el correo", error.message
@@ -1948,12 +1906,13 @@
             enviarTicketSoporte
         );
 
-        $("btnRefrescarCaptcha").addEventListener(
-            "click",
-            cargarCaptcha
-        );
 
         configurarPasswordVisible();
+        $("formRegistroAlumno").addEventListener("submit", registrarAlumno);
+        $("modalRegistroAlumno").addEventListener("shown.bs.modal", async () => {
+            await cargarCarrerasRegistro();
+            if (recaptchaSiteKey && recaptchaRegistroId === null) recaptchaRegistroId = window.grecaptcha.render("googleRecaptchaRegistro", {sitekey:recaptchaSiteKey});
+        });
 
         /*
         No borramos sessionStorage.
@@ -1967,7 +1926,7 @@
 
             await comprobarSesionExistente();
 
-            await cargarCaptcha();
+            await prepararRecaptcha();
 
         } catch (error) {
             console.error(

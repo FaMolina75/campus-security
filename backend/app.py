@@ -85,6 +85,9 @@ ENVIRONMENT = os.getenv(
 PRODUCTION = ENVIRONMENT == "production"
 
 SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY", "").strip()
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY", "").strip()
+RECAPTCHA_ALLOWED_HOSTNAMES = {h.strip().lower() for h in os.getenv("RECAPTCHA_ALLOWED_HOSTNAMES", "").split(",") if h.strip()}
 
 if PRODUCTION and len(SECRET_KEY) < 32:
     raise RuntimeError(
@@ -972,6 +975,78 @@ def validar_captcha(identificador, respuesta):
         return correcto
 
 
+
+@app.get("/api/auth/recaptcha-config")
+def recaptcha_config():
+    if not RECAPTCHA_SITE_KEY or not RECAPTCHA_SECRET_KEY:
+        return error_json("Google reCAPTCHA no está configurado", 503)
+    return jsonify({"site_key": RECAPTCHA_SITE_KEY})
+
+
+def verificar_recaptcha(token):
+    if not RECAPTCHA_SECRET_KEY or not RECAPTCHA_ALLOWED_HOSTNAMES:
+        return False
+    if not isinstance(token, str) or not 1 <= len(token) <= 4096:
+        return False
+    try:
+        respuesta = requests.post(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data={"secret": RECAPTCHA_SECRET_KEY, "response": token, "remoteip": ip_cliente()},
+            timeout=8
+        )
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+        return bool(datos.get("success")) and str(datos.get("hostname", "")).lower() in RECAPTCHA_ALLOWED_HOSTNAMES
+    except (requests.RequestException, ValueError):
+        logger.warning("No se pudo validar reCAPTCHA")
+        return False
+
+
+@app.get("/api/auth/carreras")
+@limiter.limit("30 per minute")
+def carreras_publicas():
+    # Solo se publican los campos necesarios para el registro.
+    carreras = consultar_todos("SELECT id_carrera, nombre FROM carreras ORDER BY nombre")
+    return jsonify({"carreras": carreras})
+
+
+@app.post("/api/auth/registro-alumno")
+@limiter.limit("3 per 15 minutes")
+def registro_alumno():
+    data = json_body()
+    nombre = str(data.get("nombre") or "").strip()
+    correo = normalizar_email(data.get("correo"))
+    password = data.get("password")
+    id_carrera = entero_positivo(data.get("id_carrera"))
+    if not 3 <= len(nombre) <= 120 or not validar_email(correo):
+        return error_json("Nombre o correo inválido")
+    if not password_valida(password) or not id_carrera:
+        return error_json("Contraseña o carrera inválida")
+    if not verificar_recaptcha(data.get("recaptcha_token")):
+        return error_json("Verificación de seguridad inválida", 403)
+    carrera = consultar_uno("SELECT id_carrera FROM carreras WHERE id_carrera = %s LIMIT 1", (id_carrera,))
+    if not carrera:
+        return error_json("Carrera no disponible", 400)
+    matricula = "SC" + utc_now().strftime("%y%m%d") + secrets.token_hex(4).upper()
+    password_hash = generate_password_hash(password, method="scrypt")
+    try:
+        _, id_usuario = ejecutar(
+            """INSERT INTO usuarios
+               (matricula, nombre, correo, password, rol, id_carrera,
+                semestre_actual, bloqueado, correo_verificado)
+               VALUES (%s, %s, %s, %s, 'alumno', %s, 1, 0, 0)""",
+            (matricula, nombre, correo, password_hash, id_carrera)
+        )
+    except mysql.connector.IntegrityError:
+        return error_json("No se pudo registrar: correo o matrícula duplicada", 409)
+    auditar("REGISTRO_ALUMNO", f"Alumno {id_usuario}")
+    return jsonify({
+        "mensaje": "Cuenta creada. Solicita el código para verificar tu correo.",
+        "matricula": matricula,
+        "id_usuario": id_usuario
+    }), 201
+
+
 # ========================================================
 # 13. LOGIN
 # ========================================================
@@ -987,9 +1062,7 @@ def login():
 
     password = data.get("password")
 
-    captcha_id = data.get("captcha_id")
-
-    captcha_input = data.get("captcha_input")
+    recaptcha_token = data.get("recaptcha_token")
 
     if (
             not validar_email(correo)
@@ -1021,20 +1094,9 @@ def login():
             403
         )
 
-    if not validar_captcha(
-            captcha_id,
-            captcha_input
-    ):
-        registrar_acceso(
-            correo,
-            False,
-            "CAPTCHA_INVALIDO"
-        )
-
-        return error_json(
-            "Código CAPTCHA incorrecto",
-            403
-        )
+    if not verificar_recaptcha(recaptcha_token):
+        registrar_acceso(correo, False, "RECAPTCHA_INVALIDO")
+        return error_json("Verificación Google reCAPTCHA inválida", 403)
 
     usuario = consultar_uno(
         """
