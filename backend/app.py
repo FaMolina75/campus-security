@@ -1969,6 +1969,159 @@ def admin_auditoria_operaciones():
     )
 
 
+def _auditoria_filtros(tipo):
+    """Filtros acotados para evitar SQL dinámico desde el cliente."""
+    from datetime import date
+
+    if tipo == "accesos":
+        campos = {"correo": "correo_intentado", "ip": "ip_origen",
+                  "exitoso": "exitoso"}
+        fecha = "fecha_intento"
+    else:
+        campos = {"usuario": "usuario", "accion": "accion",
+                  "rol": "rol", "ip": "ip_origen"}
+        fecha = "fecha"
+
+    try:
+        limite = int(request.args.get("limite", "50"))
+        pagina = int(request.args.get("pagina", "1"))
+    except (TypeError, ValueError):
+        return None, error_json("Paginación inválida", 400)
+
+    if not (1 <= limite <= 100 and 1 <= pagina <= 10000):
+        return None, error_json("Paginación fuera de rango", 400)
+
+    condiciones, parametros = [], []
+    permitidos = set(campos) | {"desde", "hasta", "pagina", "limite"}
+    if set(request.args) - permitidos:
+        return None, error_json("Filtro no permitido", 400)
+
+    if any(len(request.args.getlist(k)) > 1 for k in request.args):
+        return None, error_json("Parámetro duplicado", 400)
+
+    for nombre, columna in campos.items():
+        valor = request.args.get(nombre, "").strip()
+        if not valor:
+            continue
+        if len(valor) > 255:
+            return None, error_json("Filtro demasiado largo", 400)
+        if nombre == "exitoso":
+            if valor not in ("0", "1"):
+                return None, error_json("Resultado inválido", 400)
+            valor = int(valor)
+        condiciones.append(f"{columna} = %s")
+        parametros.append(valor)
+
+    fechas = {}
+    for nombre, operador in (("desde", ">="), ("hasta", "<")):
+        valor = request.args.get(nombre, "").strip()
+        if not valor:
+            continue
+        try:
+            fecha_valida = date.fromisoformat(valor)
+        except ValueError:
+            return None, error_json("Fecha inválida; use AAAA-MM-DD", 400)
+        fechas[nombre] = fecha_valida
+        if nombre == "hasta":
+            from datetime import timedelta
+            if fecha_valida == date.max:
+                return None, error_json("Fecha fuera de rango", 400)
+            fecha_valida += timedelta(days=1)
+        condiciones.append(f"{fecha} {operador} %s")
+        parametros.append(fecha_valida.isoformat())
+
+    if "desde" in fechas and "hasta" in fechas and fechas["desde"] > fechas["hasta"]:
+        return None, error_json("Rango de fechas invertido", 400)
+
+    return (condiciones, parametros, limite, (pagina - 1) * limite), None
+
+
+@app.get("/api/admin/auditoria/accesos/buscar")
+@requiere_rol("admin")
+def admin_auditoria_accesos_buscar():
+    filtros, error = _auditoria_filtros("accesos")
+    if error is not None:
+        return error
+    condiciones, parametros, limite, offset = filtros
+    where = " WHERE " + " AND ".join(
+        condicion.replace("correo_intentado", "sa.correo_intentado")
+                 .replace("ip_origen", "sa.ip_origen")
+                 .replace("exitoso", "sa.exitoso")
+                 .replace("fecha_intento", "sa.fecha_intento")
+        for condicion in condiciones
+    ) if condiciones else ""
+    sql = ("SELECT sa.id_acceso, sa.correo_intentado, sa.ip_origen, "
+           "sa.exitoso, sa.motivo, sa.user_agent, sa.fecha_intento, "
+           "EXISTS (SELECT 1 FROM ips_bloqueadas ib "
+           "WHERE ib.ip = sa.ip_origen AND ib.activo = 1 "
+           "AND (ib.fecha_expiracion IS NULL "
+           "OR ib.fecha_expiracion > UTC_TIMESTAMP())) AS esta_baneada "
+           "FROM seguridad_accesos sa" + where +
+           " ORDER BY sa.fecha_intento DESC LIMIT %s OFFSET %s")
+    return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
+
+
+@app.get("/api/admin/auditoria/alertas")
+@requiere_rol("admin")
+def admin_auditoria_alertas():
+    """Detección informativa: no bloquea automáticamente direcciones IP."""
+    if set(request.args) - {"minutos", "umbral"}:
+        return error_json("Parámetro no permitido", 400)
+    if any(len(request.args.getlist(k)) != 1 for k in request.args):
+        return error_json("Parámetro duplicado", 400)
+    try:
+        minutos = int(request.args.get("minutos", "60"))
+        umbral = int(request.args.get("umbral", "5"))
+    except (ValueError, TypeError):
+        return error_json("Parámetros inválidos", 400)
+    if not (5 <= minutos <= 1440 and 3 <= umbral <= 100):
+        return error_json("Parámetros fuera de rango", 400)
+    # No almacenar nuevos datos sensibles; reutilizar auditoría existente.
+    # LIMIT acotado y agrupación por IP para no devolver correos ni contraseñas.
+    sql = """
+        SELECT ip_origen, COUNT(*) AS intentos_fallidos,
+               MIN(fecha_intento) AS primer_intento,
+               MAX(fecha_intento) AS ultimo_intento
+        FROM seguridad_accesos
+        WHERE exitoso = 0
+          AND fecha_intento >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %s MINUTE)
+          AND ip_origen IS NOT NULL
+        GROUP BY ip_origen
+        HAVING COUNT(*) >= %s
+        ORDER BY intentos_fallidos DESC, ultimo_intento DESC
+        LIMIT 100
+    """
+    filas = consultar_todos(sql, (minutos, umbral))
+    return jsonify({
+        "ventana_minutos": minutos,
+        "umbral": umbral,
+        "alertas": [
+            {
+                "tipo": "INTENTOS_FALLIDOS_REPETIDOS",
+                "ip": fila["ip_origen"],
+                "intentos": fila["intentos_fallidos"],
+                "primer_intento": fila["primer_intento"],
+                "ultimo_intento": fila["ultimo_intento"]
+            }
+            for fila in filas
+        ]
+    })
+
+
+@app.get("/api/admin/auditoria/operaciones/buscar")
+@requiere_rol("admin")
+def admin_auditoria_operaciones_buscar():
+    filtros, error = _auditoria_filtros("operaciones")
+    if error is not None:
+        return error
+    condiciones, parametros, limite, offset = filtros
+    where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
+    sql = ("SELECT id_usuario, usuario, rol, accion, detalles, ip_origen, "
+           "fecha FROM auditoria_operaciones" + where +
+           " ORDER BY fecha DESC LIMIT %s OFFSET %s")
+    return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
+
+
 @app.post("/api/admin/ban_ip")
 @requiere_rol("admin")
 def admin_ban_ip():

@@ -886,6 +886,16 @@
                             id="tab-red"
                     >
 
+                        <section class="alert alert-warning" aria-label="Alertas de seguridad">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <strong><i class="fa-solid fa-triangle-exclamation"></i> Intentos fallidos repetidos (últimos 60 minutos)</strong>
+                                <button type="button" class="btn btn-sm btn-outline-dark" id="actualizarAlertas">Actualizar alertas</button>
+                            </div>
+                            <p class="small mb-2">Alertas informativas. No se bloquean IP automáticamente.</p>
+                            <div id="resumenAlertas" role="status" aria-live="polite">Sin consultar</div>
+                            <ul id="listaAlertas" class="mb-0"></ul>
+                        </section>
+
                         <div class="d-flex justify-content-between gap-2 mb-3">
 
                             <input
@@ -904,6 +914,19 @@
                                 CSV
                             </button>
 
+                        </div>
+
+                        <div class="row g-2 mb-3" id="filtrosAuditoriaAccesos">
+                            <div class="col-md-3"><label for="auditoriaAccDesde" class="form-label">Desde</label><input type="date" id="auditoriaAccDesde" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccHasta" class="form-label">Hasta</label><input type="date" id="auditoriaAccHasta" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccCorreo" class="form-label">Correo exacto</label><input type="text" maxlength="255" id="auditoriaAccCorreo" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccResultado" class="form-label">Resultado</label><select id="auditoriaAccResultado" class="form-select"><option value="">Todos</option><option value="1">Concedido</option><option value="0">Denegado</option></select></div>
+                            <div class="col-12 d-flex gap-2 align-items-center">
+                                <button type="button" id="auditoriaAccAplicar" class="btn btn-primary btn-sm">Aplicar filtros</button>
+                                <button type="button" id="auditoriaAccAnterior" class="btn btn-outline-secondary btn-sm">Anterior</button>
+                                <span id="auditoriaAccPagina" aria-live="polite">Página 1</span>
+                                <button type="button" id="auditoriaAccSiguiente" class="btn btn-outline-secondary btn-sm">Siguiente</button>
+                            </div>
                         </div>
 
                         <div class="audit-table-wrapper">
@@ -955,6 +978,18 @@
                                 CSV
                             </button>
 
+                        </div>
+
+                        <div class="row g-2 mb-3" id="filtrosAuditoriaOps">
+                            <div class="col-md-3"><label class="form-label" for="auditoriaOpsDesde">Desde</label><input type="date" id="auditoriaOpsDesde" class="form-control"></div>
+                            <div class="col-md-3"><label class="form-label" for="auditoriaOpsHasta">Hasta</label><input type="date" id="auditoriaOpsHasta" class="form-control"></div>
+                            <div class="col-md-3"><label class="form-label" for="auditoriaOpsAccion">Acción exacta</label><input type="text" maxlength="255" id="auditoriaOpsAccion" class="form-control" placeholder="LOGIN"></div>
+                            <div class="col-md-3 d-flex align-items-end"><button type="button" class="btn btn-primary w-100" id="auditoriaOpsAplicar">Aplicar filtros</button></div>
+                            <div class="col-12 d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="auditoriaOpsAnterior">Anterior</button>
+                                <span id="auditoriaOpsPagina" aria-live="polite">Página 1</span>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="auditoriaOpsSiguiente">Siguiente</button>
+                            </div>
                         </div>
 
                         <div class="audit-table-wrapper">
@@ -2080,6 +2115,7 @@
         if (seccionId === "auditoria") {
             cargarAuditoriaIAM();
             cargarAuditoriaOperaciones();
+            cargarAlertasSeguridad();
         }
     }
 
@@ -2589,11 +2625,54 @@
     // 16. AUDITORÍA DE ACCESOS
     // ==========================================================
 
+    async function cargarAlertasSeguridad() {
+        const resumen = $("resumenAlertas");
+        const lista = $("listaAlertas");
+        resumen.textContent = "Consultando alertas...";
+        lista.replaceChildren();
+        try {
+            const resultado = await apiRequest("/admin/auditoria/alertas?minutos=60&umbral=5");
+            const alertas = resultado.alertas || [];
+            resumen.textContent = alertas.length
+                ? alertas.length + " IP(s) con cinco o más intentos fallidos."
+                : "Sin alertas con el umbral actual.";
+            alertas.forEach(alerta => {
+                const elemento = document.createElement("li");
+                elemento.textContent = alerta.ip + ": " + alerta.intentos + " intentos fallidos";
+                lista.appendChild(elemento);
+            });
+        } catch (error) {
+            resumen.textContent = "No se pudieron cargar las alertas.";
+            console.error("Error al consultar alertas de seguridad:", error);
+        }
+    }
+
+    let paginaAuditoriaAcc = 1;
+    const limiteAuditoriaAcc = 50;
+    let hayPaginaSiguienteAuditoriaAcc = false;
+
     async function cargarAuditoriaIAM() {
         try {
+            const params = new URLSearchParams({
+                pagina: String(paginaAuditoriaAcc),
+                limite: String(limiteAuditoriaAcc)
+            });
+            for (const [campo, id] of [
+                ["desde", "auditoriaAccDesde"],
+                ["hasta", "auditoriaAccHasta"],
+                ["correo", "auditoriaAccCorreo"],
+                ["exitoso", "auditoriaAccResultado"]
+            ]) {
+                const valor = $(id).value.trim();
+                if (valor) params.set(campo, valor);
+            }
             const logs = await apiRequest(
-                "/admin/auditoria/accesos"
+                "/admin/auditoria/accesos/buscar?" + params.toString()
             );
+            hayPaginaSiguienteAuditoriaAcc = Array.isArray(logs) && logs.length === limiteAuditoriaAcc;
+            $("auditoriaAccPagina").textContent = "Página " + paginaAuditoriaAcc;
+            $("auditoriaAccAnterior").disabled = paginaAuditoriaAcc === 1;
+            $("auditoriaAccSiguiente").disabled = !hayPaginaSiguienteAuditoriaAcc;
 
             if (!Array.isArray(logs)) {
                 throw new Error("Formato de auditoría incorrecto.");
@@ -2617,7 +2696,8 @@
 
                 const exitoso = Boolean(log.exitoso);
 
-                const baneada = Boolean(log.esta_baneada);
+                const estadoBloqueoConocido = log.esta_baneada !== undefined && log.esta_baneada !== null;
+                const baneada = estadoBloqueoConocido && Boolean(log.esta_baneada);
 
                 tr.innerHTML = `
                 <td>
@@ -2649,7 +2729,9 @@
 
                 const celda = tr.querySelector(".accion-firewall");
 
-                if (baneada) {
+                if (!estadoBloqueoConocido) {
+                    celda.textContent = "Estado no disponible";
+                } else if (baneada) {
                     const badge = document.createElement("span");
 
                     badge.className = "badge bg-dark";
@@ -2687,11 +2769,31 @@
     // 17. AUDITORÍA DE OPERACIONES
     // ==========================================================
 
+    let paginaAuditoriaOps = 1;
+    const limiteAuditoriaOps = 50;
+    let hayPaginaSiguienteAuditoriaOps = false;
+
     async function cargarAuditoriaOperaciones() {
         try {
+            const params = new URLSearchParams({
+                pagina: String(paginaAuditoriaOps),
+                limite: String(limiteAuditoriaOps)
+            });
+            for (const [campo, id] of [
+                ["desde", "auditoriaOpsDesde"],
+                ["hasta", "auditoriaOpsHasta"],
+                ["accion", "auditoriaOpsAccion"]
+            ]) {
+                const valor = $(id).value.trim();
+                if (valor) params.set(campo, valor);
+            }
             const logs = await apiRequest(
-                "/admin/auditoria/operaciones"
+                "/admin/auditoria/operaciones/buscar?" + params.toString()
             );
+            hayPaginaSiguienteAuditoriaOps = Array.isArray(logs) && logs.length === limiteAuditoriaOps;
+            $("auditoriaOpsPagina").textContent = "Página " + paginaAuditoriaOps;
+            $("auditoriaOpsAnterior").disabled = paginaAuditoriaOps === 1;
+            $("auditoriaOpsSiguiente").disabled = !hayPaginaSiguienteAuditoriaOps;
 
             if (!Array.isArray(logs)) {
                 throw new Error("Formato de operaciones incorrecto.");
@@ -2918,6 +3020,25 @@
             )
         );
 
+        $("actualizarAlertas").addEventListener("click", cargarAlertasSeguridad);
+
+        $("auditoriaAccAplicar").addEventListener("click", () => {
+            paginaAuditoriaAcc = 1;
+            cargarAuditoriaIAM();
+        });
+        $("auditoriaAccAnterior").addEventListener("click", () => {
+            if (paginaAuditoriaAcc > 1) {
+                paginaAuditoriaAcc--;
+                cargarAuditoriaIAM();
+            }
+        });
+        $("auditoriaAccSiguiente").addEventListener("click", () => {
+            if (hayPaginaSiguienteAuditoriaAcc) {
+                paginaAuditoriaAcc++;
+                cargarAuditoriaIAM();
+            }
+        });
+
         $("buscadorAccesos").addEventListener(
             "input",
             evento => filtrarTabla(
@@ -2925,6 +3046,23 @@
                 evento.target.value
             )
         );
+
+        $("auditoriaOpsAplicar").addEventListener("click", () => {
+            paginaAuditoriaOps = 1;
+            cargarAuditoriaOperaciones();
+        });
+        $("auditoriaOpsAnterior").addEventListener("click", () => {
+            if (paginaAuditoriaOps > 1) {
+                paginaAuditoriaOps--;
+                cargarAuditoriaOperaciones();
+            }
+        });
+        $("auditoriaOpsSiguiente").addEventListener("click", () => {
+            if (hayPaginaSiguienteAuditoriaOps) {
+                paginaAuditoriaOps++;
+                cargarAuditoriaOperaciones();
+            }
+        });
 
         $("buscadorOperaciones").addEventListener(
             "input",
