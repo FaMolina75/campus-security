@@ -906,6 +906,19 @@
 
                         </div>
 
+                        <div class="row g-2 mb-3" id="filtrosAuditoriaAccesos">
+                            <div class="col-md-3"><label for="auditoriaAccDesde" class="form-label">Desde</label><input type="date" id="auditoriaAccDesde" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccHasta" class="form-label">Hasta</label><input type="date" id="auditoriaAccHasta" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccCorreo" class="form-label">Correo exacto</label><input type="text" maxlength="255" id="auditoriaAccCorreo" class="form-control"></div>
+                            <div class="col-md-3"><label for="auditoriaAccResultado" class="form-label">Resultado</label><select id="auditoriaAccResultado" class="form-select"><option value="">Todos</option><option value="1">Concedido</option><option value="0">Denegado</option></select></div>
+                            <div class="col-12 d-flex gap-2 align-items-center">
+                                <button type="button" id="auditoriaAccAplicar" class="btn btn-primary btn-sm">Aplicar filtros</button>
+                                <button type="button" id="auditoriaAccAnterior" class="btn btn-outline-secondary btn-sm">Anterior</button>
+                                <span id="auditoriaAccPagina" aria-live="polite">Página 1</span>
+                                <button type="button" id="auditoriaAccSiguiente" class="btn btn-outline-secondary btn-sm">Siguiente</button>
+                            </div>
+                        </div>
+
                         <div class="audit-table-wrapper">
 
                             <table class="table table-sm table-hover">
@@ -2601,11 +2614,32 @@
     // 16. AUDITORÍA DE ACCESOS
     // ==========================================================
 
+    let paginaAuditoriaAcc = 1;
+    const limiteAuditoriaAcc = 50;
+    let hayPaginaSiguienteAuditoriaAcc = false;
+
     async function cargarAuditoriaIAM() {
         try {
+            const params = new URLSearchParams({
+                pagina: String(paginaAuditoriaAcc),
+                limite: String(limiteAuditoriaAcc)
+            });
+            for (const [campo, id] of [
+                ["desde", "auditoriaAccDesde"],
+                ["hasta", "auditoriaAccHasta"],
+                ["correo", "auditoriaAccCorreo"],
+                ["exitoso", "auditoriaAccResultado"]
+            ]) {
+                const valor = $(id).value.trim();
+                if (valor) params.set(campo, valor);
+            }
             const logs = await apiRequest(
-                "/admin/auditoria/accesos"
+                "/admin/auditoria/accesos/buscar?" + params.toString()
             );
+            hayPaginaSiguienteAuditoriaAcc = Array.isArray(logs) && logs.length === limiteAuditoriaAcc;
+            $("auditoriaAccPagina").textContent = "Página " + paginaAuditoriaAcc;
+            $("auditoriaAccAnterior").disabled = paginaAuditoriaAcc === 1;
+            $("auditoriaAccSiguiente").disabled = !hayPaginaSiguienteAuditoriaAcc;
 
             if (!Array.isArray(logs)) {
                 throw new Error("Formato de auditoría incorrecto.");
@@ -2629,7 +2663,8 @@
 
                 const exitoso = Boolean(log.exitoso);
 
-                const baneada = Boolean(log.esta_baneada);
+                const estadoBloqueoConocido = log.esta_baneada !== undefined && log.esta_baneada !== null;
+                const baneada = estadoBloqueoConocido && Boolean(log.esta_baneada);
 
                 tr.innerHTML = `
                 <td>
@@ -2661,7 +2696,9 @@
 
                 const celda = tr.querySelector(".accion-firewall");
 
-                if (baneada) {
+                if (!estadoBloqueoConocido) {
+                    celda.textContent = "Estado no disponible";
+                } else if (baneada) {
                     const badge = document.createElement("span");
 
                     badge.className = "badge bg-dark";
@@ -2949,6 +2986,23 @@
                 evento.target.value
             )
         );
+
+        $("auditoriaAccAplicar").addEventListener("click", () => {
+            paginaAuditoriaAcc = 1;
+            cargarAuditoriaIAM();
+        });
+        $("auditoriaAccAnterior").addEventListener("click", () => {
+            if (paginaAuditoriaAcc > 1) {
+                paginaAuditoriaAcc--;
+                cargarAuditoriaIAM();
+            }
+        });
+        $("auditoriaAccSiguiente").addEventListener("click", () => {
+            if (hayPaginaSiguienteAuditoriaAcc) {
+                paginaAuditoriaAcc++;
+                cargarAuditoriaIAM();
+            }
+        });
 
         $("buscadorAccesos").addEventListener(
             "input",
