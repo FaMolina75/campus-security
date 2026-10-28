@@ -16,6 +16,17 @@ class AdminAuditUiTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertIn('id="' + name + '"', HTML)
 
+    def test_access_filter_controls_exist(self):
+        for name in ("auditoriaAccDesde", "auditoriaAccHasta", "auditoriaAccCorreo",
+                     "auditoriaAccResultado", "auditoriaAccAplicar",
+                     "auditoriaAccAnterior", "auditoriaAccSiguiente", "auditoriaAccPagina"):
+            with self.subTest(name=name):
+                self.assertIn('id="' + name + '"', HTML)
+
+    def test_access_search_endpoint(self):
+        self.assertIn('"/admin/auditoria/accesos/buscar?"', HTML)
+        self.assertIn('estadoBloqueoConocido', HTML)
+
     def test_uses_admin_audit_search_endpoint(self):
         self.assertIn('"/admin/auditoria/operaciones/buscar?"', HTML)
         self.assertIn("new URLSearchParams", HTML)
