@@ -886,6 +886,16 @@
                             id="tab-red"
                     >
 
+                        <section class="alert alert-warning" aria-label="Alertas de seguridad">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <strong><i class="fa-solid fa-triangle-exclamation"></i> Intentos fallidos repetidos (últimos 60 minutos)</strong>
+                                <button type="button" class="btn btn-sm btn-outline-dark" id="actualizarAlertas">Actualizar alertas</button>
+                            </div>
+                            <p class="small mb-2">Alertas informativas. No se bloquean IP automáticamente.</p>
+                            <div id="resumenAlertas" role="status" aria-live="polite">Sin consultar</div>
+                            <ul id="listaAlertas" class="mb-0"></ul>
+                        </section>
+
                         <div class="d-flex justify-content-between gap-2 mb-3">
 
                             <input
@@ -2105,6 +2115,7 @@
         if (seccionId === "auditoria") {
             cargarAuditoriaIAM();
             cargarAuditoriaOperaciones();
+            cargarAlertasSeguridad();
         }
     }
 
@@ -2614,6 +2625,28 @@
     // 16. AUDITORÍA DE ACCESOS
     // ==========================================================
 
+    async function cargarAlertasSeguridad() {
+        const resumen = $("resumenAlertas");
+        const lista = $("listaAlertas");
+        resumen.textContent = "Consultando alertas...";
+        lista.replaceChildren();
+        try {
+            const resultado = await apiRequest("/admin/auditoria/alertas?minutos=60&umbral=5");
+            const alertas = resultado.alertas || [];
+            resumen.textContent = alertas.length
+                ? alertas.length + " IP(s) con cinco o más intentos fallidos."
+                : "Sin alertas con el umbral actual.";
+            alertas.forEach(alerta => {
+                const elemento = document.createElement("li");
+                elemento.textContent = alerta.ip + ": " + alerta.intentos + " intentos fallidos";
+                lista.appendChild(elemento);
+            });
+        } catch (error) {
+            resumen.textContent = "No se pudieron cargar las alertas.";
+            console.error("Error al consultar alertas de seguridad:", error);
+        }
+    }
+
     let paginaAuditoriaAcc = 1;
     const limiteAuditoriaAcc = 50;
     let hayPaginaSiguienteAuditoriaAcc = false;
@@ -2986,6 +3019,8 @@
                 evento.target.value
             )
         );
+
+        $("actualizarAlertas").addEventListener("click", cargarAlertasSeguridad);
 
         $("auditoriaAccAplicar").addEventListener("click", () => {
             paginaAuditoriaAcc = 1;
