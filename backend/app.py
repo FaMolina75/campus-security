@@ -1996,6 +1996,9 @@ def _auditoria_filtros(tipo):
     if set(request.args) - permitidos:
         return None, error_json("Filtro no permitido", 400)
 
+    if any(len(request.args.getlist(k)) > 1 for k in request.args):
+        return None, error_json("Parámetro duplicado", 400)
+
     for nombre, columna in campos.items():
         valor = request.args.get(nombre, "").strip()
         if not valor:
@@ -2009,6 +2012,7 @@ def _auditoria_filtros(tipo):
         condiciones.append(f"{columna} = %s")
         parametros.append(valor)
 
+    fechas = {}
     for nombre, operador in (("desde", ">="), ("hasta", "<")):
         valor = request.args.get(nombre, "").strip()
         if not valor:
@@ -2017,11 +2021,17 @@ def _auditoria_filtros(tipo):
             fecha_valida = date.fromisoformat(valor)
         except ValueError:
             return None, error_json("Fecha inválida; use AAAA-MM-DD", 400)
+        fechas[nombre] = fecha_valida
         if nombre == "hasta":
             from datetime import timedelta
+            if fecha_valida == date.max:
+                return None, error_json("Fecha fuera de rango", 400)
             fecha_valida += timedelta(days=1)
         condiciones.append(f"{fecha} {operador} %s")
         parametros.append(fecha_valida.isoformat())
+
+    if "desde" in fechas and "hasta" in fechas and fechas["desde"] > fechas["hasta"]:
+        return None, error_json("Rango de fechas invertido", 400)
 
     return (condiciones, parametros, limite, (pagina - 1) * limite), None
 
