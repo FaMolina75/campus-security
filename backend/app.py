@@ -1969,6 +1969,91 @@ def admin_auditoria_operaciones():
     )
 
 
+def _auditoria_filtros(tipo):
+    """Filtros acotados para evitar SQL dinámico desde el cliente."""
+    from datetime import date
+
+    if tipo == "accesos":
+        campos = {"correo": "correo_intentado", "ip": "ip_origen",
+                  "exitoso": "exitoso"}
+        fecha = "fecha_intento"
+    else:
+        campos = {"usuario": "usuario", "accion": "accion",
+                  "rol": "rol", "ip": "ip_origen"}
+        fecha = "fecha"
+
+    try:
+        limite = int(request.args.get("limite", "50"))
+        pagina = int(request.args.get("pagina", "1"))
+    except (TypeError, ValueError):
+        return None, error_json("Paginación inválida", 400)
+
+    if not (1 <= limite <= 100 and 1 <= pagina <= 10000):
+        return None, error_json("Paginación fuera de rango", 400)
+
+    condiciones, parametros = [], []
+    permitidos = set(campos) | {"desde", "hasta", "pagina", "limite"}
+    if set(request.args) - permitidos:
+        return None, error_json("Filtro no permitido", 400)
+
+    for nombre, columna in campos.items():
+        valor = request.args.get(nombre, "").strip()
+        if not valor:
+            continue
+        if len(valor) > 255:
+            return None, error_json("Filtro demasiado largo", 400)
+        if nombre == "exitoso":
+            if valor not in ("0", "1"):
+                return None, error_json("Resultado inválido", 400)
+            valor = int(valor)
+        condiciones.append(f"{columna} = %s")
+        parametros.append(valor)
+
+    for nombre, operador in (("desde", ">="), ("hasta", "<")):
+        valor = request.args.get(nombre, "").strip()
+        if not valor:
+            continue
+        try:
+            fecha_valida = date.fromisoformat(valor)
+        except ValueError:
+            return None, error_json("Fecha inválida; use AAAA-MM-DD", 400)
+        if nombre == "hasta":
+            from datetime import timedelta
+            fecha_valida += timedelta(days=1)
+        condiciones.append(f"{fecha} {operador} %s")
+        parametros.append(fecha_valida.isoformat())
+
+    return (condiciones, parametros, limite, (pagina - 1) * limite), None
+
+
+@app.get("/api/admin/auditoria/accesos/buscar")
+@requiere_rol("admin")
+def admin_auditoria_accesos_buscar():
+    filtros, error = _auditoria_filtros("accesos")
+    if error is not None:
+        return error
+    condiciones, parametros, limite, offset = filtros
+    where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
+    sql = ("SELECT correo_intentado, ip_origen, exitoso, motivo, "
+           "user_agent, fecha_intento FROM seguridad_accesos" + where +
+           " ORDER BY fecha_intento DESC LIMIT %s OFFSET %s")
+    return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
+
+
+@app.get("/api/admin/auditoria/operaciones/buscar")
+@requiere_rol("admin")
+def admin_auditoria_operaciones_buscar():
+    filtros, error = _auditoria_filtros("operaciones")
+    if error is not None:
+        return error
+    condiciones, parametros, limite, offset = filtros
+    where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
+    sql = ("SELECT id_usuario, usuario, rol, accion, detalles, ip_origen, "
+           "fecha FROM auditoria_operaciones" + where +
+           " ORDER BY fecha DESC LIMIT %s OFFSET %s")
+    return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
+
+
 @app.post("/api/admin/ban_ip")
 @requiere_rol("admin")
 def admin_ban_ip():
