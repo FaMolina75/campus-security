@@ -40,6 +40,54 @@ class AuthHttpTests(unittest.TestCase):
         self.assertEqual(lookup.call_count, 1)  # Only IP-block lookup
         audit.assert_called_once()
 
+    def test_recovery_rejects_missing_recaptcha_without_lookup(self):
+        with patch.object(backend_module, "consultar_uno") as lookup, \
+             patch.object(backend_module, "verificar_recaptcha", return_value=False) as captcha:
+            response = self.client.post(
+                "/api/auth/recuperar-solicitar",
+                json={"correo": "alumno@example.com"},
+                headers=self.headers,
+            )
+        self.assertEqual(response.status_code, 403)
+        lookup.assert_not_called()
+        captcha.assert_called_once_with(None)
+
+    def test_verification_rejects_missing_recaptcha_without_lookup(self):
+        with patch.object(backend_module, "consultar_uno") as lookup, \
+             patch.object(backend_module, "verificar_recaptcha", return_value=False) as captcha:
+            response = self.client.post(
+                "/api/auth/verificacion-solicitar",
+                json={"correo": "alumno@example.com"},
+                headers=self.headers,
+            )
+        self.assertEqual(response.status_code, 403)
+        lookup.assert_not_called()
+        captcha.assert_called_once_with(None)
+
+    def test_recovery_rejects_invalid_recaptcha_without_lookup(self):
+        with patch.object(backend_module, "consultar_uno") as lookup, \
+             patch.object(backend_module, "verificar_recaptcha", return_value=False) as captcha:
+            response = self.client.post(
+                "/api/auth/recuperar-solicitar",
+                json={"correo": "alumno@example.com", "recaptcha_token": "invalid"},
+                headers=self.headers,
+            )
+        self.assertEqual(response.status_code, 403)
+        lookup.assert_not_called()
+        captcha.assert_called_once_with("invalid")
+
+    def test_verification_rejects_invalid_recaptcha_without_lookup(self):
+        with patch.object(backend_module, "consultar_uno") as lookup, \
+             patch.object(backend_module, "verificar_recaptcha", return_value=False) as captcha:
+            response = self.client.post(
+                "/api/auth/verificacion-solicitar",
+                json={"correo": "alumno@example.com", "recaptcha_token": "invalid"},
+                headers=self.headers,
+            )
+        self.assertEqual(response.status_code, 403)
+        lookup.assert_not_called()
+        captcha.assert_called_once_with("invalid")
+
     def test_registration_rejects_missing_recaptcha_without_writing(self):
         payload = {
             "nombre": "Alumno Prueba",

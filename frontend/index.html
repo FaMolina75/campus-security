@@ -650,6 +650,7 @@
 
                     </div>
 
+                    <div class="mb-3"><label class="form-label fw-bold">Verificación de seguridad</label><div id="googleRecaptchaRecuperacion"></div><div id="recaptchaRecuperacionMensaje" class="small text-danger mt-2" role="alert"></div></div>
                     <div class="text-end">
 
                         <button
@@ -1076,6 +1077,7 @@
                     </label>
                     <input type="email" id="verCorreo" class="form-control mb-3"
                            maxlength="254" autocomplete="email" required>
+                    <div class="mb-3"><label class="form-label fw-bold">Verificación de seguridad</label><div id="googleRecaptchaVerificacion"></div><div id="recaptchaVerificacionMensaje" class="small text-danger mt-2" role="alert"></div></div>
                     <button type="submit" id="btnSolicitarVerificacion"
                             class="btn btn-primary w-100">
                         Enviar código de verificación
@@ -1132,6 +1134,8 @@
     let recaptchaSiteKey = null;
     let recaptchaLoginId = null;
     let recaptchaRegistroId = null;
+    let recaptchaRecuperacionId = null;
+    let recaptchaVerificacionId = null;
     let registroEnProceso = false;
 
     let loginEnProceso = false;
@@ -1306,7 +1310,7 @@
     }
 
     function tokenRecaptcha(tipo) {
-        const id = tipo === "login" ? recaptchaLoginId : recaptchaRegistroId;
+        const id = ({login:recaptchaLoginId, registro:recaptchaRegistroId, recuperacion:recaptchaRecuperacionId, verificacion:recaptchaVerificacionId})[tipo];
         if (id === null || !window.grecaptcha) throw new Error("La verificación de seguridad no está disponible.");
         const token = window.grecaptcha.getResponse(id);
         if (!token) throw new Error("Marca la casilla de Google reCAPTCHA.");
@@ -1314,7 +1318,7 @@
     }
 
     function reiniciarRecaptcha(tipo) {
-        const id = tipo === "login" ? recaptchaLoginId : recaptchaRegistroId;
+        const id = ({login:recaptchaLoginId, registro:recaptchaRegistroId, recuperacion:recaptchaRecuperacionId, verificacion:recaptchaVerificacionId})[tipo];
         if (id !== null && window.grecaptcha) window.grecaptcha.reset(id);
     }
 
@@ -1497,6 +1501,10 @@
             $("recCorreo").value
         );
 
+        let recaptcha_token;
+        try { recaptcha_token = tokenRecaptcha("recuperacion"); }
+        catch (error) { $("recaptchaRecuperacionMensaje").textContent = error.message; return; }
+        $("recaptchaRecuperacionMensaje").textContent = "";
         activarBoton(
             "btnSolicitarRecuperacion",
             true,
@@ -1509,7 +1517,7 @@
                 {
                     method: "POST",
                     body: {
-                        correo
+                        correo, recaptcha_token
                     }
                 }
             );
@@ -1540,6 +1548,7 @@
             );
 
         } finally {
+            reiniciarRecaptcha("recuperacion");
             activarBoton(
                 "btnSolicitarRecuperacion",
                 false
@@ -1806,11 +1815,15 @@
         evento.preventDefault();
         const correo = normalizarCorreo($("verCorreo").value);
 
+        let recaptcha_token;
+        try { recaptcha_token = tokenRecaptcha("verificacion"); }
+        catch (error) { $("recaptchaVerificacionMensaje").textContent = error.message; return; }
+        $("recaptchaVerificacionMensaje").textContent = "";
         activarBoton("btnSolicitarVerificacion", true, "Enviando...");
         try {
             const respuesta = await apiRequest(
                 "/auth/verificacion-solicitar",
-                {method: "POST", body: {correo}}
+                {method: "POST", body: {correo, recaptcha_token}}
             );
             await mostrarAlerta(
                 "info",
@@ -1823,6 +1836,7 @@
                 "error", "No se pudo solicitar el código", error.message
             );
         } finally {
+            reiniciarRecaptcha("verificacion");
             activarBoton("btnSolicitarVerificacion", false);
         }
     }
@@ -1909,6 +1923,12 @@
 
         configurarPasswordVisible();
         $("formRegistroAlumno").addEventListener("submit", registrarAlumno);
+        $("modalRecuperar").addEventListener("shown.bs.modal", () => {
+            if (recaptchaSiteKey && recaptchaRecuperacionId === null) recaptchaRecuperacionId = window.grecaptcha.render("googleRecaptchaRecuperacion", {sitekey:recaptchaSiteKey});
+        });
+        $("modalVerificarCorreo").addEventListener("shown.bs.modal", () => {
+            if (recaptchaSiteKey && recaptchaVerificacionId === null) recaptchaVerificacionId = window.grecaptcha.render("googleRecaptchaVerificacion", {sitekey:recaptchaSiteKey});
+        });
         $("modalRegistroAlumno").addEventListener("shown.bs.modal", async () => {
             await cargarCarrerasRegistro();
             if (recaptchaSiteKey && recaptchaRegistroId === null) recaptchaRegistroId = window.grecaptcha.render("googleRecaptchaRegistro", {sitekey:recaptchaSiteKey});
