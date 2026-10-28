@@ -193,7 +193,9 @@ limiter = Limiter(
     key_func=get_remote_address,
     app=app,
     default_limits=[
-        "300 per hour"
+        # Margen para aulas con alumnos detrás de una misma IP pública.
+        # No sustituye límites estrictos de autenticación y operaciones sensibles.
+        "500 per minute"
     ],
     storage_uri=LIMITER_STORAGE
 )
@@ -465,7 +467,7 @@ def obtener_csrf():
 
 
 @app.get("/api/auth/csrf")
-@limiter.limit("60 per minute")
+@limiter.limit("500 per minute")
 def csrf_endpoint():
     return jsonify({
         "csrf_token": obtener_csrf()
@@ -902,7 +904,7 @@ def verificar_recaptcha(token):
 
 
 @app.get("/api/auth/carreras")
-@limiter.limit("30 per minute")
+@limiter.limit("120 per minute")
 def carreras_publicas():
     # Solo se publican los campos necesarios para el registro.
     carreras = consultar_todos("SELECT id_carrera, nombre FROM carreras ORDER BY nombre")
