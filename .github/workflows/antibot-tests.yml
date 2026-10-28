@@ -1,9 +1,10 @@
-name: SecurityCampus antibot tests
+name: SecurityCampus security tests
 on:
   pull_request:
     paths:
       - 'backend/app.py'
-      - 'tests/test_recaptcha_security.py'
+      - 'tests/**'
+      - 'frontend/dashboards/admin/index.html'
       - '.github/workflows/antibot-tests.yml'
   push:
     branches:
