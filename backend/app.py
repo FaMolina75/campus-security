@@ -2051,6 +2051,49 @@ def admin_auditoria_accesos_buscar():
     return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
 
 
+@app.get("/api/admin/auditoria/alertas")
+@requiere_rol("admin")
+def admin_auditoria_alertas():
+    """Detección informativa: no bloquea automáticamente direcciones IP."""
+    try:
+        minutos = int(request.args.get("minutos", "60"))
+        umbral = int(request.args.get("umbral", "5"))
+    except (ValueError, TypeError):
+        return error_json("Parámetros inválidos", 400)
+    if not (5 <= minutos <= 1440 and 3 <= umbral <= 100):
+        return error_json("Parámetros fuera de rango", 400)
+    # No almacenar nuevos datos sensibles; reutilizar auditoría existente.
+    # LIMIT acotado y agrupación por IP para no devolver correos ni contraseñas.
+    sql = """
+        SELECT ip_origen, COUNT(*) AS intentos_fallidos,
+               MIN(fecha_intento) AS primer_intento,
+               MAX(fecha_intento) AS ultimo_intento
+        FROM seguridad_accesos
+        WHERE exitoso = 0
+          AND fecha_intento >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %s MINUTE)
+          AND ip_origen IS NOT NULL
+        GROUP BY ip_origen
+        HAVING COUNT(*) >= %s
+        ORDER BY intentos_fallidos DESC, ultimo_intento DESC
+        LIMIT 100
+    """
+    filas = consultar_todos(sql, (minutos, umbral))
+    return jsonify({
+        "ventana_minutos": minutos,
+        "umbral": umbral,
+        "alertas": [
+            {
+                "tipo": "INTENTOS_FALLIDOS_REPETIDOS",
+                "ip": fila["ip_origen"],
+                "intentos": fila["intentos_fallidos"],
+                "primer_intento": fila["primer_intento"],
+                "ultimo_intento": fila["ultimo_intento"]
+            }
+            for fila in filas
+        ]
+    })
+
+
 @app.get("/api/admin/auditoria/operaciones/buscar")
 @requiere_rol("admin")
 def admin_auditoria_operaciones_buscar():
