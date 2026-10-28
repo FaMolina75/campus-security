@@ -1175,6 +1175,9 @@ def recuperar_solicitar():
             "Correo inválido"
         )
 
+    if not verificar_recaptcha(data.get("recaptcha_token")):
+        return error_json("Verificación Google reCAPTCHA inválida", 403)
+
     respuesta_generica = {
         "mensaje": (
             "Si existe una cuenta asociada, "
@@ -1458,9 +1461,12 @@ def hash_verificacion_correo(id_usuario, codigo):
 @app.post("/api/auth/verificacion-solicitar")
 @limiter.limit("3 per 15 minutes")
 def verificacion_solicitar():
-    correo = normalizar_email(json_body().get("correo"))
+    data = json_body()
+    correo = normalizar_email(data.get("correo"))
     if not validar_email(correo):
         return error_json("Correo inválido")
+    if not verificar_recaptcha(data.get("recaptcha_token")):
+        return error_json("Verificación Google reCAPTCHA inválida", 403)
 
     respuesta = {"mensaje": (
         "Si la cuenta existe y está pendiente de verificación, "
