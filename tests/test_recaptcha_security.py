@@ -63,5 +63,29 @@ class RecaptchaTests(unittest.TestCase):
     def test_invalid_token(self):
         self.assertFalse(self.check(self.payload(), token=""))
 
+
+class AuthRouteContractTests(unittest.TestCase):
+    """Comprueba la presencia del control reCAPTCHA en rutas públicas."""
+
+    @staticmethod
+    def route(name):
+        return next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == name)
+
+    def test_login_rejects_invalid_recaptcha(self):
+        route = self.route("login")
+        calls = [n for n in ast.walk(route) if isinstance(n, ast.Call)]
+        self.assertTrue(any(isinstance(c.func, ast.Name) and c.func.id == "verificar_recaptcha" for c in calls))
+        self.assertTrue(any(isinstance(c.func, ast.Name) and c.func.id == "registrar_acceso" for c in calls))
+
+    def test_registration_requires_recaptcha(self):
+        route = self.route("registro_alumno")
+        calls = [n for n in ast.walk(route) if isinstance(n, ast.Call)]
+        self.assertTrue(any(isinstance(c.func, ast.Name) and c.func.id == "verificar_recaptcha" for c in calls))
+
+    def test_legacy_captcha_does_not_expose_answer(self):
+        route = self.route("captcha_heredado_deshabilitado")
+        self.assertNotIn("captcha_code", ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), route))
+        self.assertIn("410", ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), route))
+
 if __name__ == "__main__":
     unittest.main()
