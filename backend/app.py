@@ -851,129 +851,12 @@ def health():
 # 12. CAPTCHA
 # ========================================================
 
+# El CAPTCHA heredado devolvía la solución al navegador y no es seguro.
+# El frontend actual utiliza Google reCAPTCHA v2 validado en el servidor.
 @app.get("/api/auth/captcha")
 @limiter.limit("20 per minute")
-def generar_captcha():
-    codigo = "".join(
-        secrets.choice(
-            "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        )
-        for _ in range(5)
-    )
-
-    identificador = secrets.token_urlsafe(24)
-
-    # Hash vinculado al identificador.
-    respuesta_hash = hmac.new(
-        SECRET_KEY.encode(),
-        (
-                identificador + ":" + codigo
-        ).encode(),
-        hashlib.sha256
-    ).hexdigest()
-
-    ejecutar(
-        """
-        INSERT INTO desafios_captcha (
-            identificador_hash,
-            respuesta_hash,
-            intentos,
-            fecha_creacion,
-            fecha_expiracion,
-            utilizado
-        )
-        VALUES (
-                   %s, %s, 0,
-                   UTC_TIMESTAMP(),
-                   DATE_ADD(UTC_TIMESTAMP(), INTERVAL 5 MINUTE),
-                   0
-               )
-        """,
-        (
-            sha256(identificador),
-            respuesta_hash
-        )
-    )
-
-    return jsonify({
-        "captcha_id": identificador,
-        "captcha_code": codigo
-    })
-
-
-def validar_captcha(identificador, respuesta):
-    if not isinstance(identificador, str):
-        return False
-
-    if not isinstance(respuesta, str):
-        return False
-
-    respuesta = respuesta.strip().upper()
-
-    if not re.fullmatch(
-            r"[A-Z2-9]{5}",
-            respuesta
-    ):
-        return False
-
-    # Consumo atómico: solo una solicitud puede utilizarlo.
-    with db_cursor() as (conexion, cursor):
-        cursor.execute(
-            """
-            SELECT
-                respuesta_hash,
-                intentos,
-                fecha_expiracion,
-                utilizado
-            FROM desafios_captcha
-            WHERE identificador_hash = %s
-                FOR UPDATE
-            """,
-            (sha256(identificador),)
-        )
-
-        desafio = cursor.fetchone()
-
-        if not desafio:
-            return False
-
-        if (
-                desafio["utilizado"]
-                or desafio["intentos"] >= 3
-                or db_now() >= desafio["fecha_expiracion"]
-        ):
-            return False
-
-        esperado = hmac.new(
-            SECRET_KEY.encode(),
-            (
-                    identificador + ":" + respuesta
-            ).encode(),
-            hashlib.sha256
-        ).hexdigest()
-
-        correcto = hmac.compare_digest(
-            esperado,
-            desafio["respuesta_hash"]
-        )
-
-        cursor.execute(
-            """
-            UPDATE desafios_captcha
-            SET intentos = intentos + 1,
-                utilizado = %s
-            WHERE identificador_hash = %s
-            """,
-            (
-                int(correcto),
-                sha256(identificador)
-            )
-        )
-
-        conexion.commit()
-
-        return correcto
-
+def captcha_heredado_deshabilitado():
+    return error_json("CAPTCHA heredado deshabilitado; utiliza Google reCAPTCHA.", 410)
 
 
 @app.get("/api/auth/recaptcha-config")
@@ -996,7 +879,23 @@ def verificar_recaptcha(token):
         )
         respuesta.raise_for_status()
         datos = respuesta.json()
-        return bool(datos.get("success")) and str(datos.get("hostname", "")).lower() in RECAPTCHA_ALLOWED_HOSTNAMES
+        if not isinstance(datos, dict) or datos.get("success") is not True:
+            return False
+        hostname = datos.get("hostname")
+        if not isinstance(hostname, str) or hostname.lower() not in RECAPTCHA_ALLOWED_HOSTNAMES:
+            return False
+        # Un desafío antiguo o con fecha inválida no debe autorizar un formulario.
+        challenge_ts = datos.get("challenge_ts")
+        if not isinstance(challenge_ts, str):
+            return False
+        try:
+            fecha = datetime.fromisoformat(challenge_ts.replace("Z", "+00:00"))
+            if fecha.tzinfo is None:
+                return False
+            edad = (datetime.now(timezone.utc) - fecha).total_seconds()
+            return -30 <= edad <= 120
+        except ValueError:
+            return False
     except (requests.RequestException, ValueError):
         logger.warning("No se pudo validar reCAPTCHA")
         return False
