@@ -2034,7 +2034,7 @@ def admin_auditoria_accesos_buscar():
         return error
     condiciones, parametros, limite, offset = filtros
     where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
-    sql = ("SELECT correo_intentado, ip_origen, exitoso, motivo, "
+    sql = ("SELECT id_acceso, correo_intentado, ip_origen, exitoso, motivo, "
            "user_agent, fecha_intento FROM seguridad_accesos" + where +
            " ORDER BY fecha_intento DESC LIMIT %s OFFSET %s")
     return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
