@@ -2065,6 +2065,10 @@ def admin_auditoria_accesos_buscar():
 @requiere_rol("admin")
 def admin_auditoria_alertas():
     """Detección informativa: no bloquea automáticamente direcciones IP."""
+    if set(request.args) - {"minutos", "umbral"}:
+        return error_json("Parámetro no permitido", 400)
+    if any(len(request.args.getlist(k)) != 1 for k in request.args):
+        return error_json("Parámetro duplicado", 400)
     try:
         minutos = int(request.args.get("minutos", "60"))
         umbral = int(request.args.get("umbral", "5"))
