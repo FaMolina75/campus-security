@@ -996,7 +996,23 @@ def verificar_recaptcha(token):
         )
         respuesta.raise_for_status()
         datos = respuesta.json()
-        return bool(datos.get("success")) and str(datos.get("hostname", "")).lower() in RECAPTCHA_ALLOWED_HOSTNAMES
+        if not isinstance(datos, dict) or datos.get("success") is not True:
+            return False
+        hostname = datos.get("hostname")
+        if not isinstance(hostname, str) or hostname.lower() not in RECAPTCHA_ALLOWED_HOSTNAMES:
+            return False
+        # Un desafío antiguo o con fecha inválida no debe autorizar un formulario.
+        challenge_ts = datos.get("challenge_ts")
+        if not isinstance(challenge_ts, str):
+            return False
+        try:
+            fecha = datetime.fromisoformat(challenge_ts.replace("Z", "+00:00"))
+            if fecha.tzinfo is None:
+                return False
+            edad = (datetime.now(timezone.utc) - fecha).total_seconds()
+            return -30 <= edad <= 120
+        except ValueError:
+            return False
     except (requests.RequestException, ValueError):
         logger.warning("No se pudo validar reCAPTCHA")
         return False
