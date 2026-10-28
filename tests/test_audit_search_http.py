@@ -35,6 +35,23 @@ class AuditSearchHttpTests(unittest.TestCase):
         self.assertIn("LIMIT %s OFFSET %s", captured["sql"])
         self.assertEqual(captured["params"], ("LOGIN", "2026-10-01", "2026-10-29", 20, 20))
 
+    def test_access_query_includes_live_firewall_state(self):
+        captured = {}
+        def fake_query(sql, params=()):
+            captured["sql"], captured["params"] = sql, params
+            return []
+        with patch.object(backend_module, "cargar_usuario_sesion", return_value={"rol": "admin"}), \
+             patch.object(backend_module, "consultar_todos", side_effect=fake_query):
+            response = self.client.get(
+                "/api/admin/auditoria/accesos/buscar?correo=student@example.com&exitoso=0"
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("ips_bloqueadas", captured["sql"])
+        self.assertIn("fecha_expiracion > UTC_TIMESTAMP()", captured["sql"])
+        self.assertIn("sa.correo_intentado = %s", captured["sql"])
+        self.assertIn("sa.exitoso = %s", captured["sql"])
+        self.assertEqual(captured["params"], ("student@example.com", 0, 50, 0))
+
     def test_rejects_unknown_filter(self):
         with patch.object(backend_module, "cargar_usuario_sesion", return_value={"rol": "admin"}):
             self.assertEqual(self.client.get(self.path + "?sql=DROP").status_code, 400)
