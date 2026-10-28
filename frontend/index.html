@@ -1208,6 +1208,10 @@
     // 3. CLIENTE API
     // =========================================================
 
+    // Evita solicitudes GET idénticas simultáneas (por ejemplo, al abrir modales).
+    // No se cachean respuestas: solo se comparte la petición mientras está activa.
+    const solicitudesGetPendientes = new Map();
+
     async function apiRequest(
         endpoint,
         {
@@ -1242,35 +1246,62 @@
             headers["X-CSRF-Token"] = csrfToken;
         }
 
-        const respuesta = await fetch(
-            `${API_BASE}${endpoint}`,
-            {
-                method: metodo,
-                credentials: "include",
-                headers,
-                cache: "no-store",
-                body: body === null
-                    ? undefined
-                    : JSON.stringify(body)
-            }
-        );
+        const claveGet = metodo === "GET" && body === null
+            ? endpoint
+            : null;
 
-        const tipoContenido =
-            respuesta.headers.get("content-type") || "";
-
-        const data = tipoContenido.includes("application/json")
-            ? await respuesta.json()
-            : {};
-
-        if (!respuesta.ok) {
-            throw new Error(
-                data.error ||
-                data.mensaje ||
-                `Error HTTP ${respuesta.status}`
-            );
+        if (claveGet !== null && solicitudesGetPendientes.has(claveGet)) {
+            return solicitudesGetPendientes.get(claveGet);
         }
 
-        return data;
+        const ejecutar = async () => {
+            const respuesta = await fetch(
+                `${API_BASE}${endpoint}`,
+                {
+                    method: metodo,
+                    credentials: "include",
+                    headers,
+                    cache: "no-store",
+                    body: body === null
+                        ? undefined
+                        : JSON.stringify(body)
+                }
+            );
+
+            const tipoContenido =
+                respuesta.headers.get("content-type") || "";
+
+            const data = tipoContenido.includes("application/json")
+                ? await respuesta.json()
+                : {};
+
+            if (!respuesta.ok) {
+                if (respuesta.status === 429) {
+                    throw new Error(
+                        "Hay demasiadas solicitudes en este momento. Espera un poco antes de volver a intentar."
+                    );
+                }
+                throw new Error(
+                    data.error ||
+                    data.mensaje ||
+                    `Error HTTP ${respuesta.status}`
+                );
+            }
+
+            return data;
+        };
+
+        if (claveGet === null) {
+            return ejecutar();
+        }
+
+        const pendiente = ejecutar();
+        solicitudesGetPendientes.set(claveGet, pendiente);
+        try {
+            return await pendiente;
+        } finally {
+            solicitudesGetPendientes.delete(claveGet);
+        }
     }
 
 
