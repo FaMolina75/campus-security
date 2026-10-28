@@ -2033,18 +2033,20 @@ def admin_auditoria_accesos_buscar():
     if error is not None:
         return error
     condiciones, parametros, limite, offset = filtros
-    where = " WHERE " + " AND ".join(condiciones) if condiciones else ""
+    where = " WHERE " + " AND ".join(
+        condicion.replace("correo_intentado", "sa.correo_intentado")
+                 .replace("ip_origen", "sa.ip_origen")
+                 .replace("exitoso", "sa.exitoso")
+                 .replace("fecha_intento", "sa.fecha_intento")
+        for condicion in condiciones
+    ) if condiciones else ""
     sql = ("SELECT sa.id_acceso, sa.correo_intentado, sa.ip_origen, "
            "sa.exitoso, sa.motivo, sa.user_agent, sa.fecha_intento, "
            "EXISTS (SELECT 1 FROM ips_bloqueadas ib "
            "WHERE ib.ip = sa.ip_origen AND ib.activo = 1 "
            "AND (ib.fecha_expiracion IS NULL "
            "OR ib.fecha_expiracion > UTC_TIMESTAMP())) AS esta_baneada "
-           "FROM seguridad_accesos sa" +
-           where.replace("correo_intentado", "sa.correo_intentado")
-                .replace("ip_origen", "sa.ip_origen")
-                .replace("exitoso", "sa.exitoso")
-                .replace("fecha_intento", "sa.fecha_intento") +
+           "FROM seguridad_accesos sa" + where +
            " ORDER BY sa.fecha_intento DESC LIMIT %s OFFSET %s")
     return jsonify(consultar_todos(sql, tuple(parametros + [limite, offset])))
 
