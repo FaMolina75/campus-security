@@ -87,5 +87,17 @@ class AuthRouteContractTests(unittest.TestCase):
         self.assertNotIn("captcha_code", ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), route))
         self.assertIn("410", ast.get_source_segment(SOURCE.read_text(encoding="utf-8"), route))
 
+
+class FrontendRecaptchaContractTests(unittest.TestCase):
+    """Verifica que el frontend envíe el token en ambos formularios."""
+
+    def test_frontend_submits_token_for_login_and_registration(self):
+        frontend = (SOURCE.parent.parent / "frontend" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('tokenRecaptcha("login")', frontend)
+        self.assertIn('tokenRecaptcha("registro")', frontend)
+        self.assertIn('"/auth/registro-alumno"', frontend)
+        self.assertIn('"/auth/login"', frontend)
+        self.assertIn("recaptcha_token", frontend)
+
 if __name__ == "__main__":
     unittest.main()
