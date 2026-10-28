@@ -28,6 +28,14 @@ class AlertTests(unittest.TestCase):
                 with self.subTest(query=query):
                     self.assertEqual(self.client.get(self.path + query).status_code, 400)
 
+    def test_duplicate_or_unknown_alert_parameters_rejected(self):
+        with patch.object(backend_module, "cargar_usuario_sesion", return_value={"rol": "admin"}), \
+             patch.object(backend_module, "consultar_todos", return_value=[]) as db:
+            for query in ("?minutos=60&minutos=5", "?umbral=5&umbral=3", "?debug=true"):
+                with self.subTest(query=query):
+                    self.assertEqual(self.client.get(self.path + query).status_code, 400)
+            db.assert_not_called()
+
     def test_grouped_alerts_do_not_expose_email(self):
         def fake_query(sql, params):
             self.assertIn("GROUP BY ip_origen", sql)
