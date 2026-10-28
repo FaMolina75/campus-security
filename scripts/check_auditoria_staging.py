@@ -40,3 +40,31 @@ for path in paths:
         print("FAIL", path, type(exc).__name__, file=sys.stderr)
         sys.exit(1)
 print("All read-only audit checks passed")
+
+# Negative checks: invalid requests must not reach database queries or return 500.
+invalid_paths = (
+    "/api/admin/auditoria/accesos/buscar?pagina=1&pagina=2",
+    "/api/admin/auditoria/accesos/buscar?desde=2026-10-30&hasta=2026-10-01",
+    "/api/admin/auditoria/accesos/buscar?hasta=9999-12-31",
+    "/api/admin/auditoria/alertas?minutos=60&minutos=5",
+    "/api/admin/auditoria/alertas?debug=true",
+)
+for path in invalid_paths:
+    req = urllib.request.Request(
+        base + path,
+        headers={"Cookie": cookie, "Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as response:
+            print("FAIL", path, "unexpected HTTP", response.status, file=sys.stderr)
+            sys.exit(1)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 400:
+            print("FAIL", path, "unexpected HTTP", exc.code, file=sys.stderr)
+            sys.exit(1)
+        print("OK", path, "HTTP 400")
+    except urllib.error.URLError as exc:
+        print("FAIL", path, type(exc).__name__, file=sys.stderr)
+        sys.exit(1)
+print("All negative audit checks passed")
