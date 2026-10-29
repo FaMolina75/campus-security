@@ -220,6 +220,10 @@ DB_CONFIG = {
     ),
 
     "connection_timeout": 10,
+    # Evita que consultas bloqueadas retengan conexiones indefinidamente.
+    # Valores configurables según la carga real y el plan de TiDB.
+    "read_timeout": max(1, int(os.getenv("DB_READ_TIMEOUT", "20"))),
+    "write_timeout": max(1, int(os.getenv("DB_WRITE_TIMEOUT", "20"))),
     "ssl_disabled": False
 }
 
