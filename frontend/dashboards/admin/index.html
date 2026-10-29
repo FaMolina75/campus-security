@@ -2714,14 +2714,18 @@
     // 16. AUDITORÍA DE ACCESOS
     // ==========================================================
 
+    let solicitudAlertasSeguridad = 0;
+
     async function cargarAlertasSeguridad() {
+        const solicitudActual = ++solicitudAlertasSeguridad;
         const resumen = $("resumenAlertas");
         const lista = $("listaAlertas");
         resumen.textContent = "Consultando alertas...";
         lista.replaceChildren();
         try {
             const resultado = await apiRequest("/admin/auditoria/alertas?minutos=60&umbral=5");
-            const alertas = resultado.alertas || [];
+            if (solicitudActual !== solicitudAlertasSeguridad) return;
+            const alertas = Array.isArray(resultado.alertas) ? resultado.alertas : [];
             resumen.textContent = alertas.length
                 ? alertas.length + " IP(s) con cinco o más intentos fallidos."
                 : "Sin alertas con el umbral actual.";
@@ -2731,7 +2735,8 @@
                 lista.appendChild(elemento);
             });
         } catch (error) {
-            resumen.textContent = "No se pudieron cargar las alertas.";
+            if (solicitudActual !== solicitudAlertasSeguridad) return;
+            resumen.textContent = "No se pudieron cargar las alertas. Vuelve a abrir Auditoría para reintentar.";
             console.error("Error al consultar alertas de seguridad:", error);
         }
     }
