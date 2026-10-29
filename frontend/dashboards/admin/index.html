@@ -1844,13 +1844,18 @@
             headers["X-CSRF-Token"] = csrfToken;
         }
 
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-            method: metodo,
-            credentials: "include",
-            headers,
-            cache: "no-store",
-            body: body !== null ? JSON.stringify(body) : null
-        });
+        let response;
+        try {
+            response = await fetch(`${API_BASE}${endpoint}`, {
+                method: metodo,
+                credentials: "include",
+                headers,
+                cache: "no-store",
+                body: body !== null ? JSON.stringify(body) : null
+            });
+        } catch (error) {
+            throw new Error("No se pudo conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.");
+        }
 
         let data = {};
 
@@ -1876,6 +1881,12 @@
         }
 
         if (!response.ok) {
+            if (response.status === 429) {
+                throw new Error("Demasiadas solicitudes. Espera unos segundos y vuelve a intentarlo.");
+            }
+            if (response.status >= 500) {
+                throw new Error("El servidor está temporalmente ocupado. Inténtalo nuevamente.");
+            }
             throw new Error(
                 data.error ||
                 data.mensaje ||
@@ -3102,7 +3113,14 @@
 
             registrarActividad();
 
-            await cargarStats();
+            // Las estadísticas son secundarias: un fallo temporal no debe
+            // cerrar una sesión administrativa que ya fue validada.
+            try {
+                await cargarStats();
+            } catch (error) {
+                console.error("No se pudieron cargar las estadísticas:", error);
+                mostrarError(error);
+            }
 
             console.info(
                 "SecurityCampus V2: panel administrativo inicializado."
