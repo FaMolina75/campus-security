@@ -58,7 +58,8 @@ from flask import (
     jsonify,
     session,
     g,
-    make_response
+    make_response,
+    has_request_context
 )
 
 from flask_cors import CORS
@@ -251,7 +252,17 @@ def conectar_db():
             + ", ".join(faltantes)
         )
 
-    return mysql.connector.connect(**DB_CONFIG)
+    inicio = time.perf_counter()
+    try:
+        return mysql.connector.connect(**DB_CONFIG)
+    finally:
+        duracion_ms = (time.perf_counter() - inicio) * 1000
+        if duracion_ms >= max(1, int(os.getenv("DB_SLOW_CONNECT_MS", "500"))):
+            logger.warning(
+                "db_slow_connect request_id=%s duration_ms=%d",
+                getattr(g, "request_id", "-") if has_request_context() else "-",
+                round(duracion_ms)
+            )
 
 
 @contextmanager
