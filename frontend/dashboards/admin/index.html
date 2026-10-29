@@ -2187,6 +2187,9 @@
     // ==========================================================
 
     async function cargarStats() {
+        ["statUsuarios", "statMaterias", "statAlertas"].forEach(id => {
+            $(id).textContent = "…";
+        });
         try {
             const stats = await apiRequest("/admin/stats");
 
@@ -2200,6 +2203,9 @@
                 Number(stats.alertas || 0).toLocaleString("es-MX");
 
         } catch (error) {
+            ["statUsuarios", "statMaterias", "statAlertas"].forEach(id => {
+                $(id).textContent = "—";
+            });
             mostrarError(error);
         }
     }
@@ -2260,6 +2266,7 @@
     // ==========================================================
 
     async function cargarUsuarios() {
+        establecerVacio("tablaUsuariosBody", 8, "Cargando datos…");
         try {
             const usuarios = await apiRequest("/admin/usuarios");
 
@@ -2367,6 +2374,7 @@
             });
 
         } catch (error) {
+            establecerVacio("tablaUsuariosBody", 8, "No se pudieron cargar los datos. Vuelve a entrar en esta sección para reintentar.");
             mostrarError(error);
         }
     }
@@ -2534,6 +2542,7 @@
     // ==========================================================
 
     async function cargarMaterias() {
+        establecerVacio("tablaMateriasBody", 6, "Cargando datos…");
         try {
             const materias = await apiRequest("/admin/materias");
 
@@ -2591,6 +2600,7 @@
             });
 
         } catch (error) {
+            establecerVacio("tablaMateriasBody", 6, "No se pudieron cargar los datos. Vuelve a entrar en esta sección para reintentar.");
             mostrarError(error);
         }
     }
