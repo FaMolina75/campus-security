@@ -2744,6 +2744,9 @@
 
     async function cargarAuditoriaIAM() {
         const solicitudActual = ++solicitudAuditoriaAcc;
+        $("auditoriaAccAnterior").disabled = true;
+        $("auditoriaAccSiguiente").disabled = true;
+        establecerVacio("tablaAuditoriaRed", 6, "Consultando auditoría…");
         try {
             const params = new URLSearchParams({
                 pagina: String(paginaAuditoriaAcc),
@@ -2854,7 +2857,13 @@
             });
 
         } catch (error) {
-            if (solicitudActual === solicitudAuditoriaAcc) mostrarError(error);
+            if (solicitudActual === solicitudAuditoriaAcc) {
+                hayPaginaSiguienteAuditoriaAcc = false;
+                $("auditoriaAccAnterior").disabled = true;
+                $("auditoriaAccSiguiente").disabled = true;
+                establecerVacio("tablaAuditoriaRed", 6, "No se pudo consultar la auditoría. Reintenta con Aplicar filtros.");
+                mostrarError(error);
+            }
         }
     }
 
@@ -2871,6 +2880,9 @@
 
     async function cargarAuditoriaOperaciones() {
         const solicitudActual = ++solicitudAuditoriaOps;
+        $("auditoriaOpsAnterior").disabled = true;
+        $("auditoriaOpsSiguiente").disabled = true;
+        establecerVacio("tablaAuditoriaOps", 6, "Consultando auditoría…");
         try {
             const params = new URLSearchParams({
                 pagina: String(paginaAuditoriaOps),
@@ -2944,7 +2956,13 @@
             });
 
         } catch (error) {
-            if (solicitudActual === solicitudAuditoriaOps) mostrarError(error);
+            if (solicitudActual === solicitudAuditoriaOps) {
+                hayPaginaSiguienteAuditoriaOps = false;
+                $("auditoriaOpsAnterior").disabled = true;
+                $("auditoriaOpsSiguiente").disabled = true;
+                establecerVacio("tablaAuditoriaOps", 6, "No se pudo consultar la auditoría. Reintenta con Aplicar filtros.");
+                mostrarError(error);
+            }
         }
     }
 
