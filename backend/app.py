@@ -694,6 +694,13 @@ def requiere_rol(*roles):
                 )
 
             if roles and usuario["rol"] not in roles:
+                # No incluir identidad, cookies ni parámetros sensibles.
+                logger.warning(
+                    "ACCESS_DENIED method=%s endpoint=%s role=%s",
+                    request.method,
+                    request.url_rule.rule if request.url_rule else "unknown",
+                    usuario["rol"]
+                )
                 return error_json(
                     "No tienes permisos para esta operación",
                     403
@@ -3182,6 +3189,9 @@ def soporte_enviar():
                 "Ticket guardado, pero correo no enviado: %s",
                 id_ticket
             )
+
+    # Registrar el identificador del ticket, nunca el contenido enviado.
+    auditar("TICKET_SOPORTE_CREADO", json_safe({"id_ticket": id_ticket}))
 
     return jsonify({
         "mensaje": "Ticket registrado correctamente",
