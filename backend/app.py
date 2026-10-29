@@ -3183,11 +3183,20 @@ def error_405(_):
 
 
 @app.errorhandler(429)
-def error_429(_):
-    return error_json(
+def error_429(error):
+    # Preservar Retry-After de Flask-Limiter para que el cliente
+    # pueda mostrar una espera útil sin exponer información interna.
+    response = error_json(
         "Demasiadas solicitudes. Intenta más tarde.",
         429
     )
+    original = error.get_response() if hasattr(error, "get_response") else None
+    if original is not None:
+        retry_after = original.headers.get("Retry-After")
+        if retry_after:
+            response.headers["Retry-After"] = retry_after
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.errorhandler(mysql.connector.Error)
