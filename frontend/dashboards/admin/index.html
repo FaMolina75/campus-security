@@ -2265,10 +2265,14 @@
     // 10. USUARIOS
     // ==========================================================
 
+    let solicitudUsuarios = 0;
+
     async function cargarUsuarios() {
+        const solicitudActual = ++solicitudUsuarios;
         establecerVacio("tablaUsuariosBody", 8, "Cargando datos…");
         try {
             const usuarios = await apiRequest("/admin/usuarios");
+            if (solicitudActual !== solicitudUsuarios) return;
 
             if (!Array.isArray(usuarios)) {
                 throw new Error("Formato de usuarios incorrecto.");
@@ -2374,6 +2378,7 @@
             });
 
         } catch (error) {
+            if (solicitudActual !== solicitudUsuarios) return;
             establecerVacio("tablaUsuariosBody", 8, "No se pudieron cargar los datos. Vuelve a entrar en esta sección para reintentar.");
             mostrarError(error);
         }
@@ -2541,10 +2546,14 @@
     // 13. MATERIAS
     // ==========================================================
 
+    let solicitudMaterias = 0;
+
     async function cargarMaterias() {
+        const solicitudActual = ++solicitudMaterias;
         establecerVacio("tablaMateriasBody", 6, "Cargando datos…");
         try {
             const materias = await apiRequest("/admin/materias");
+            if (solicitudActual !== solicitudMaterias) return;
 
             if (!Array.isArray(materias)) {
                 throw new Error("Formato de materias incorrecto.");
@@ -2600,6 +2609,7 @@
             });
 
         } catch (error) {
+            if (solicitudActual !== solicitudMaterias) return;
             establecerVacio("tablaMateriasBody", 6, "No se pudieron cargar los datos. Vuelve a entrar en esta sección para reintentar.");
             mostrarError(error);
         }
