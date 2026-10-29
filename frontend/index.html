@@ -1329,6 +1329,7 @@
 
 
     async function prepararRecaptcha() {
+        $("recaptchaMensaje").textContent = "Cargando verificación de seguridad…";
         const config = await apiRequest("/auth/recaptcha-config");
         if (!config.site_key) throw new Error("reCAPTCHA no está configurado.");
         recaptchaSiteKey = config.site_key;
@@ -1338,6 +1339,7 @@
         }
         if (!window.grecaptcha || typeof window.grecaptcha.render !== "function") throw new Error("No se pudo cargar Google reCAPTCHA.");
         recaptchaLoginId = window.grecaptcha.render("googleRecaptchaLogin", {sitekey: recaptchaSiteKey, "expired-callback": () => $("recaptchaMensaje").textContent = "La verificación expiró."});
+        $("recaptchaMensaje").textContent = "";
     }
 
     function tokenRecaptcha(tipo) {
@@ -1973,11 +1975,14 @@
         */
 
         try {
-            await cargarCsrf();
-
+            // Cargar reCAPTCHA en paralelo: no esperar a la consulta de sesión
+            // ni al token CSRF para empezar a mostrar la casilla.
+            const inicioSeguridad = Promise.all([
+                cargarCsrf(),
+                prepararRecaptcha()
+            ]);
             await comprobarSesionExistente();
-
-            await prepararRecaptcha();
+            await inicioSeguridad;
 
         } catch (error) {
             console.error(
