@@ -339,6 +339,57 @@
             padding: 32px !important;
         }
 
+        /* Tablas y controles utilizables en pantallas pequeñas. */
+        .table-responsive,
+        .audit-table-wrapper {
+            max-width: 100%;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-responsive .table,
+        .audit-table-wrapper .table {
+            min-width: 680px;
+        }
+
+        .table td {
+            overflow-wrap: anywhere;
+        }
+
+        .sidebar .nav-link:focus-visible,
+        button:focus-visible,
+        .form-control:focus-visible,
+        .form-select:focus-visible {
+            outline: 3px solid #60a5fa;
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 576px) {
+            .main-content { padding: 12px; }
+            .header-top { padding: 16px; gap: 12px; }
+            .admin-profile { max-width: 100%; overflow-wrap: anywhere; }
+            .sidebar { padding: 14px 10px; }
+            .sidebar .nav { gap: 6px; }
+            .sidebar .nav-link {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 0;
+                padding: 12px 10px;
+                margin-bottom: 0;
+                text-align: center;
+                overflow-wrap: anywhere;
+            }
+            .sidebar .nav-link i {
+                display: block;
+                width: auto;
+                margin-bottom: 5px;
+            }
+            .modal-body { padding: 18px; }
+            .stat-number { font-size: 34px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .section-view.active { animation: none; }
+        }
+
         @media (max-width: 992px) {
             .app-layout {
                 flex-direction: column;
