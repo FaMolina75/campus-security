@@ -431,12 +431,35 @@ def json_safe(valor):
     )
 
 
+# Observabilidad: identifica solicitudes lentas y errores sin registrar
+# contraseñas, tokens, cookies, cuerpos ni parámetros de URL.
+SLOW_REQUEST_MS = max(100, int(os.getenv("SLOW_REQUEST_MS", "1500")))
+
+
+@app.before_request
+def iniciar_medicion_solicitud():
+    g.request_started = time.perf_counter()
+    g.request_id = secrets.token_hex(8)
+
+
 # ========================================================
 # 6. ENCABEZADOS DE SEGURIDAD
 # ========================================================
 
 @app.after_request
 def security_headers(response):
+    request_id = getattr(g, "request_id", None) or secrets.token_hex(8)
+    response.headers["X-Request-ID"] = request_id
+
+    inicio = getattr(g, "request_started", None)
+    if inicio is not None:
+        duracion_ms = round((time.perf_counter() - inicio) * 1000)
+        if response.status_code >= 500 or response.status_code == 429 or duracion_ms >= SLOW_REQUEST_MS:
+            ruta = request.url_rule.rule if request.url_rule else "<sin_ruta>"
+            logger.warning(
+                "http_request request_id=%s method=%s route=%s status=%s duration_ms=%s",
+                request_id, request.method, ruta, response.status_code, duracion_ms
+            )
     response.headers["X-Content-Type-Options"] = "nosniff"
 
     response.headers["Referrer-Policy"] = (
