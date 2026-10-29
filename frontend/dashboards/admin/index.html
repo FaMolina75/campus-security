@@ -2662,7 +2662,10 @@
     const limiteAuditoriaAcc = 50;
     let hayPaginaSiguienteAuditoriaAcc = false;
 
+    let solicitudAuditoriaAcc = 0;
+
     async function cargarAuditoriaIAM() {
+        const solicitudActual = ++solicitudAuditoriaAcc;
         try {
             const params = new URLSearchParams({
                 pagina: String(paginaAuditoriaAcc),
@@ -2680,6 +2683,8 @@
             const logs = await apiRequest(
                 "/admin/auditoria/accesos/buscar?" + params.toString()
             );
+            // Ignorar respuestas antiguas si el administrador cambió de filtro o página.
+            if (solicitudActual !== solicitudAuditoriaAcc) return;
             hayPaginaSiguienteAuditoriaAcc = Array.isArray(logs) && logs.length === limiteAuditoriaAcc;
             $("auditoriaAccPagina").textContent = "Página " + paginaAuditoriaAcc;
             $("auditoriaAccAnterior").disabled = paginaAuditoriaAcc === 1;
@@ -2771,7 +2776,7 @@
             });
 
         } catch (error) {
-            mostrarError(error);
+            if (solicitudActual === solicitudAuditoriaAcc) mostrarError(error);
         }
     }
 
@@ -2784,7 +2789,10 @@
     const limiteAuditoriaOps = 50;
     let hayPaginaSiguienteAuditoriaOps = false;
 
+    let solicitudAuditoriaOps = 0;
+
     async function cargarAuditoriaOperaciones() {
+        const solicitudActual = ++solicitudAuditoriaOps;
         try {
             const params = new URLSearchParams({
                 pagina: String(paginaAuditoriaOps),
@@ -2801,6 +2809,8 @@
             const logs = await apiRequest(
                 "/admin/auditoria/operaciones/buscar?" + params.toString()
             );
+            // Ignorar respuestas antiguas si el administrador cambió de filtro o página.
+            if (solicitudActual !== solicitudAuditoriaOps) return;
             hayPaginaSiguienteAuditoriaOps = Array.isArray(logs) && logs.length === limiteAuditoriaOps;
             $("auditoriaOpsPagina").textContent = "Página " + paginaAuditoriaOps;
             $("auditoriaOpsAnterior").disabled = paginaAuditoriaOps === 1;
@@ -2856,7 +2866,7 @@
             });
 
         } catch (error) {
-            mostrarError(error);
+            if (solicitudActual === solicitudAuditoriaOps) mostrarError(error);
         }
     }
 
