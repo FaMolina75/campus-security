@@ -2366,16 +2366,21 @@
         }
 
         if (!payload.nombre || !payload.correo) {
-            mostrarError(
-                new Error("Nombre y correo son obligatorios.")
-            );
+            mostrarError(new Error("Nombre y correo son obligatorios."));
             return;
         }
 
-        const boton = evento.target.querySelector(
-            'button[type="submit"]'
-        );
+        // No enviar IDs inválidos: Number("") produce 0.
+        if (["alumno", "coordinadora"].includes(rol) &&
+            (!Number.isSafeInteger(payload.id_carrera) || payload.id_carrera <= 0)) {
+            mostrarError(new Error("Selecciona una carrera válida."));
+            return;
+        }
 
+        const formulario = evento.currentTarget;
+        if (!formulario.reportValidity()) return;
+        const boton = formulario.querySelector('button[type="submit"]');
+        if (!boton || boton.disabled) return;
         boton.disabled = true;
 
         try {
@@ -2428,7 +2433,19 @@
     // 12. BLOQUEO DE USUARIOS
     // ==========================================================
 
+    const bloqueosEnCurso = new Set();
+
     async function toggleBloqueo(idUsuario) {
+        if (bloqueosEnCurso.has(idUsuario)) return;
+        bloqueosEnCurso.add(idUsuario);
+        try {
+            await confirmarCambioBloqueo(idUsuario);
+        } finally {
+            bloqueosEnCurso.delete(idUsuario);
+        }
+    }
+
+    async function confirmarCambioBloqueo(idUsuario) {
         const confirmacion = await Swal.fire({
             icon: "warning",
             title: "¿Cambiar estado del usuario?",
