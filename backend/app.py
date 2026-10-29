@@ -3183,11 +3183,24 @@ def error_405(_):
 
 
 @app.errorhandler(429)
-def error_429(_):
-    return error_json(
+def error_429(error):
+    # Registrar la ruta (sin query string, contraseñas, cookies ni tokens)
+    # para identificar endpoints saturados durante clases concurrentes.
+    logger.warning(
+        "RATE_LIMIT_EXCEEDED method=%s path=%s",
+        request.method,
+        request.path
+    )
+    response = error_json(
         "Demasiadas solicitudes. Intenta más tarde.",
         429
     )
+    # Flask-Limiter puede incluir Retry-After en la excepción.
+    # No inventar tiempos de espera cuando el backend no los conoce.
+    retry_after = getattr(error, "retry_after", None)
+    if retry_after is not None:
+        response.headers["Retry-After"] = str(retry_after)
+    return response
 
 
 @app.errorhandler(mysql.connector.Error)
