@@ -44,6 +44,7 @@ import secrets
 import hashlib
 import logging
 import ipaddress
+import threading
 
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -51,6 +52,7 @@ from contextlib import contextmanager
 
 import requests
 import mysql.connector
+from mysql.connector.pooling import MySQLConnectionPool
 
 from flask import (
     Flask,
@@ -232,6 +234,27 @@ if os.getenv("DB_SSL_CA"):
     DB_CONFIG["ssl_ca"] = os.getenv("DB_SSL_CA")
 
 
+# Cada proceso Gunicorn mantiene su propio pool; no se comparten conexiones
+# entre procesos. El pool se crea bajo demanda para no bloquear el arranque.
+_DB_POOL = None
+_DB_POOL_LOCK = threading.Lock()
+
+
+def obtener_pool_db():
+    global _DB_POOL
+    if _DB_POOL is None:
+        with _DB_POOL_LOCK:
+            if _DB_POOL is None:
+                tamano = max(1, min(10, int(os.getenv("DB_POOL_SIZE", "3"))))
+                _DB_POOL = MySQLConnectionPool(
+                    pool_size=tamano,
+                    pool_reset_session=True,
+                    **DB_CONFIG
+                )
+                logger.info("db_pool_ready size=%d", tamano)
+    return _DB_POOL
+
+
 def conectar_db():
     required = [
         "host",
@@ -254,7 +277,7 @@ def conectar_db():
 
     inicio = time.perf_counter()
     try:
-        return mysql.connector.connect(**DB_CONFIG)
+        return obtener_pool_db().get_connection()
     finally:
         duracion_ms = (time.perf_counter() - inicio) * 1000
         if duracion_ms >= max(1, int(os.getenv("DB_SLOW_CONNECT_MS", "500"))):
