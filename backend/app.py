@@ -980,10 +980,21 @@ def carreras_publicas():
     return jsonify({"carreras": carreras})
 
 
+def rechazar_honeypot(data, formulario):
+    valor = data.get("sitio_web", "")
+    if isinstance(valor, str) and not valor.strip():
+        return None
+    logger.warning("honeypot_detected form=%s ip=%s", formulario, ip_cliente())
+    return error_json("Solicitud no válida", 400)
+
+
 @app.post("/api/auth/registro-alumno")
 @limiter.limit("3 per 15 minutes")
 def registro_alumno():
     data = json_body()
+    bloqueo_bot = rechazar_honeypot(data, "registro")
+    if bloqueo_bot is not None:
+        return bloqueo_bot
     nombre = str(data.get("nombre") or "").strip()
     correo = normalizar_email(data.get("correo"))
     password = data.get("password")
@@ -1025,6 +1036,9 @@ def registro_alumno():
 @limiter.limit("10 per minute")
 def login():
     data = json_body()
+    bloqueo_bot = rechazar_honeypot(data, "login")
+    if bloqueo_bot is not None:
+        return bloqueo_bot
 
     correo = normalizar_email(
         data.get("correo")
@@ -1236,6 +1250,9 @@ def logout():
 @limiter.limit("3 per 15 minutes")
 def recuperar_solicitar():
     data = json_body()
+    bloqueo_bot = rechazar_honeypot(data, "recuperacion")
+    if bloqueo_bot is not None:
+        return bloqueo_bot
 
     correo = normalizar_email(
         data.get("correo")
@@ -1533,6 +1550,9 @@ def hash_verificacion_correo(id_usuario, codigo):
 @limiter.limit("3 per 15 minutes")
 def verificacion_solicitar():
     data = json_body()
+    bloqueo_bot = rechazar_honeypot(data, "verificacion")
+    if bloqueo_bot is not None:
+        return bloqueo_bot
     correo = normalizar_email(data.get("correo"))
     if not validar_email(correo):
         return error_json("Correo inválido")
