@@ -381,6 +381,7 @@
                 ============================= -->
 
                 <form id="formLogin">
+                    <div class="visually-hidden" aria-hidden="true"><label for="hpLogin">Sitio web (dejar vacío)</label><input id="hpLogin" name="sitio_web" type="text" tabindex="-1" autocomplete="off"></div>
 
                     <div class="mb-3">
 
@@ -558,6 +559,7 @@
             <div class="modal-body">
                 <p class="text-muted small">Tu matrícula se generará automáticamente. Después deberás verificar tu correo con un código de seis dígitos.</p>
                 <form id="formRegistroAlumno">
+                    <div class="visually-hidden" aria-hidden="true"><label for="hpRegistro">Sitio web (dejar vacío)</label><input id="hpRegistro" name="sitio_web" type="text" tabindex="-1" autocomplete="off"></div>
                     <div class="mb-3"><label for="regNombre" class="form-label">Nombre completo</label><input id="regNombre" class="form-control" autocomplete="name" minlength="3" maxlength="120" required></div>
                     <div class="mb-3"><label for="regCorreo" class="form-label">Correo electrónico</label><input id="regCorreo" type="email" class="form-control" autocomplete="email" maxlength="254" required></div>
                     <div class="mb-3"><label for="regCarrera" class="form-label">Carrera</label><select id="regCarrera" class="form-select" required><option value="">Cargando carreras...</option></select></div>
@@ -629,6 +631,7 @@
                 </p>
 
                 <form id="formRecuperar">
+                    <div class="visually-hidden" aria-hidden="true"><label for="hpRecuperacion">Sitio web (dejar vacío)</label><input id="hpRecuperacion" name="sitio_web" type="text" tabindex="-1" autocomplete="off"></div>
 
                     <div class="mb-4">
 
@@ -1072,6 +1075,7 @@
                 </p>
 
                 <form id="formSolicitarVerificacion" class="mb-4">
+                    <div class="visually-hidden" aria-hidden="true"><label for="hpVerificacion">Sitio web (dejar vacío)</label><input id="hpVerificacion" name="sitio_web" type="text" tabindex="-1" autocomplete="off"></div>
                     <label for="verCorreo" class="form-label fw-bold">
                         Correo institucional
                     </label>
@@ -1394,7 +1398,7 @@
         registroEnProceso = true;
         activarBoton("btnRegistrarAlumno", true, "Registrando...");
         try {
-            const respuesta = await apiRequest("/auth/registro-alumno", {method:"POST", body:{nombre,correo,password,id_carrera,recaptcha_token}});
+            const respuesta = await apiRequest("/auth/registro-alumno", {method:"POST", body:{nombre,correo,password,id_carrera,recaptcha_token,sitio_web:$("hpRegistro").value}});
             const matricula = respuesta.matricula || (respuesta.usuario && respuesta.usuario.matricula);
             $("formRegistroAlumno").reset();
             reiniciarRecaptcha("registro");
@@ -1473,7 +1477,8 @@
                     body: {
                         correo,
                         password,
-                        recaptcha_token
+                        recaptcha_token,
+                        sitio_web: $("hpLogin").value
                     }
                 }
             );
@@ -1550,7 +1555,7 @@
                 {
                     method: "POST",
                     body: {
-                        correo, recaptcha_token
+                        correo, recaptcha_token, sitio_web: $("hpRecuperacion").value
                     }
                 }
             );
@@ -1856,7 +1861,7 @@
         try {
             const respuesta = await apiRequest(
                 "/auth/verificacion-solicitar",
-                {method: "POST", body: {correo, recaptcha_token}}
+                {method: "POST", body: {correo, recaptcha_token, sitio_web: $("hpVerificacion").value}}
             );
             await mostrarAlerta(
                 "info",
