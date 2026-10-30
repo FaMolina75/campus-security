@@ -247,6 +247,7 @@ def obtener_pool_db():
             if _DB_POOL is None:
                 tamano = max(1, min(10, int(os.getenv("DB_POOL_SIZE", "3"))))
                 _DB_POOL = MySQLConnectionPool(
+                    pool_name="securitycampus_db",
                     pool_size=tamano,
                     pool_reset_session=True,
                     **DB_CONFIG
